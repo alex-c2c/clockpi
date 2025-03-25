@@ -4,8 +4,6 @@ import sys
 import os
 picdir = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'pic')
 libdir = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'lib')
-print(f"{picdir=}")
-print(f"{libdir=}")
 if os.path.exists(libdir):
     sys.path.append(libdir)
 
@@ -22,11 +20,8 @@ try:
 
     epd = epd7in3e.EPD()   
     logging.info("init and Clear")
-    print("picdir: " + picdir)
     epd.init()
-    print("2")
     epd.Clear()
-    print("3")
     font24 = ImageFont.truetype(os.path.join(picdir, 'Font.ttc'), 24)
     font18 = ImageFont.truetype(os.path.join(picdir, 'Font.ttc'), 18)
     font40 = ImageFont.truetype(os.path.join(picdir, 'Font.ttc'), 40)
