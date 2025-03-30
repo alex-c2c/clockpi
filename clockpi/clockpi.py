@@ -129,6 +129,24 @@ def upload_file():
     </form>
     '''
     
+@bp.route('/test', methods=['GET', 'POST'])
+def test():
+    if request.method == 'POST':
+            # draw the image on display
+            #draw_image(dest_path)
+            time:str = f"{datetime.now().hour:02d}:{datetime.now().minute:02d}"
+            draw_image_with_time(os.path.join(current_app.config["UPLOAD_FOLDER"], "01fe482628b58eb16f05fbb698063d652261a8ca79e3366d472f003c6168bbb3.bmp"), time, TimePos.TOP_LEFT)
+            
+            #return redirect(url_for('clockpi.index'))
+    return '''
+    <!doctype html>
+    <title>Test E-Paper Display</title>
+    <h1>Update E-Paper display</h1>
+    <form method=post>
+      <input type=submit value=Update>
+    </form>
+    '''
+    
     
 @bp.route('/uploads/<name>')
 def download_file(name):
