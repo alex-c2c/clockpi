@@ -98,7 +98,7 @@ def draw_image_with_time(file_path:str, time:str, pos:TimePos) -> None:
         
         # draw time
         x, y = get_start_pos(pos)
-        draw.text((x, y), time, epd.BLACK, font18)
+        draw.text((x, y), time, epd.BLACK, font80)
         
         epd.display(epd.getbuffer(img))
         epd.sleep()
