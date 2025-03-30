@@ -83,7 +83,7 @@ def draw_image_with_time(file_path:str, time:str, pos:TimePos) -> None:
         from lib.waveshare_epd import epd7in3e
         epd = epd7in3e.EPD()
         epd.init()
-        epd.Clear()
+        epd.clear()
 
         # Drawing on the image
         img = Image.open(file_path)
@@ -112,7 +112,7 @@ def draw_image(file_path:str) -> None:
         from lib.waveshare_epd import epd7in3e
         epd = epd7in3e.EPD()
         epd.init()
-        epd.Clear()
+        epd.clear()
 
         # Drawing on the image
         img = Image.open(file_path)
