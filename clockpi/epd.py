@@ -23,6 +23,7 @@ class TimePos(Enum):
 font18 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Font.ttc'), 18)
 font24 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Font.ttc'), 24)
 font40 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Font.ttc'), 40)
+font80 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Clock2017L.ttc'), 80)
 
 def is_machine_valid() -> bool:
     return "IS_RASPBERRYPI" in os.environ
