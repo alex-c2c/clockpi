@@ -3,6 +3,7 @@ import tempfile
 import shutil
 import hashlib
 from . import consts as c
+from datetime import datetime
 from flask import Blueprint, current_app, flash, g, redirect, render_template, request, url_for, send_from_directory
 from werkzeug.exceptions import abort
 from werkzeug.utils import secure_filename
@@ -114,7 +115,8 @@ def upload_file():
             
             # draw the image on display
             #draw_image(dest_path)
-            draw_image_with_time(dest_path, "", TimePos.TOP_LEFT)
+            time:str = f"{datetime.now().hour:02d}:{datetime.now().minute:02d}"
+            draw_image_with_time(dest_path, time, TimePos.TOP_LEFT)
             
             #return redirect(url_for('clockpi.index'))
     return '''

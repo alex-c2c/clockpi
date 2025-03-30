@@ -88,10 +88,17 @@ def draw_image_with_time(file_path:str, time:str, pos:TimePos) -> None:
         # Drawing on the image
         img = Image.open(file_path)
         draw = ImageDraw.Draw(img)
+        
+        # test grid
         draw.line((266,0, 266, 480), epd.BLACK, 2)
         draw.line((532,0, 532, 480), epd.BLACK, 2)
         draw.line((0,159, 800, 159), epd.BLACK, 2)
         draw.line((0,319, 800, 319), epd.BLACK, 2)
+        
+        # draw time
+        x, y = get_start_pos(pos)
+        draw.text((x, y), time, epd.BLACK, font18)
+        
         epd.display(epd.getbuffer(img))
         epd.sleep()
             
