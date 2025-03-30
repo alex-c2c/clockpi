@@ -1,33 +1,126 @@
 import os
 import logging
-from PIL import Image,ImageDraw,ImageFont
+from PIL import Image, ImageDraw, ImageFont
+from enum import Enum
+from . import consts as c
 
 logging.basicConfig(level=logging.DEBUG)
+
+class TimePos(Enum):
+    TOP_LEFT = 1
+    MIDDLE_LEFT = 2
+    BOTTOM_LEFT = 3
+    TOP_CENTER = 4
+    MIDDLE_CENTER = 5
+    BOTTOM_CENTER = 6
+    TOP_RIGHT = 7
+    MIDDLE_RIGHT = 8
+    BOTTOM_RIGHT = 9
+    FULL_1 = 10
+    FULL_2 = 11
+    FULL_3 = 12
+
+font18 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Font.ttc'), 18)
+font24 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Font.ttc'), 24)
+font40 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Font.ttc'), 40)
 
 def is_machine_valid() -> bool:
     return "IS_RASPBERRYPI" in os.environ
 
-if is_machine_valid():
-    from lib.waveshare_epd import epd7in3e
+def get_start_pos(time_pos:TimePos) -> tuple[int, int]:
+    if time_pos == TimePos.TOP_LEFT:
+        return 0, 0
+    elif time_pos == TimePos.MIDDLE_LEFT:
+        return 0, 0
+    elif time_pos == TimePos.BOTTOM_LEFT:
+        return 0, 0
+    elif time_pos == TimePos.TOP_LEFT:
+        return 0, 0
+    elif time_pos == TimePos.TOP_LEFT:
+        return 0, 0
+    elif time_pos == TimePos.TOP_LEFT:
+        return 0, 0
+    elif time_pos == TimePos.TOP_LEFT:
+        return 0, 0
+    elif time_pos == TimePos.TOP_LEFT:
+        return 0, 0
+    elif time_pos == TimePos.TOP_LEFT:
+        return 0, 0
+    elif time_pos == TimePos.TOP_LEFT:
+        return 0, 0
+    elif time_pos == TimePos.TOP_LEFT:
+        return 0, 0
+    elif time_pos == TimePos.TOP_LEFT:
+        return 0, 0
 
-    
-def draw_image(file_path:str) -> None:
+
+def clear_display() -> None:
     if not is_machine_valid():
-        logging.info(f"Skip drawing image as this might not be a valid machine")
+        logging.warning("Unable to clear display")
         return
-    
+
     try:
+        from lib.waveshare_epd import epd7in3e
         epd = epd7in3e.EPD()
         epd.init()
         epd.clear()
+        epd.sleep()
+        
+    except IOError as e:
+        logging.error(e)
+
+
+def draw_image_with_time(file_path:str, time:str, pos:TimePos) -> None:
+    if not is_machine_valid():
+        logging.warning(f"Unable to draw image")
+        return
+    
+    if not os.path.isfile(file_path):
+        logging.warning("Cannot display invalid file")
+        return
+    
+    try:
+        from lib.waveshare_epd import epd7in3e
+        epd = epd7in3e.EPD()
+        epd.init()
+        epd.Clear()
 
         # Drawing on the image
-        Himage = Image.open(file_path)
-        epd.display(epd.getbuffer(Himage))
+        img = Image.open(file_path)
+        draw = ImageDraw.Draw(img)
+        draw.line((266,0, 266, 480), epd.BLACK, 2)
+        draw.line((532,0, 532, 480), epd.BLACK, 2)
+        draw.line((0,159, 800, 159), epd.BLACK, 2)
+        draw.line((0,319, 800, 319), epd.BLACK, 2)
+        epd.display(epd.getbuffer(img))
         epd.sleep()
             
     except IOError as e:
-        logging.info(e)
+        logging.error(e)
+
+
+def draw_image(file_path:str) -> None:
+    if not is_machine_valid():
+        logging.warning(f"Unable to draw image")
+        return
+    
+    if not os.path.isfile(file_path):
+        logging.warning("Cannot display invalid file")
+        return
+    
+    try:
+        from lib.waveshare_epd import epd7in3e
+        epd = epd7in3e.EPD()
+        epd.init()
+        epd.Clear()
+
+        # Drawing on the image
+        img = Image.open(file_path)
+        epd.display(epd.getbuffer(img))
+        epd.sleep()
+            
+    except IOError as e:
+        logging.error(e)
     
 '''
 try:

@@ -211,7 +211,7 @@ class EPD:
 
         self.TurnOnDisplay()
         
-    def Clear(self, color=0x11):
+    def clear(self, color=0x11):
         self.send_command(0x10)
         self.send_data2([color] * int(self.height) * int(self.width/2))
 

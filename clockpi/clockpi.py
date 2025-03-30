@@ -9,7 +9,7 @@ from werkzeug.utils import secure_filename
 from clockpi.auth import login_required
 from clockpi.db import get_db
 from clockpi.image import procsess_image, validate_image
-from clockpi.epd import draw_image
+from clockpi.epd import draw_image, draw_image_with_time, TimePos
 
 bp = Blueprint('clockpi', __name__)
 
@@ -55,7 +55,7 @@ def upload_file():
             # save file to temp dir
             # TODO: improve location of "uploaded" files so that it doesn't get
             # overwritten by someone else uploading the files with same file name at the same time
-            temp_dir:str = os.path.join(tempfile.gettempdir(), "upload")
+            temp_dir:str = os.path.join(tempfile.gettempdir(), c.DIR_UPLOAD)
             if not os.path.isdir(temp_dir):
                 os.mkdir(temp_dir)
             temp_path:str = os.path.join(temp_dir, filename)
@@ -68,7 +68,7 @@ def upload_file():
                 return redirect(request.url)
             
             # process image
-            proc_dir:str = os.path.join(temp_dir, "processed")
+            proc_dir:str = os.path.join(temp_dir, c.DIR_PROCESSED)
             if not os.path.isdir(proc_dir):
                 os.mkdir(proc_dir)
             processed_path:str = os.path.join(proc_dir, filename)
@@ -113,7 +113,8 @@ def upload_file():
                 return redirect(request.url)
             
             # draw the image on display
-            draw_image(dest_path)
+            #draw_image(dest_path)
+            draw_image_with_time(dest_path, "", TimePos.TOP_LEFT)
             
             #return redirect(url_for('clockpi.index'))
     return '''
