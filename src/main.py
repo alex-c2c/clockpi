@@ -89,7 +89,7 @@ def main(file_path:str) -> None:
         
         path_list:list[str] = os.path.splitext(file_path)
         out_path:str = path_list[0] + "_small" + path_list[-1]
-        img.save(out_path, "png")
+        img.save(out_path, "jpg")
         
     except IOError as error:
         logging.error(error)

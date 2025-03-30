@@ -1,12 +1,9 @@
 import os
 import logging
 import numpy as np
-from PIL.Image import Image
 
-# Constants
-CONST_IMG_WIDTH:int = 800 # pixel count of the Waveshare E-paper display 7"3e
-CONST_IMG_HEIGHT:int = 480 # pixel count of the Waveshare E-paper display 7"3e
-CONST_IMG_NC:int = 2 # colors per channel
+from . import consts as c
+from PIL import Image as Image
 
 def crop(img:Image, w:int, h:int) -> Image:
     l:float = (img.width - w) * 0.5
@@ -58,30 +55,42 @@ def palette_reduce(img:Image, nc:int) -> Image:
     return Image.fromarray(carr)
 
 
-def procsess_image(src_path:str, dest_path:str, del_src:bool = True) -> None:
+def validate_image(file_path:str) -> bool:
     try:
-        img:Image = Image.open(src_path)
+        img:Image = Image.open(file_path)
+        img.verify()
+        return True
+    except (IOError, SyntaxError):
+        return False
+    
+
+def procsess_image(file_path:str, dest_path:str, del_src:bool = True) -> bool:
+    try:
+        img:Image = Image.open(file_path)
         w:int = img.width
         h:int = img.height
         
         # resize
-        r:float = max(CONST_IMG_WIDTH/w, CONST_IMG_HEIGHT/h);
+        r:float = max(c.EPD_WIDTH/w, c.EPD_HEIGHT/h);
         img.thumbnail((w * r, h * r), Image.Resampling.LANCZOS)
         
         # Crop
-        img:Image = crop(img) 
+        img:Image = crop(img, c.EPD_WIDTH, c.EPD_HEIGHT) 
         
         # Apply fyold steinburg dithering
-        img = fs_dither(img, CONST_IMG_NC)
+        img = fs_dither(img, c.EPD_NC)
         
         # Reduce palette color
-        img = palette_reduce(img, CONST_IMG_NC)
+        img = palette_reduce(img, c.EPD_NC)
         
         # Save file
         img.save(dest_path)
         
         if del_src:
-            os.remove(src_path)
+            os.remove(file_path)
+        
+        return True
         
     except IOError as error:
         logging.error(error)
+        return False

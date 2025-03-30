@@ -1,20 +1,35 @@
-#!/usr/bin/python
-# -*- coding:utf-8 -*-
-import sys
 import os
-picdir = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'pic')
-libdir = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'lib')
-if os.path.exists(libdir):
-    sys.path.append(libdir)
-
 import logging
-from waveshare_epd import epd7in3e
-import time
 from PIL import Image,ImageDraw,ImageFont
-import traceback
 
 logging.basicConfig(level=logging.DEBUG)
 
+def is_machine_valid() -> bool:
+    return "IS_RASPBERRYPI" in os.environ
+
+if is_machine_valid():
+    from lib.waveshare_epd import epd7in3e
+
+    
+def draw_image(file_path:str) -> None:
+    if not is_machine_valid():
+        logging.info(f"Skip drawing image as this might not be a valid machine")
+        return
+    
+    try:
+        epd = epd7in3e.EPD()
+        epd.init()
+        epd.clear()
+
+        # Drawing on the image
+        Himage = Image.open(file_path)
+        epd.display(epd.getbuffer(Himage))
+        epd.sleep()
+            
+    except IOError as e:
+        logging.info(e)
+    
+'''
 try:
     logging.info("epd7in3e Demo")
 
@@ -64,3 +79,4 @@ except KeyboardInterrupt:
     logging.info("ctrl + c:")
     epd7in3e.epdconfig.module_exit(cleanup=True)
     exit()
+'''

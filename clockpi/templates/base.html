@@ -13,6 +13,12 @@
     {% endif %}
   </ul>
 </nav>
+<section class="control">
+  <form method=post enctype=multipart/form-data>
+    <input type=file name=file>
+    <input type=submit value=Upload>
+  </form>
+</section>
 <section class="content">
   <header>
     {% block header %}{% endblock %}
