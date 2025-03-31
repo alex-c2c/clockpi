@@ -47,44 +47,45 @@ def is_machine_valid() -> bool:
 
 
 def get_time_pos(time_pos:TimePos, epd) -> tuple[int, int]:
+    from 
     if time_pos == TimePos.SECT_9_TOP_LEFT:
-        return 0 * epd.EPD_WIDTH / 3 + 33, 0 * epd.EPD_HEIGHT / 3 + 25
+        return 0 * epd.width / 3 + 33, 0 * epd.height / 3 + 25
     elif time_pos == TimePos.SECT_9_TOP_CENTER:
-        return 1 * epd.EPD_WIDTH / 3 + 33, 0 * epd.EPD_HEIGHT / 3 + 25
+        return 1 * epd.width / 3 + 33, 0 * epd.height / 3 + 25
     elif time_pos == TimePos.SECT_9_TOP_RIGHT:
-        return 2 * epd.EPD_WIDTH / 3 + 33, 0 * epd.EPD_HEIGHT / 3 + 25
+        return 2 * epd.width / 3 + 33, 0 * epd.height / 3 + 25
     elif time_pos == TimePos.SECT_9_MIDDLE_LEFT:
-        return 0 * epd.EPD_WIDTH / 3 + 33, 1 * epd.EPD_HEIGHT / 3 + 25
+        return 0 * epd.width / 3 + 33, 1 * epd.height / 3 + 25
     elif time_pos == TimePos.SECT_9_MIDDLE_CENTER:
-        return 1 * epd.EPD_WIDTH / 3 + 33, 1 * epd.EPD_HEIGHT / 3 + 25
+        return 1 * epd.width / 3 + 33, 1 * epd.height / 3 + 25
     elif time_pos == TimePos.SECT_9_MIDDLE_RIGHT:
-        return 2 * epd.EPD_WIDTH / 3 + 33, 1 * epd.EPD_HEIGHT / 3 + 25
+        return 2 * epd.width / 3 + 33, 1 * epd.height / 3 + 25
     elif time_pos == TimePos.SECT_9_BOTTOM_LEFT:
-        return 0 * epd.EPD_WIDTH / 3 + 33, 2 * epd.EPD_HEIGHT / 3 + 25
+        return 0 * epd.width / 3 + 33, 2 * epd.height / 3 + 25
     elif time_pos == TimePos.SECT_9_BOTTOM_CENTER:
-        return 1 * epd.EPD_WIDTH / 3 + 33, 2 * epd.EPD_HEIGHT / 3 + 25
+        return 1 * epd.width / 3 + 33, 2 * epd.height / 3 + 25
     elif time_pos == TimePos.SECT_9_BOTTOM_RIGHT:
-        return 2 * epd.EPD_WIDTH / 3 + 33, 2 * epd.EPD_HEIGHT / 3 + 25
+        return 2 * epd.width / 3 + 33, 2 * epd.height / 3 + 25
     elif time_pos == TimePos.SECT_6_TOP_LEFT:
-        return 2 * epd.EPD_WIDTH / 2 + 33, 2 * epd.EPD_HEIGHT / 3 + 25
+        return 2 * epd.width / 2 + 33, 2 * epd.height / 3 + 25
     elif time_pos == TimePos.SECT_6_TOP_RIGHT:
-        return 2 * epd.EPD_WIDTH / 2 + 33, 2 * epd.EPD_HEIGHT / 3 + 25
+        return 2 * epd.width / 2 + 33, 2 * epd.height / 3 + 25
     elif time_pos == TimePos.SECT_6_MIDDLE_LEFT:
-        return 2 * epd.EPD_WIDTH / 2 + 33, 2 * epd.EPD_HEIGHT / 3 + 25
+        return 2 * epd.width / 2 + 33, 2 * epd.height / 3 + 25
     elif time_pos == TimePos.SECT_6_MIDDLE_RIGHT:
-        return 2 * epd.EPD_WIDTH / 2 + 33, 2 * epd.EPD_HEIGHT / 3 + 25
+        return 2 * epd.width / 2 + 33, 2 * epd.height / 3 + 25
     elif time_pos == TimePos.SECT_6_BOTTOM_LEFT:
-        return 2 * epd.EPD_WIDTH / 2 + 33, 2 * epd.EPD_HEIGHT / 3 + 25
+        return 2 * epd.width / 2 + 33, 2 * epd.height / 3 + 25
     elif time_pos == TimePos.SECT_6_BOTTOM_RIGHT:
-        return 2 * epd.EPD_WIDTH / 2 + 33, 2 * epd.EPD_HEIGHT / 3 + 25
+        return 2 * epd.width / 2 + 33, 2 * epd.height / 3 + 25
     elif time_pos == TimePos.SECT_4_TOP_LEFT:
-        return 2 * epd.EPD_WIDTH / 2 + 33, 2 * epd.EPD_HEIGHT / 2 + 25
+        return 2 * epd.width / 2 + 33, 2 * epd.height / 2 + 25
     elif time_pos == TimePos.SECT_4_TOP_RIGHT:
-        return 2 * epd.EPD_WIDTH / 2 + 33, 2 * epd.EPD_HEIGHT / 2 + 25
+        return 2 * epd.width / 2 + 33, 2 * epd.height / 2 + 25
     elif time_pos == TimePos.SECT_4_BOTTOM_LEFT:
-        return 2 * epd.EPD_WIDTH / 2 + 33, 2 * epd.EPD_HEIGHT / 2 + 25
+        return 2 * epd.width / 2 + 33, 2 * epd.height / 2 + 25
     elif time_pos == TimePos.SECT_4_BOTTOM_RIGHT:
-        return 2 * epd.EPD_WIDTH / 2 + 33, 2 * epd.EPD_HEIGHT / 2 + 25
+        return 2 * epd.width / 2 + 33, 2 * epd.height / 2 + 25
     elif time_pos == TimePos.FULL_1:
         return 150, 100
     elif time_pos == TimePos.FULL_2:
@@ -208,7 +209,7 @@ def draw_image_with_time(file_path:str, time:str, pos:TimePos, refresh:bool = Fa
         logging.error(e)
 
 
-def draw_image(file_path:str) -> None:
+def draw_image(file_path:str, refresh:bool = True) -> None:
     if not is_machine_valid():
         logging.warning(f"Unable to draw image")
         return
@@ -218,10 +219,12 @@ def draw_image(file_path:str) -> None:
         return
     
     try:
-        from lib.waveshare_epd import epd7in3e
-        epd = epd7in3e.EPD()
+        from lib.waveshare_epd.epd7in3e import EPD
+        epd = EPD()
         epd.init()
-        epd.clear()
+        
+        if refresh:
+            epd.clear()
 
         # Drawing on the image
         img = Image.open(file_path)

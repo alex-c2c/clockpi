@@ -36,8 +36,6 @@ from PIL import Image
 EPD_WIDTH       = 800
 EPD_HEIGHT      = 480
 
-
-
 logger = logging.getLogger(__name__)
 
 class EPD:
