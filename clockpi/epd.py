@@ -216,7 +216,7 @@ def draw_image_with_time(file_path:str, time:str, pos:TimePos, color:int = c.COL
         if shadow is not None:
             shadow:int = get_color(shadow, epd)
             x_s:int  = x - 3
-            y_s:int = y + 3
+            y_s:int = y + 5
             draw.text((x_s, y_s), time, shadow, font)    
         
         draw.text((x, y), time, color, font)
