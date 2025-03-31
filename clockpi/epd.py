@@ -209,16 +209,17 @@ def draw_image_with_time(file_path:str, time:str, pos:TimePos, color:int = c.COL
             draw_grids(draw, epd)
 
         # Draw time
-        xy:tuple[int, int] = get_time_pos(pos, epd)
+        x, y = get_time_pos(pos, epd)
         color:int = get_color(color, epd)
         font:ImageFont = get_font(pos)
         
         if shadow is not None:
             shadow:int = get_color(shadow, epd)
-            xy_shadow:tuple[int, int] = {xy[0] - 3, xy[1] + 3}
-            draw.text(xy_shadow, time, shadow, font)    
+            x_s:int  = x - 3
+            y_s:int = y + 3
+            draw.text((x_s, y_s), time, shadow, font)    
         
-        draw.text(xy, time, color, font)
+        draw.text((x, y), time, color, font)
 
         # Send to display
         epd.display(epd.getbuffer(img))

@@ -139,7 +139,7 @@ def test():
         time_pos:TimePos = TimePos.OFF
         
         # Get Refresh flag
-        if request.form.get("clear", "") == "Clear":
+        if request.form.get("clear", ""):
             clear_display()
             return render_template(('clockpi/test.html'))
                 
