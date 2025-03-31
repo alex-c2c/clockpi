@@ -18,41 +18,71 @@ class TimePos(Enum):
     BOTTOM_RIGHT = 9
     FULL_1 = 10
     FULL_2 = 11
-    FULL_3 = 12
 
 font18 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Font.ttc'), 18)
 font24 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Font.ttc'), 24)
 font40 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Font.ttc'), 40)
-font80 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'MesloLGS_NF_Bold.ttc'), 80)
+#font80 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'MesloLGS_NF_Bold.ttf'), 80)
+font_bold = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Bold.ttf'), 80)
+font_full_1 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Light.ttf'), 200)
+font_full_2 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Light.ttf'), 250)
+font_full_3 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Light.ttf'), 300)
+
 
 def is_machine_valid() -> bool:
     return "IS_RASPBERRYPI" in os.environ
 
-def get_start_pos(time_pos:TimePos) -> tuple[int, int]:
+
+def get_full_3_pos() -> tuple[int, int]:
+   return 25, 30
+
+
+def get_full_2_pos() -> tuple[int, int]:
+    return 88, 65
+
+
+def get_full_1_pos() -> tuple[int, int]:
+    return 150, 100
+
+
+def get_part_pos(time_pos:TimePos) -> tuple[int, int]:
+    offset_x:int = 33
+    offset_y:int = 25
+    
+    part_x:int = 0
+    part_y:int = 0
+    part_w:int = c.EPD_WIDTH / 3
+    part_h:int = c.EPD_HEIGHT / 3
+
     if time_pos == TimePos.TOP_LEFT:
-        return 0, 0
+        part_x = 0
+        part_y = 0
     elif time_pos == TimePos.MIDDLE_LEFT:
-        return 0, 0
+        part_x = 0
+        part_y = 1
     elif time_pos == TimePos.BOTTOM_LEFT:
-        return 0, 0
-    elif time_pos == TimePos.TOP_LEFT:
-        return 0, 0
-    elif time_pos == TimePos.TOP_LEFT:
-        return 0, 0
-    elif time_pos == TimePos.TOP_LEFT:
-        return 0, 0
-    elif time_pos == TimePos.TOP_LEFT:
-        return 0, 0
-    elif time_pos == TimePos.TOP_LEFT:
-        return 0, 0
-    elif time_pos == TimePos.TOP_LEFT:
-        return 0, 0
-    elif time_pos == TimePos.TOP_LEFT:
-        return 0, 0
-    elif time_pos == TimePos.TOP_LEFT:
-        return 0, 0
-    elif time_pos == TimePos.TOP_LEFT:
-        return 0, 0
+        part_x = 0
+        part_y = 2
+    elif time_pos == TimePos.TOP_CENTER:
+        part_x = 1
+        part_y = 0
+    elif time_pos == TimePos.MIDDLE_CENTER:
+        part_x = 1
+        part_y = 1
+    elif time_pos == TimePos.BOTTOM_CENTER:
+        part_x = 1
+        part_y = 2
+    elif time_pos == TimePos.TOP_RIGHT:
+        part_x = 2
+        part_y = 0
+    elif time_pos == TimePos.MIDDLE_RIGHT:
+        part_x = 2
+        part_y = 1
+    elif time_pos == TimePos.BOTTOM_RIGHT:
+        part_x = 2
+        part_y = 2
+
+    return part_x * part_w + offset_x, part_y * part_h + offset_y 
 
 
 def clear_display() -> None:
@@ -84,21 +114,31 @@ def draw_image_with_time(file_path:str, time:str, pos:TimePos) -> None:
         from lib.waveshare_epd import epd7in3e
         epd = epd7in3e.EPD()
         epd.init()
-        epd.clear()
 
         # Drawing on the image
         img = Image.open(file_path)
         draw = ImageDraw.Draw(img)
         
         # test grid
+        ''' 
+        for x in range(80):
+            x_p:int = (x + 1) * 10
+            draw.line((x_p, 0, x_p, 480), epd.WHITE, 1)
+        for y in range(48):
+            y_p:int = (y + 1) * 10
+            draw.line((0, y_p, 800, y_p), epd.WHITE, 1)
+
         draw.line((266,0, 266, 480), epd.BLACK, 2)
         draw.line((532,0, 532, 480), epd.BLACK, 2)
         draw.line((0,159, 800, 159), epd.BLACK, 2)
         draw.line((0,319, 800, 319), epd.BLACK, 2)
-        
+        '''
+
         # draw time
-        x, y = get_start_pos(pos)
-        draw.text((x, y), time, epd.BLACK, font80)
+        #x, y = get_start_pos(TimePos.TOP_LEFT)
+        #draw.text((x, y), time, epd.BLACK, fontbold)
+        x, y = get_full_2_pos()
+        draw.text((x, y), time, epd.BLACK, font_full_2)
         
         epd.display(epd.getbuffer(img))
         epd.sleep()
