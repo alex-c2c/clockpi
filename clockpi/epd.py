@@ -3,6 +3,7 @@ import logging
 from PIL import Image, ImageDraw, ImageFont
 from PIL.ImageFont import FreeTypeFont
 from enum import Enum
+
 from . import consts as c
 
 logging.basicConfig(level=logging.DEBUG)
@@ -45,45 +46,45 @@ def is_machine_valid() -> bool:
     return "IS_RASPBERRYPI" in os.environ
 
 
-def get_time_pos(time_pos:TimePos) -> tuple[int, int]:
+def get_time_pos(time_pos:TimePos, epd) -> tuple[int, int]:
     if time_pos == TimePos.SECT_9_TOP_LEFT:
-        return 0 * c.EPD_WIDTH / 3 + 33, 0 * c.EPD_HEIGHT / 3 + 25
+        return 0 * epd.EPD_WIDTH / 3 + 33, 0 * epd.EPD_HEIGHT / 3 + 25
     elif time_pos == TimePos.SECT_9_TOP_CENTER:
-        return 1 * c.EPD_WIDTH / 3 + 33, 0 * c.EPD_HEIGHT / 3 + 25
+        return 1 * epd.EPD_WIDTH / 3 + 33, 0 * epd.EPD_HEIGHT / 3 + 25
     elif time_pos == TimePos.SECT_9_TOP_RIGHT:
-        return 2 * c.EPD_WIDTH / 3 + 33, 0 * c.EPD_HEIGHT / 3 + 25
+        return 2 * epd.EPD_WIDTH / 3 + 33, 0 * epd.EPD_HEIGHT / 3 + 25
     elif time_pos == TimePos.SECT_9_MIDDLE_LEFT:
-        return 0 * c.EPD_WIDTH / 3 + 33, 1 * c.EPD_HEIGHT / 3 + 25
+        return 0 * epd.EPD_WIDTH / 3 + 33, 1 * epd.EPD_HEIGHT / 3 + 25
     elif time_pos == TimePos.SECT_9_MIDDLE_CENTER:
-        return 1 * c.EPD_WIDTH / 3 + 33, 1 * c.EPD_HEIGHT / 3 + 25
+        return 1 * epd.EPD_WIDTH / 3 + 33, 1 * epd.EPD_HEIGHT / 3 + 25
     elif time_pos == TimePos.SECT_9_MIDDLE_RIGHT:
-        return 2 * c.EPD_WIDTH / 3 + 33, 1 * c.EPD_HEIGHT / 3 + 25
+        return 2 * epd.EPD_WIDTH / 3 + 33, 1 * epd.EPD_HEIGHT / 3 + 25
     elif time_pos == TimePos.SECT_9_BOTTOM_LEFT:
-        return 0 * c.EPD_WIDTH / 3 + 33, 2 * c.EPD_HEIGHT / 3 + 25
+        return 0 * epd.EPD_WIDTH / 3 + 33, 2 * epd.EPD_HEIGHT / 3 + 25
     elif time_pos == TimePos.SECT_9_BOTTOM_CENTER:
-        return 1 * c.EPD_WIDTH / 3 + 33, 2 * c.EPD_HEIGHT / 3 + 25
+        return 1 * epd.EPD_WIDTH / 3 + 33, 2 * epd.EPD_HEIGHT / 3 + 25
     elif time_pos == TimePos.SECT_9_BOTTOM_RIGHT:
-        return 2 * c.EPD_WIDTH / 3 + 33, 2 * c.EPD_HEIGHT / 3 + 25
+        return 2 * epd.EPD_WIDTH / 3 + 33, 2 * epd.EPD_HEIGHT / 3 + 25
     elif time_pos == TimePos.SECT_6_TOP_LEFT:
-        return 2 * c.EPD_WIDTH / 2 + 33, 2 * c.EPD_HEIGHT / 3 + 25
+        return 2 * epd.EPD_WIDTH / 2 + 33, 2 * epd.EPD_HEIGHT / 3 + 25
     elif time_pos == TimePos.SECT_6_TOP_RIGHT:
-        return 2 * c.EPD_WIDTH / 2 + 33, 2 * c.EPD_HEIGHT / 3 + 25
+        return 2 * epd.EPD_WIDTH / 2 + 33, 2 * epd.EPD_HEIGHT / 3 + 25
     elif time_pos == TimePos.SECT_6_MIDDLE_LEFT:
-        return 2 * c.EPD_WIDTH / 2 + 33, 2 * c.EPD_HEIGHT / 3 + 25
+        return 2 * epd.EPD_WIDTH / 2 + 33, 2 * epd.EPD_HEIGHT / 3 + 25
     elif time_pos == TimePos.SECT_6_MIDDLE_RIGHT:
-        return 2 * c.EPD_WIDTH / 2 + 33, 2 * c.EPD_HEIGHT / 3 + 25
+        return 2 * epd.EPD_WIDTH / 2 + 33, 2 * epd.EPD_HEIGHT / 3 + 25
     elif time_pos == TimePos.SECT_6_BOTTOM_LEFT:
-        return 2 * c.EPD_WIDTH / 2 + 33, 2 * c.EPD_HEIGHT / 3 + 25
+        return 2 * epd.EPD_WIDTH / 2 + 33, 2 * epd.EPD_HEIGHT / 3 + 25
     elif time_pos == TimePos.SECT_6_BOTTOM_RIGHT:
-        return 2 * c.EPD_WIDTH / 2 + 33, 2 * c.EPD_HEIGHT / 3 + 25
+        return 2 * epd.EPD_WIDTH / 2 + 33, 2 * epd.EPD_HEIGHT / 3 + 25
     elif time_pos == TimePos.SECT_4_TOP_LEFT:
-        return 2 * c.EPD_WIDTH / 2 + 33, 2 * c.EPD_HEIGHT / 2 + 25
+        return 2 * epd.EPD_WIDTH / 2 + 33, 2 * epd.EPD_HEIGHT / 2 + 25
     elif time_pos == TimePos.SECT_4_TOP_RIGHT:
-        return 2 * c.EPD_WIDTH / 2 + 33, 2 * c.EPD_HEIGHT / 2 + 25
+        return 2 * epd.EPD_WIDTH / 2 + 33, 2 * epd.EPD_HEIGHT / 2 + 25
     elif time_pos == TimePos.SECT_4_BOTTOM_LEFT:
-        return 2 * c.EPD_WIDTH / 2 + 33, 2 * c.EPD_HEIGHT / 2 + 25
+        return 2 * epd.EPD_WIDTH / 2 + 33, 2 * epd.EPD_HEIGHT / 2 + 25
     elif time_pos == TimePos.SECT_4_BOTTOM_RIGHT:
-        return 2 * c.EPD_WIDTH / 2 + 33, 2 * c.EPD_HEIGHT / 2 + 25
+        return 2 * epd.EPD_WIDTH / 2 + 33, 2 * epd.EPD_HEIGHT / 2 + 25
     elif time_pos == TimePos.FULL_1:
         return 150, 100
     elif time_pos == TimePos.FULL_2:
@@ -105,6 +106,24 @@ def get_font(time_pos:TimePos) -> FreeTypeFont:
         return font_bold_100
     else:
         return font_bold_80
+
+
+def get_color(color:int, epd) -> int:
+    if color == c.COLOR_BLACK:
+        return epd.BLACK
+    elif color == c.COLOR_WHITE:
+        return epd.WHITE
+    elif color == c.COLOR_YELLOW:
+        return epd.YELLOW
+    elif color == c.COLOR_RED:
+        return epd.RED
+    elif color == c.COLOR_BLUE:
+        return epd.BLUE
+    elif color == c.COLOR_GREEN:
+        return epd.GREEN
+    else:
+        logging.warning(f"Selected unknown {color=}")
+        return epd.BLACK
     
 
 def draw_grids(draw:ImageDraw, epd) -> None:
@@ -133,8 +152,8 @@ def clear_display() -> None:
         return
 
     try:
-        from lib.waveshare_epd import epd7in3e
-        epd = epd7in3e.EPD()
+        from lib.waveshare_epd.epd7in3e import EPD
+        epd = EPD()
         epd.init()
         epd.clear()
         epd.sleep()
@@ -143,7 +162,7 @@ def clear_display() -> None:
         logging.error(e)
 
 
-def draw_image_with_time(file_path:str, time:str, pos:TimePos, refresh:bool = False, draw_grid:bool = False) -> None:
+def draw_image_with_time(file_path:str, time:str, pos:TimePos, refresh:bool = False, color:int = c.COLOR_BLACK, draw_grid:bool = False) -> None:
     if not is_machine_valid():
         logging.warning(f"Unable to draw image")
         return
@@ -153,8 +172,9 @@ def draw_image_with_time(file_path:str, time:str, pos:TimePos, refresh:bool = Fa
         return
     
     try:
-        from lib.waveshare_epd import epd7in3e
-        epd = epd7in3e.EPD()
+        #from lib.waveshare_epd import epd7in3e
+        from lib.waveshare_epd.epd7in3e import EPD
+        epd = EPD()
         epd.init()
         
         if refresh:
@@ -173,7 +193,10 @@ def draw_image_with_time(file_path:str, time:str, pos:TimePos, refresh:bool = Fa
             draw_grids(draw, epd)
 
         # Draw time
-        draw.text(get_time_pos(pos), time, epd.BLACK, get_font(pos))
+        xy:tuple[int, int] = get_time_pos(pos, epd)
+        color:int = get_color(color, epd)
+        font:ImageFont = get_font(pos)
+        draw.text(xy, time, color, font)
 
         # Send to display
         epd.display(epd.getbuffer(img))
@@ -208,54 +231,3 @@ def draw_image(file_path:str) -> None:
     except IOError as e:
         logging.error(e)
     
-'''
-try:
-    logging.info("epd7in3e Demo")
-
-    epd = epd7in3e.EPD()   
-    logging.info("init and Clear")
-    epd.init()
-    epd.Clear()
-    font24 = ImageFont.truetype(os.path.join(picdir, 'Font.ttc'), 24)
-    font18 = ImageFont.truetype(os.path.join(picdir, 'Font.ttc'), 18)
-    font40 = ImageFont.truetype(os.path.join(picdir, 'Font.ttc'), 40)
-    
-    # Drawing on the image
-    logging.info("1.Drawing on the image...")
-    Himage = Image.new('RGB', (epd.width, epd.height), epd.WHITE)  # 255: clear the frame
-    draw = ImageDraw.Draw(Himage)
-    draw.text((5, 0), 'hello world', font = font18, fill = epd.RED)
-    draw.text((5, 20), '7.3inch e-Paper (e)', font = font24, fill = epd.YELLOW)
-    draw.text((5, 45), u'微雪电子', font = font40, fill = epd.GREEN)
-    draw.text((5, 85), u'微雪电子', font = font40, fill = epd.BLUE)
-    draw.text((5, 125), u'微雪电子', font = font40, fill = epd.BLACK)
-
-    draw.line((5, 170, 80, 245), fill = epd.BLUE)
-    draw.line((80, 170, 5, 245), fill = epd.YELLOW)
-    draw.rectangle((5, 170, 80, 245), outline = epd.BLACK)
-    draw.rectangle((90, 170, 165, 245), fill = epd.GREEN)
-    draw.arc((5, 250, 80, 325), 0, 360, fill = epd.RED)
-    draw.chord((90, 250, 165, 325), 0, 360, fill = epd.YELLOW)
-    epd.display(epd.getbuffer(Himage))
-    time.sleep(3)
-    
-    # read bmp file 
-    logging.info("2.read bmp file")
-    Himage = Image.open(os.path.join(picdir, '7in3e.bmp'))
-    epd.display(epd.getbuffer(Himage))
-    time.sleep(3)
-    
-    logging.info("Clear...")
-    epd.Clear()
-    
-    logging.info("Goto Sleep...")
-    epd.sleep()
-        
-except IOError as e:
-    logging.info(e)
-    
-except KeyboardInterrupt:    
-    logging.info("ctrl + c:")
-    epd7in3e.epdconfig.module_exit(cleanup=True)
-    exit()
-'''

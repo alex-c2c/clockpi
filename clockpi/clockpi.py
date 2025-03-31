@@ -133,12 +133,30 @@ def upload_file():
 @bp.route('/test', methods=['GET', 'POST'])
 def test():
     if request.method == 'POST':
-        time:str = f"{datetime.now().hour:02d}:{datetime.now().minute:02d}"
-                
+        logging.debug(f"{request.form=}")                
         file_path:str = os.path.join(current_app.config["UPLOAD_FOLDER"], "01fe482628b58eb16f05fbb698063d652261a8ca79e3366d472f003c6168bbb3.bmp")
         time:str = f"{datetime.now().hour:02d}:{datetime.now().minute:02d}"
         time_pos:TimePos = TimePos.OFF
         
+        # Get Refresh flag
+        refresh:bool = request.form.get("refresh", "") == "true"
+        
+        # Get Color
+        color:int = c.COLOR_BLACK
+        if request.form.get("color", "") == "black":
+            color = c.COLOR_BLACK
+        elif request.form.get("color", "") == "white":
+            color = c.COLOR_WHITE
+        elif request.form.get("color", "") == "yellow":
+            color = c.COLOR_YELLOW
+        elif request.form.get("color", "") == "red":
+            color = c.COLOR_RED
+        elif request.form.get("color", "") == "blue":
+            color = c.COLOR_BLUE
+        elif request.form.get("color", "") == "green":
+            color = c.COLOR_GREEN
+        
+        # Get Position
         if request.form.get("btn_nine_section", "") == "Top Left":
             time_pos = TimePos.SECT_9_TOP_LEFT
         elif request.form.get("btn_nine_section", "") == "Top Center":
@@ -186,7 +204,7 @@ def test():
 
         logging.debug(f"pressed {time_pos=}")
 
-        draw_image_with_time(file_path, time, time_pos, True, True)
+        draw_image_with_time(file_path, time, time_pos, True, color, True)
             
     return render_template(('clockpi/test.html'))
     

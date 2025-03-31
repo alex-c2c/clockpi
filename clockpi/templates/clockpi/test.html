@@ -6,7 +6,26 @@
 
 {% block content %}
   <form method="post">
-    <label for="title">9 Section</label>
+    <label>Options</label>
+    <div class="option_div">
+      <div>
+        <span style="padding-right:10px">
+          Refresh?
+        </span>
+        <input name="refresh" type="checkbox" value="true"></div>
+      <div>
+        <span style="padding-right:10px">Select Color</span>
+        <select name="color">
+          <option value="black">Black</option>
+          <option value="white">White</option>
+          <option value="yellow">Yellow</option>
+          <option value="red">Red</option>
+          <option value="blue">Blue</option>
+          <option value="green">Green</option>
+        </select>
+      </div>
+    </div>
+    <label style="padding-top: 30px">9 Section</label>
     <div class="nine_section_div">
       <div><input name="btn_nine_section" type="submit" value="Top Left"></div>
       <div><input name="btn_nine_section" type="submit" value="Top Center"></div>
@@ -18,7 +37,7 @@
       <div><input name="btn_nine_section" type="submit" value="Bottom Center"></div>
       <div><input name="btn_nine_section" type="submit" value="Bottom Right"></div>
     </div>
-    <label for="title" style="padding-top: 30px">6 Section</label>
+    <label style="padding-top: 30px">6 Section</label>
     <div class="six_section_div">
       <div><input name="btn_six_section" type="submit" value="Top Left"></div>
       <div><input name="btn_six_section" type="submit" value="Top Right"></div>
@@ -27,14 +46,14 @@
       <div><input name="btn_six_section" type="submit" value="Bottom Left"></div>
       <div><input name="btn_six_section" type="submit" value="Bottom Right"></div>
     </div>
-    <label for="title" style="padding-top: 30px">4 Section</label>
+    <label style="padding-top: 30px">4 Section</label>
     <div class="four_section_div">
       <div><input name="btn_four_section" type="submit" value="Top Left"></div>
       <div><input name="btn_four_section" type="submit" value="Top Right"></div>
       <div><input name="btn_four_section" type="submit" value="Bottom Left"></div>
       <div><input name="btn_four_section" type="submit" value="Bottom Right"></div>
     </div>
-    <label for="title" style="padding-top: 30px">Full Screen</label>
+    <label style="padding-top: 30px">Full Screen</label>
     <div class="full_div">
       <div><input name="btn_full" type="submit" value="Full Screen 1" class="full_div_button_1"></div>
     </div>

@@ -30,14 +30,13 @@
 
 import logging
 from . import epdconfig
-
-import PIL
 from PIL import Image
-import io
 
 # Display resolution
 EPD_WIDTH       = 800
 EPD_HEIGHT      = 480
+
+
 
 logger = logging.getLogger(__name__)
 
@@ -49,14 +48,15 @@ class EPD:
         self.cs_pin = epdconfig.CS_PIN
         self.width = EPD_WIDTH
         self.height = EPD_HEIGHT
-        self.BLACK  = 0x000000   #   0000  BGR
-        self.WHITE  = 0xffffff   #   0001
-        self.YELLOW = 0x00ffff   #   0010
-        self.RED    = 0x0000ff   #   0011
-        # self.ORANGE = 0x0080ff   #   0100
-        self.BLUE   = 0xff0000   #   0101
-        self.GREEN  = 0x00ff00   #   0110
         
+        # Display colors
+        self.BLACK:int       = 0x000000   #   0000  BGR
+        self.WHITE:int       = 0xffffff   #   0001
+        self.YELLOW:int      = 0x00ffff   #   0010
+        self.RED:int         = 0x0000ff   #   0011
+        #self.ORANGE:int     = 0x0080ff   #   0100
+        self.BLUE:int        = 0xff0000   #   0101
+        self.GREEN:int       = 0x00ff00   #   0110
 
     # Hardware reset
     def reset(self):
