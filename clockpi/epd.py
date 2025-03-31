@@ -9,8 +9,8 @@ from . import consts as c
 logging.basicConfig(level=logging.DEBUG)
 
 
-SHADOW_OFFSET_X:int = -2
-SHADOW_OFFSET_Y:int = 4
+SHADOW_OFFSET_X:int = -5
+SHADOW_OFFSET_Y:int = 5
 
 SECT_9_OFFSET_X:int = 33
 SECT_9_OFFSET_Y:int = 25
