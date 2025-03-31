@@ -141,6 +141,9 @@ def test():
         # Get Refresh flag
         refresh:bool = request.form.get("refresh", "") == "true"
         
+        # Get Draw Grids flag
+        draw_grids:bool = request.form.get("draw_grids", "") == "true"
+        
         # Get Color
         color:int = c.COLOR_BLACK
         if request.form.get("color", "") == "black":
@@ -204,7 +207,7 @@ def test():
 
         logging.debug(f"pressed {time_pos=}")
 
-        draw_image_with_time(file_path, time, time_pos, True, color, True)
+        draw_image_with_time(file_path, time, time_pos, True, color, draw_grids)
             
     return render_template(('clockpi/test.html'))
     
