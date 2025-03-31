@@ -71,27 +71,27 @@ def get_time_pos(time_pos:TimePos, epd) -> tuple[int, int]:
     
     # 6 Section
     elif time_pos == TimePos.SECT_6_TOP_LEFT:
-        return 0 * epd.width / 2 + 33, 0 * epd.height / 3 + 25
+        return 0 * epd.width / 2 + 30, 0 * epd.height / 3 - 10
     elif time_pos == TimePos.SECT_6_TOP_RIGHT:
-        return 1 * epd.width / 2 + 33, 0 * epd.height / 3 + 25
+        return 1 * epd.width / 2 + 30, 0 * epd.height / 3 - 10
     elif time_pos == TimePos.SECT_6_MIDDLE_LEFT:
-        return 0 * epd.width / 2 + 33, 1 * epd.height / 3 + 25
+        return 0 * epd.width / 2 + 30, 1 * epd.height / 3 - 10
     elif time_pos == TimePos.SECT_6_MIDDLE_RIGHT:
-        return 1 * epd.width / 2 + 33, 1 * epd.height / 3 + 25
+        return 1 * epd.width / 2 + 30, 1 * epd.height / 3 - 10
     elif time_pos == TimePos.SECT_6_BOTTOM_LEFT:
-        return 0 * epd.width / 2 + 33, 2 * epd.height / 3 + 25
+        return 0 * epd.width / 2 + 30, 2 * epd.height / 3 - 10
     elif time_pos == TimePos.SECT_6_BOTTOM_RIGHT:
-        return 1 * epd.width / 2 + 33, 2 * epd.height / 3 + 25
+        return 1 * epd.width / 2 + 30, 2 * epd.height / 3 - 10
     
     # 4 Section
     elif time_pos == TimePos.SECT_4_TOP_LEFT:
-        return 0 * epd.width / 2 + 33, 0 * epd.height / 2 + 25
+        return 0 * epd.width / 2 + 33, 0 * epd.height / 2 + 30
     elif time_pos == TimePos.SECT_4_TOP_RIGHT:
-        return 1 * epd.width / 2 + 33, 0 * epd.height / 2 + 25
+        return 1 * epd.width / 2 + 33, 0 * epd.height / 2 + 30
     elif time_pos == TimePos.SECT_4_BOTTOM_LEFT:
-        return 0 * epd.width / 2 + 33, 1 * epd.height / 2 + 25
+        return 0 * epd.width / 2 + 33, 1 * epd.height / 2 + 30
     elif time_pos == TimePos.SECT_4_BOTTOM_RIGHT:
-        return 1 * epd.width / 2 + 33, 1 * epd.height / 2 + 25
+        return 1 * epd.width / 2 + 33, 1 * epd.height / 2 + 30
     
     # Full Screen
     elif time_pos == TimePos.FULL_1:

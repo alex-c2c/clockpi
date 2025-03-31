@@ -181,7 +181,7 @@ def test():
         elif request.form.get("btn_six_section", "") == "Top Left":
             time_pos = TimePos.SECT_6_TOP_LEFT
         elif request.form.get("btn_six_section", "") == "Top Right":
-            time_pos = TimePos.SECT_6_TOP_Right
+            time_pos = TimePos.SECT_6_TOP_RIGHT
         elif request.form.get("btn_six_section", "") == "Middle Left":
             time_pos = TimePos.SECT_6_MIDDLE_LEFT
         elif request.form.get("btn_six_section", "") == "Middle Right":
