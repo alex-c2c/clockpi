@@ -10,25 +10,32 @@ logging.basicConfig(level=logging.DEBUG)
 class TimePos(Enum):
     OFF = 0
     SECT_9_TOP_LEFT = 1
-    SECT_9_MIDDLE_LEFT = 2
-    SECT_9_BOTTOM_LEFT = 3
-    SECT_9_TOP_CENTER = 4
+    SECT_9_TOP_CENTER = 2
+    SECT_9_TOP_RIGHT = 3
+    SECT_9_MIDDLE_LEFT = 4
     SECT_9_MIDDLE_CENTER = 5
-    SECT_9_BOTTOM_CENTER = 6
-    SECT_9_TOP_RIGHT = 7
-    SECT_9_MIDDLE_RIGHT = 8
-    SECT_9_BOTTOM_RIGHT = 9
-    SECT_4_TOP_LEFT = 10
-    SECT_4_BOTTOM_LEFT = 11
-    SECT_4_TOP_RIGHT = 12
-    SECT_4_BOTTOM_RIGHT = 13
-    FULL_1 = 14 # Small
-    FULL_2 = 15 # Medium
-    FULL_3 = 16 # Large
-    MAX = 17
+    SECT_9_MIDDLE_RIGHT = 6
+    SECT_9_BOTTOM_LEFT = 7
+    SECT_9_BOTTOM_CENTER = 8
+    SECT_9_BOTTOM_RIGHT= 9
+    SECT_6_TOP_LEFT = 10
+    SECT_6_TOP_RIGHT = 11
+    SECT_6_MIDDLE_LEFT = 12
+    SECT_6_MIDDLE_RIGHT = 13
+    SECT_6_BOTTOM_LEFT = 14
+    SECT_6_BOTTOM_RIGHT = 15
+    SECT_4_TOP_LEFT = 16
+    SECT_4_TOP_RIGHT = 17
+    SECT_4_BOTTOM_LEFT = 18
+    SECT_4_BOTTOM_RIGHT = 19
+    FULL_1 = 20 # Small
+    FULL_2 = 21 # Medium
+    FULL_3 = 22 # Large
+    MAX = FULL_3 + 1
 
 
-font_bold = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Bold.ttf'), 80)
+font_bold_80 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Bold.ttf'), 80)
+font_bold_100 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Bold.ttf'), 100)
 font_full_1 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Light.ttf'), 200)
 font_full_2 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Light.ttf'), 250)
 font_full_3 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Light.ttf'), 300)
@@ -41,22 +48,42 @@ def is_machine_valid() -> bool:
 def get_time_pos(time_pos:TimePos) -> tuple[int, int]:
     if time_pos == TimePos.SECT_9_TOP_LEFT:
         return 0 * c.EPD_WIDTH / 3 + 33, 0 * c.EPD_HEIGHT / 3 + 25
-    elif time_pos == TimePos.SECT_9_MIDDLE_LEFT:
-        return 0 * c.EPD_WIDTH / 3 + 33, 1 * c.EPD_HEIGHT / 3 + 25
-    elif time_pos == TimePos.SECT_9_BOTTOM_LEFT:
-        return 0 * c.EPD_WIDTH / 3 + 33, 2 * c.EPD_HEIGHT / 3 + 25
     elif time_pos == TimePos.SECT_9_TOP_CENTER:
         return 1 * c.EPD_WIDTH / 3 + 33, 0 * c.EPD_HEIGHT / 3 + 25
-    elif time_pos == TimePos.SECT_9_MIDDLE_CENTER:
-        return 1 * c.EPD_WIDTH / 3 + 33, 1 * c.EPD_HEIGHT / 3 + 25
-    elif time_pos == TimePos.SECT_9_BOTTOM_CENTER:
-        return 1 * c.EPD_WIDTH / 3 + 33, 2 * c.EPD_HEIGHT / 3 + 25
     elif time_pos == TimePos.SECT_9_TOP_RIGHT:
         return 2 * c.EPD_WIDTH / 3 + 33, 0 * c.EPD_HEIGHT / 3 + 25
+    elif time_pos == TimePos.SECT_9_MIDDLE_LEFT:
+        return 0 * c.EPD_WIDTH / 3 + 33, 1 * c.EPD_HEIGHT / 3 + 25
+    elif time_pos == TimePos.SECT_9_MIDDLE_CENTER:
+        return 1 * c.EPD_WIDTH / 3 + 33, 1 * c.EPD_HEIGHT / 3 + 25
     elif time_pos == TimePos.SECT_9_MIDDLE_RIGHT:
         return 2 * c.EPD_WIDTH / 3 + 33, 1 * c.EPD_HEIGHT / 3 + 25
+    elif time_pos == TimePos.SECT_9_BOTTOM_LEFT:
+        return 0 * c.EPD_WIDTH / 3 + 33, 2 * c.EPD_HEIGHT / 3 + 25
+    elif time_pos == TimePos.SECT_9_BOTTOM_CENTER:
+        return 1 * c.EPD_WIDTH / 3 + 33, 2 * c.EPD_HEIGHT / 3 + 25
     elif time_pos == TimePos.SECT_9_BOTTOM_RIGHT:
         return 2 * c.EPD_WIDTH / 3 + 33, 2 * c.EPD_HEIGHT / 3 + 25
+    elif time_pos == TimePos.SECT_6_TOP_LEFT:
+        return 2 * c.EPD_WIDTH / 2 + 33, 2 * c.EPD_HEIGHT / 3 + 25
+    elif time_pos == TimePos.SECT_6_TOP_RIGHT:
+        return 2 * c.EPD_WIDTH / 2 + 33, 2 * c.EPD_HEIGHT / 3 + 25
+    elif time_pos == TimePos.SECT_6_MIDDLE_LEFT:
+        return 2 * c.EPD_WIDTH / 2 + 33, 2 * c.EPD_HEIGHT / 3 + 25
+    elif time_pos == TimePos.SECT_6_MIDDLE_RIGHT:
+        return 2 * c.EPD_WIDTH / 2 + 33, 2 * c.EPD_HEIGHT / 3 + 25
+    elif time_pos == TimePos.SECT_6_BOTTOM_LEFT:
+        return 2 * c.EPD_WIDTH / 2 + 33, 2 * c.EPD_HEIGHT / 3 + 25
+    elif time_pos == TimePos.SECT_6_BOTTOM_RIGHT:
+        return 2 * c.EPD_WIDTH / 2 + 33, 2 * c.EPD_HEIGHT / 3 + 25
+    elif time_pos == TimePos.SECT_4_TOP_LEFT:
+        return 2 * c.EPD_WIDTH / 2 + 33, 2 * c.EPD_HEIGHT / 2 + 25
+    elif time_pos == TimePos.SECT_4_TOP_RIGHT:
+        return 2 * c.EPD_WIDTH / 2 + 33, 2 * c.EPD_HEIGHT / 2 + 25
+    elif time_pos == TimePos.SECT_4_BOTTOM_LEFT:
+        return 2 * c.EPD_WIDTH / 2 + 33, 2 * c.EPD_HEIGHT / 2 + 25
+    elif time_pos == TimePos.SECT_4_BOTTOM_RIGHT:
+        return 2 * c.EPD_WIDTH / 2 + 33, 2 * c.EPD_HEIGHT / 2 + 25
     elif time_pos == TimePos.FULL_1:
         return 150, 100
     elif time_pos == TimePos.FULL_2:
@@ -74,8 +101,10 @@ def get_font(time_pos:TimePos) -> FreeTypeFont:
         return font_full_2
     elif time_pos == TimePos.FULL_3:
         return font_full_3
+    elif time_pos == TimePos.SECT_4_TOP_LEFT or time_pos == TimePos.SECT_4_TOP_RIGHT or time_pos == TimePos.SECT_4_BOTTOM_LEFT or time_pos == TimePos.SECT_4_BOTTOM_RIGHT:
+        return font_bold_100
     else:
-        return font_bold
+        return font_bold_80
     
 
 def draw_grids(draw:ImageDraw, epd) -> None:
@@ -114,7 +143,7 @@ def clear_display() -> None:
         logging.error(e)
 
 
-def draw_image_with_time(file_path:str, time:str, pos:TimePos, refresh:bool = False) -> None:
+def draw_image_with_time(file_path:str, time:str, pos:TimePos, refresh:bool = False, draw_grid:bool = False) -> None:
     if not is_machine_valid():
         logging.warning(f"Unable to draw image")
         return
@@ -140,7 +169,8 @@ def draw_image_with_time(file_path:str, time:str, pos:TimePos, refresh:bool = Fa
         draw = ImageDraw.Draw(img)
 
         # Debug - draw grids
-        draw_grids(draw, epd)
+        if draw_grid:
+            draw_grids(draw, epd)
 
         # Draw time
         draw.text(get_time_pos(pos), time, epd.BLACK, get_font(pos))

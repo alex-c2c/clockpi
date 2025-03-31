@@ -141,28 +141,40 @@ def test():
         
         if request.form.get("btn_nine_section", "") == "Top Left":
             time_pos = TimePos.SECT_9_TOP_LEFT
-        elif request.form.get("btn_nine_section", "") == "Middle Left":
-            time_pos = TimePos.SECT_9_MIDDLE_LEFT
-        elif request.form.get("btn_nine_section", "") == "Bottom Left":
-            time_pos = TimePos.SECT_9_BOTTOM_LEFT
         elif request.form.get("btn_nine_section", "") == "Top Center":
             time_pos = TimePos.SECT_9_TOP_CENTER
-        elif request.form.get("btn_nine_section", "") == "Middle Center":
-            time_pos = TimePos.SECT_9_MIDDLE_CENTER
-        elif request.form.get("btn_nine_section", "") == "Bottom Center":
-            time_pos = TimePos.SECT_9_BOTTOM_CENTER
         elif request.form.get("btn_nine_section", "") == "Top Right":
             time_pos = TimePos.SECT_9_TOP_RIGHT
+        elif request.form.get("btn_nine_section", "") == "Middle Left":
+            time_pos = TimePos.SECT_9_MIDDLE_LEFT
+        elif request.form.get("btn_nine_section", "") == "Middle Center":
+            time_pos = TimePos.SECT_9_MIDDLE_CENTER
         elif request.form.get("btn_nine_section", "") == "Middle Right":
             time_pos = TimePos.SECT_9_MIDDLE_RIGHT
         elif request.form.get("btn_nine_section", "") == "Bottom Left":
+            time_pos = TimePos.SECT_9_BOTTOM_LEFT
+        elif request.form.get("btn_nine_section", "") == "Bottom Center":
+            time_pos = TimePos.SECT_9_BOTTOM_CENTER
+        elif request.form.get("btn_nine_section", "") == "Bottom Left":
             time_pos = TimePos.SECT_9_BOTTOM_RIGHT
+        elif request.form.get("btn_six_section", "") == "Top Left":
+            time_pos = TimePos.SECT_6_TOP_LEFT
+        elif request.form.get("btn_six_section", "") == "Top Right":
+            time_pos = TimePos.SECT_6_TOP_Right
+        elif request.form.get("btn_six_section", "") == "Middle Left":
+            time_pos = TimePos.SECT_6_MIDDLE_LEFT
+        elif request.form.get("btn_six_section", "") == "Middle Right":
+            time_pos = TimePos.SECT_6_MIDDLE_RIGHT
+        elif request.form.get("btn_six_section", "") == "Bottom Left":
+            time_pos = TimePos.SECT_6_BOTTOM_LEFT
+        elif request.form.get("btn_six_section", "") == "Bottom Right":
+            time_pos = TimePos.SECT_6_BOTTOM_RIGHT
         elif request.form.get("btn_four_section", "") == "Top Left":
             time_pos = TimePos.SECT_4_TOP_LEFT
-        elif request.form.get("btn_four_section", "") == "Bottom Left":
-            time_pos = TimePos.SECT_4_BOTTOM_LEFT
         elif request.form.get("btn_four_section", "") == "Top Right":
             time_pos = TimePos.SECT_4_TOP_RIGHT
+        elif request.form.get("btn_four_section", "") == "Bottom Left":
+            time_pos = TimePos.SECT_4_BOTTOM_LEFT
         elif request.form.get("btn_four_section", "") == "Bottom Right":
             time_pos = TimePos.SECT_4_BOTTOM_RIGHT
         elif request.form.get("btn_full", "") == "Full Screen 1":
@@ -174,7 +186,7 @@ def test():
 
         logging.debug(f"pressed {time_pos=}")
 
-        draw_image_with_time(file_path, time, time_pos)
+        draw_image_with_time(file_path, time, time_pos, True, True)
             
     return render_template(('clockpi/test.html'))
     
