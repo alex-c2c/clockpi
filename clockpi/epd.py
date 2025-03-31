@@ -35,8 +35,10 @@ class TimePos(Enum):
     MAX = FULL_3 + 1
 
 
-font_bold_80 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Bold.ttf'), 80)
-font_bold_100 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Bold.ttf'), 100)
+font_9_sect = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Bold.ttf'), 80)
+font_6_sect = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Bold.ttf'), 100)
+font_4_sect = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Bold.ttf'), 160)
+
 font_full_1 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Light.ttf'), 200)
 font_full_2 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Light.ttf'), 250)
 font_full_3 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Light.ttf'), 300)
@@ -47,6 +49,7 @@ def is_machine_valid() -> bool:
 
 
 def get_time_pos(time_pos:TimePos, epd) -> tuple[int, int]:
+    # 9 Section
     if time_pos == TimePos.SECT_9_TOP_LEFT:
         return 0 * epd.width / 3 + 33, 0 * epd.height / 3 + 25
     elif time_pos == TimePos.SECT_9_TOP_CENTER:
@@ -65,6 +68,8 @@ def get_time_pos(time_pos:TimePos, epd) -> tuple[int, int]:
         return 1 * epd.width / 3 + 33, 2 * epd.height / 3 + 25
     elif time_pos == TimePos.SECT_9_BOTTOM_RIGHT:
         return 2 * epd.width / 3 + 33, 2 * epd.height / 3 + 25
+    
+    # 6 Section
     elif time_pos == TimePos.SECT_6_TOP_LEFT:
         return 0 * epd.width / 2 + 33, 0 * epd.height / 3 + 25
     elif time_pos == TimePos.SECT_6_TOP_RIGHT:
@@ -77,6 +82,8 @@ def get_time_pos(time_pos:TimePos, epd) -> tuple[int, int]:
         return 0 * epd.width / 2 + 33, 2 * epd.height / 3 + 25
     elif time_pos == TimePos.SECT_6_BOTTOM_RIGHT:
         return 1 * epd.width / 2 + 33, 2 * epd.height / 3 + 25
+    
+    # 4 Section
     elif time_pos == TimePos.SECT_4_TOP_LEFT:
         return 0 * epd.width / 2 + 33, 0 * epd.height / 2 + 25
     elif time_pos == TimePos.SECT_4_TOP_RIGHT:
@@ -85,6 +92,8 @@ def get_time_pos(time_pos:TimePos, epd) -> tuple[int, int]:
         return 0 * epd.width / 2 + 33, 1 * epd.height / 2 + 25
     elif time_pos == TimePos.SECT_4_BOTTOM_RIGHT:
         return 1 * epd.width / 2 + 33, 1 * epd.height / 2 + 25
+    
+    # Full Screen
     elif time_pos == TimePos.FULL_1:
         return 150, 100
     elif time_pos == TimePos.FULL_2:
@@ -102,10 +111,20 @@ def get_font(time_pos:TimePos) -> FreeTypeFont:
         return font_full_2
     elif time_pos == TimePos.FULL_3:
         return font_full_3
-    elif time_pos == TimePos.SECT_4_TOP_LEFT or time_pos == TimePos.SECT_4_TOP_RIGHT or time_pos == TimePos.SECT_4_BOTTOM_LEFT or time_pos == TimePos.SECT_4_BOTTOM_RIGHT:
-        return font_bold_100
+    elif time_pos == TimePos.SECT_4_TOP_LEFT or \
+            time_pos == TimePos.SECT_4_TOP_RIGHT or \
+            time_pos == TimePos.SECT_4_BOTTOM_LEFT or \
+            time_pos == TimePos.SECT_4_BOTTOM_RIGHT:
+        return font_4_sect
+    elif time_pos == TimePos.SECT_6_TOP_LEFT or \
+            time_pos == TimePos.SECT_6_TOP_RIGHT or \
+            time_pos == TimePos.SECT_6_MIDDLE_LEFT or \
+            time_pos == TimePos.SECT_6_MIDDLE_RIGHT or \
+            time_pos == TimePos.SECT_6_BOTTOM_LEFT or \
+            time_pos == TimePos.SECT_6_BOTTOM_RIGHT:
+        return font_6_sect
     else:
-        return font_bold_80
+        return font_9_sect
 
 
 def get_color(color:int, epd) -> int:
