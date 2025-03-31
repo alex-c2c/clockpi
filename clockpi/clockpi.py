@@ -11,7 +11,7 @@ from werkzeug.utils import secure_filename
 from clockpi.auth import login_required
 from clockpi.db import get_db
 from clockpi.image import procsess_image, validate_image
-from clockpi.epd import draw_image, draw_image_with_time, TimePos
+from clockpi.epd import clear_display, draw_image_with_time, TimePos
 
 bp = Blueprint('clockpi', __name__)
 logging.basicConfig(level=logging.DEBUG)
@@ -139,8 +139,10 @@ def test():
         time_pos:TimePos = TimePos.OFF
         
         # Get Refresh flag
-        refresh:bool = request.form.get("refresh", "") == "true"
-        
+        if request.form.get("clear", "") == "Clear":
+            clear_display()
+            return render_template(('clockpi/test.html'))
+                
         # Get Draw Grids flag
         draw_grids:bool = request.form.get("draw_grids", "") == "true"
         
@@ -158,6 +160,21 @@ def test():
             color = c.COLOR_BLUE
         elif request.form.get("color", "") == "green":
             color = c.COLOR_GREEN
+        
+        # Get Shadow
+        shadow:int | None = None
+        if request.form.get("shadow", "") == "black":
+            shadow = c.COLOR_BLACK
+        elif request.form.get("shadow", "") == "white":
+            shadow = c.COLOR_WHITE
+        elif request.form.get("shadow", "") == "yellow":
+            shadow = c.COLOR_YELLOW
+        elif request.form.get("shadow", "") == "red":
+            shadow = c.COLOR_RED
+        elif request.form.get("shadow", "") == "blue":
+            shadow = c.COLOR_BLUE
+        elif request.form.get("shadow", "") == "green":
+            shadow = c.COLOR_GREEN
         
         # Get Position
         if request.form.get("btn_nine_section", "") == "Top Left":
@@ -207,7 +224,7 @@ def test():
 
         logging.debug(f"pressed {time_pos=}")
 
-        draw_image_with_time(file_path, time, time_pos, True, color, draw_grids)
+        draw_image_with_time(file_path, time, time_pos, color, shadow, draw_grids)
             
     return render_template(('clockpi/test.html'))
     

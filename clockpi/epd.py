@@ -181,7 +181,7 @@ def clear_display() -> None:
         logging.error(e)
 
 
-def draw_image_with_time(file_path:str, time:str, pos:TimePos, refresh:bool = False, color:int = c.COLOR_BLACK, draw_grid:bool = False) -> None:
+def draw_image_with_time(file_path:str, time:str, pos:TimePos, color:int = c.COLOR_BLACK, shadow:int|None = None, draw_grid:bool = False) -> None:
     if not is_machine_valid():
         logging.warning(f"Unable to draw image")
         return
@@ -196,9 +196,6 @@ def draw_image_with_time(file_path:str, time:str, pos:TimePos, refresh:bool = Fa
         epd = EPD()
         epd.init()
         
-        if refresh:
-            epd.clear()
-
         #  Create image
         img = Image.open(file_path)
         
@@ -215,6 +212,12 @@ def draw_image_with_time(file_path:str, time:str, pos:TimePos, refresh:bool = Fa
         xy:tuple[int, int] = get_time_pos(pos, epd)
         color:int = get_color(color, epd)
         font:ImageFont = get_font(pos)
+        
+        if shadow is not None:
+            shadow:int = get_color(shadow, epd)
+            xy_shadow:tuple[int, int] = {xy[0] - 3, xy[1] + 3}
+            draw.text(xy_shadow, time, shadow, font)    
+        
         draw.text(xy, time, color, font)
 
         # Send to display

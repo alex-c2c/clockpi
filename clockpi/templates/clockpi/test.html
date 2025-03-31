@@ -9,16 +9,27 @@
     <label>Options</label>
     <div class="option_div">
       <div>
-        <span style="padding-right:10px">Refresh?</span>
-        <input name="refresh" type="checkbox" value="true">
+        <input name="clear" type="submit" value="Clear Display">
       </div>
       <div>
         <span style="padding-right:10px">Draw Grids?</span>
         <input name="draw_grids" type="checkbox" value="true">
       </div>
       <div>
-        <span style="padding-right:10px">Select Color</span>
+        <span style="padding-right:10px">Select Text Color</span>
         <select name="color">
+          <option value="black">Black</option>
+          <option value="white">White</option>
+          <option value="yellow">Yellow</option>
+          <option value="red">Red</option>
+          <option value="blue">Blue</option>
+          <option value="green">Green</option>
+        </select>
+      </div>
+      <div>
+        <span style="padding-right:10px">Select Shadow Color</span>
+        <select name="shadow">
+          <option value="none">None</option>
           <option value="black">Black</option>
           <option value="white">White</option>
           <option value="yellow">Yellow</option>
