@@ -47,7 +47,6 @@ def is_machine_valid() -> bool:
 
 
 def get_time_pos(time_pos:TimePos, epd) -> tuple[int, int]:
-    from 
     if time_pos == TimePos.SECT_9_TOP_LEFT:
         return 0 * epd.width / 3 + 33, 0 * epd.height / 3 + 25
     elif time_pos == TimePos.SECT_9_TOP_CENTER:
