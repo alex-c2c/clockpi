@@ -1,6 +1,7 @@
 <!doctype html>
 <title>{% block title %}{% endblock %} - Flaskr</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='test.css') }}">
 <nav>
   <h1>Clock Pi</h1>
   <ul>
@@ -13,12 +14,6 @@
     {% endif %}
   </ul>
 </nav>
-<section class="control">
-  <form method=post enctype=multipart/form-data>
-    <input type=file name=file>
-    <input type=submit value=Upload>
-  </form>
-</section>
 <section class="content">
   <header>
     {% block header %}{% endblock %}

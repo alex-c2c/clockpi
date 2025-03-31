@@ -2,6 +2,7 @@ import os
 import tempfile
 import shutil
 import hashlib
+import logging
 from . import consts as c
 from datetime import datetime
 from flask import Blueprint, current_app, flash, g, redirect, render_template, request, url_for, send_from_directory
@@ -13,7 +14,7 @@ from clockpi.image import procsess_image, validate_image
 from clockpi.epd import draw_image, draw_image_with_time, TimePos
 
 bp = Blueprint('clockpi', __name__)
-
+logging.basicConfig(level=logging.DEBUG)
 
 def allowed_file(filename) -> bool:
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in c.ALLOWED_EXTENSIONS
@@ -132,20 +133,50 @@ def upload_file():
 @bp.route('/test', methods=['GET', 'POST'])
 def test():
     if request.method == 'POST':
-            # draw the image on display
-            #draw_image(dest_path)
-            time:str = f"{datetime.now().hour:02d}:{datetime.now().minute:02d}"
-            draw_image_with_time(os.path.join(current_app.config["UPLOAD_FOLDER"], "01fe482628b58eb16f05fbb698063d652261a8ca79e3366d472f003c6168bbb3.bmp"), time, TimePos.TOP_LEFT)
+        time:str = f"{datetime.now().hour:02d}:{datetime.now().minute:02d}"
+                
+        file_path:str = os.path.join(current_app.config["UPLOAD_FOLDER"], "01fe482628b58eb16f05fbb698063d652261a8ca79e3366d472f003c6168bbb3.bmp")
+        time:str = f"{datetime.now().hour:02d}:{datetime.now().minute:02d}"
+        time_pos:TimePos = TimePos.OFF
+        
+        if request.form.get("btn_nine_section", "") == "Top Left":
+            time_pos = TimePos.SECT_9_TOP_LEFT
+        elif request.form.get("btn_nine_section", "") == "Middle Left":
+            time_pos = TimePos.SECT_9_MIDDLE_LEFT
+        elif request.form.get("btn_nine_section", "") == "Bottom Left":
+            time_pos = TimePos.SECT_9_BOTTOM_LEFT
+        elif request.form.get("btn_nine_section", "") == "Top Center":
+            time_pos = TimePos.SECT_9_TOP_CENTER
+        elif request.form.get("btn_nine_section", "") == "Middle Center":
+            time_pos = TimePos.SECT_9_MIDDLE_CENTER
+        elif request.form.get("btn_nine_section", "") == "Bottom Center":
+            time_pos = TimePos.SECT_9_BOTTOM_CENTER
+        elif request.form.get("btn_nine_section", "") == "Top Right":
+            time_pos = TimePos.SECT_9_TOP_RIGHT
+        elif request.form.get("btn_nine_section", "") == "Middle Right":
+            time_pos = TimePos.SECT_9_MIDDLE_RIGHT
+        elif request.form.get("btn_nine_section", "") == "Bottom Left":
+            time_pos = TimePos.SECT_9_BOTTOM_RIGHT
+        elif request.form.get("btn_four_section", "") == "Top Left":
+            time_pos = TimePos.SECT_4_TOP_LEFT
+        elif request.form.get("btn_four_section", "") == "Bottom Left":
+            time_pos = TimePos.SECT_4_BOTTOM_LEFT
+        elif request.form.get("btn_four_section", "") == "Top Right":
+            time_pos = TimePos.SECT_4_TOP_RIGHT
+        elif request.form.get("btn_four_section", "") == "Bottom Right":
+            time_pos = TimePos.SECT_4_BOTTOM_RIGHT
+        elif request.form.get("btn_full", "") == "Full Screen 1":
+            time_pos = TimePos.FULL_1
+        elif request.form.get("btn_full", "") == "Full Screen 2":
+            time_pos = TimePos.FULL_2
+        elif request.form.get("btn_full", "") == "Full Screen 3":
+            time_pos = TimePos.FULL_3
+
+        logging.debug(f"pressed {time_pos=}")
+
+        draw_image_with_time(file_path, time, time_pos)
             
-            #return redirect(url_for('clockpi.index'))
-    return '''
-    <!doctype html>
-    <title>Test E-Paper Display</title>
-    <h1>Update E-Paper display</h1>
-    <form method=post>
-      <input type=submit value=Update>
-    </form>
-    '''
+    return render_template(('clockpi/test.html'))
     
     
 @bp.route('/uploads/<name>')

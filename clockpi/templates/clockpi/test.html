@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Test E-Paper Drawing{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+  <form method="post">
+    <label for="title">9 Section</label>
+    <div class="nine_section_div">
+      <div><input name="btn_nine_section" type="submit" value="Top Left"></div>
+      <div><input name="btn_nine_section" type="submit" value="Top Center"></div>
+      <div><input name="btn_nine_section" type="submit" value="Top Right"></div>
+      <div><input name="btn_nine_section" type="submit" value="Middle Left"></div>
+      <div><input name="btn_nine_section" type="submit" value="Middle Center"></div>
+      <div><input name="btn_nine_section" type="submit" value="Middle Right"></div>
+      <div><input name="btn_nine_section" type="submit" value="Bottom Left"></div>
+      <div><input name="btn_nine_section" type="submit" value="Bottom Center"></div>
+      <div><input name="btn_nine_section" type="submit" value="Bottom Right"></div>
+    </div>
+    <label for="title" style="padding-top: 30px">4 Section</label>
+    <div class="four_section_div">
+      <div><input name="btn_four_section" type="submit" value="Top Left"></div>
+      <div><input name="btn_four_section" type="submit" value="Top Right"></div>
+      <div><input name="btn_four_section" type="submit" value="Bottom Left"></div>
+      <div><input name="btn_four_section" type="submit" value="Bottom Right"></div>
+    </div>
+    <label for="title" style="padding-top: 30px">Full Screen</label>
+    <div class="full_div">
+      <div><input name="btn_full" type="submit" value="Full Screen 1" class="full_div_button_1"></div>
+    </div>
+    <div class="full_div">
+      <div><input name="btn_full" type="submit" value="Full Screen 2" class="full_div_button_2"></div>
+    </div>
+    <div class="full_div">
+      <div><input name="btn_full" type="submit" value="Full Screen 3" class="full_div_button_3"></div>
+    </div>
+  </form>
+{% endblock %}

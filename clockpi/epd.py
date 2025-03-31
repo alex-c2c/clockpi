@@ -1,28 +1,33 @@
 import os
 import logging
 from PIL import Image, ImageDraw, ImageFont
+from PIL.ImageFont import FreeTypeFont
 from enum import Enum
 from . import consts as c
 
 logging.basicConfig(level=logging.DEBUG)
 
 class TimePos(Enum):
-    TOP_LEFT = 1
-    MIDDLE_LEFT = 2
-    BOTTOM_LEFT = 3
-    TOP_CENTER = 4
-    MIDDLE_CENTER = 5
-    BOTTOM_CENTER = 6
-    TOP_RIGHT = 7
-    MIDDLE_RIGHT = 8
-    BOTTOM_RIGHT = 9
-    FULL_1 = 10
-    FULL_2 = 11
+    OFF = 0
+    SECT_9_TOP_LEFT = 1
+    SECT_9_MIDDLE_LEFT = 2
+    SECT_9_BOTTOM_LEFT = 3
+    SECT_9_TOP_CENTER = 4
+    SECT_9_MIDDLE_CENTER = 5
+    SECT_9_BOTTOM_CENTER = 6
+    SECT_9_TOP_RIGHT = 7
+    SECT_9_MIDDLE_RIGHT = 8
+    SECT_9_BOTTOM_RIGHT = 9
+    SECT_4_TOP_LEFT = 10
+    SECT_4_BOTTOM_LEFT = 11
+    SECT_4_TOP_RIGHT = 12
+    SECT_4_BOTTOM_RIGHT = 13
+    FULL_1 = 14 # Small
+    FULL_2 = 15 # Medium
+    FULL_3 = 16 # Large
+    MAX = 17
 
-font18 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Font.ttc'), 18)
-font24 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Font.ttc'), 24)
-font40 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Font.ttc'), 40)
-#font80 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'MesloLGS_NF_Bold.ttf'), 80)
+
 font_bold = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Bold.ttf'), 80)
 font_full_1 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Light.ttf'), 200)
 font_full_2 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Light.ttf'), 250)
@@ -33,56 +38,64 @@ def is_machine_valid() -> bool:
     return "IS_RASPBERRYPI" in os.environ
 
 
-def get_full_3_pos() -> tuple[int, int]:
-   return 25, 30
-
-
-def get_full_2_pos() -> tuple[int, int]:
-    return 88, 65
-
-
-def get_full_1_pos() -> tuple[int, int]:
-    return 150, 100
-
-
-def get_part_pos(time_pos:TimePos) -> tuple[int, int]:
-    offset_x:int = 33
-    offset_y:int = 25
+def get_time_pos(time_pos:TimePos) -> tuple[int, int]:
+    if time_pos == TimePos.SECT_9_TOP_LEFT:
+        return 0 * c.EPD_WIDTH / 3 + 33, 0 * c.EPD_HEIGHT / 3 + 25
+    elif time_pos == TimePos.SECT_9_MIDDLE_LEFT:
+        return 0 * c.EPD_WIDTH / 3 + 33, 1 * c.EPD_HEIGHT / 3 + 25
+    elif time_pos == TimePos.SECT_9_BOTTOM_LEFT:
+        return 0 * c.EPD_WIDTH / 3 + 33, 2 * c.EPD_HEIGHT / 3 + 25
+    elif time_pos == TimePos.SECT_9_TOP_CENTER:
+        return 1 * c.EPD_WIDTH / 3 + 33, 0 * c.EPD_HEIGHT / 3 + 25
+    elif time_pos == TimePos.SECT_9_MIDDLE_CENTER:
+        return 1 * c.EPD_WIDTH / 3 + 33, 1 * c.EPD_HEIGHT / 3 + 25
+    elif time_pos == TimePos.SECT_9_BOTTOM_CENTER:
+        return 1 * c.EPD_WIDTH / 3 + 33, 2 * c.EPD_HEIGHT / 3 + 25
+    elif time_pos == TimePos.SECT_9_TOP_RIGHT:
+        return 2 * c.EPD_WIDTH / 3 + 33, 0 * c.EPD_HEIGHT / 3 + 25
+    elif time_pos == TimePos.SECT_9_MIDDLE_RIGHT:
+        return 2 * c.EPD_WIDTH / 3 + 33, 1 * c.EPD_HEIGHT / 3 + 25
+    elif time_pos == TimePos.SECT_9_BOTTOM_RIGHT:
+        return 2 * c.EPD_WIDTH / 3 + 33, 2 * c.EPD_HEIGHT / 3 + 25
+    elif time_pos == TimePos.FULL_1:
+        return 150, 100
+    elif time_pos == TimePos.FULL_2:
+        return 88, 65
+    elif time_pos == TimePos.FULL_3:
+        return 25, 30
+    else:
+        return 0, 0
     
-    part_x:int = 0
-    part_y:int = 0
-    part_w:int = c.EPD_WIDTH / 3
-    part_h:int = c.EPD_HEIGHT / 3
 
-    if time_pos == TimePos.TOP_LEFT:
-        part_x = 0
-        part_y = 0
-    elif time_pos == TimePos.MIDDLE_LEFT:
-        part_x = 0
-        part_y = 1
-    elif time_pos == TimePos.BOTTOM_LEFT:
-        part_x = 0
-        part_y = 2
-    elif time_pos == TimePos.TOP_CENTER:
-        part_x = 1
-        part_y = 0
-    elif time_pos == TimePos.MIDDLE_CENTER:
-        part_x = 1
-        part_y = 1
-    elif time_pos == TimePos.BOTTOM_CENTER:
-        part_x = 1
-        part_y = 2
-    elif time_pos == TimePos.TOP_RIGHT:
-        part_x = 2
-        part_y = 0
-    elif time_pos == TimePos.MIDDLE_RIGHT:
-        part_x = 2
-        part_y = 1
-    elif time_pos == TimePos.BOTTOM_RIGHT:
-        part_x = 2
-        part_y = 2
+def get_font(time_pos:TimePos) -> FreeTypeFont:
+    if time_pos == TimePos.FULL_1:
+        return font_full_1
+    elif time_pos == TimePos.FULL_2:
+        return font_full_2
+    elif time_pos == TimePos.FULL_3:
+        return font_full_3
+    else:
+        return font_bold
+    
 
-    return part_x * part_w + offset_x, part_y * part_h + offset_y 
+def draw_grids(draw:ImageDraw, epd) -> None:
+    # White every 10px
+    for x in range(80):
+        x_p:int = (x + 1) * 10
+        draw.line((x_p, 0, x_p, 480), epd.WHITE, 1)
+    for y in range(48):
+        y_p:int = (y + 1) * 10
+        draw.line((0, y_p, 800, y_p), epd.WHITE, 1)
+
+    # Black 1/3 
+    draw.line((266,0, 266, 480), epd.BLACK, 1)
+    draw.line((532,0, 532, 480), epd.BLACK, 1)
+    draw.line((0,159, 800, 159), epd.BLACK, 1)
+    draw.line((0,319, 800, 319), epd.BLACK, 1)
+    
+    # Red 1/2
+    draw.line((400, 0, 400, 480), epd.RED, 1)
+    draw.line((0, 240, 800, 240), epd.RED, 1)
 
 
 def clear_display() -> None:
@@ -101,7 +114,7 @@ def clear_display() -> None:
         logging.error(e)
 
 
-def draw_image_with_time(file_path:str, time:str, pos:TimePos) -> None:
+def draw_image_with_time(file_path:str, time:str, pos:TimePos, refresh:bool) -> None:
     if not is_machine_valid():
         logging.warning(f"Unable to draw image")
         return
@@ -114,33 +127,28 @@ def draw_image_with_time(file_path:str, time:str, pos:TimePos) -> None:
         from lib.waveshare_epd import epd7in3e
         epd = epd7in3e.EPD()
         epd.init()
+        
+        if refresh:
+            epd.clear()
 
-        # Drawing on the image
+        #  Create image
         img = Image.open(file_path)
+        
+        if pos == TimePos.OFF or time == "":
+            return
+        
         draw = ImageDraw.Draw(img)
-        
-        # test grid
-        ''' 
-        for x in range(80):
-            x_p:int = (x + 1) * 10
-            draw.line((x_p, 0, x_p, 480), epd.WHITE, 1)
-        for y in range(48):
-            y_p:int = (y + 1) * 10
-            draw.line((0, y_p, 800, y_p), epd.WHITE, 1)
 
-        draw.line((266,0, 266, 480), epd.BLACK, 2)
-        draw.line((532,0, 532, 480), epd.BLACK, 2)
-        draw.line((0,159, 800, 159), epd.BLACK, 2)
-        draw.line((0,319, 800, 319), epd.BLACK, 2)
-        '''
+        # Debug - draw grids
+        draw_grids(draw, epd)
 
-        # draw time
-        #x, y = get_start_pos(TimePos.TOP_LEFT)
-        #draw.text((x, y), time, epd.BLACK, fontbold)
-        x, y = get_full_2_pos()
-        draw.text((x, y), time, epd.BLACK, font_full_2)
-        
+        # Draw time
+        draw.text(get_time_pos(pos), time, epd.BLACK, get_font(pos))
+
+        # Send to display
         epd.display(epd.getbuffer(img))
+        
+        # Sleep
         epd.sleep()
             
     except IOError as e:
