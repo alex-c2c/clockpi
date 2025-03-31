@@ -1,7 +1,6 @@
 import os
 from . import db, auth, clockpi
 from flask import Flask
-from . import consts as c
 
 def create_app(test_config=None):
     # create and configure the app
@@ -10,7 +9,6 @@ def create_app(test_config=None):
         SECRET_KEY='dev',
         DATABASE=os.path.join(app.instance_path, 'clockpi.sqlite'),
     )
-    app.config['UPLOAD_FOLDER'] = c.DIR_UPLOAD
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1000 * 1000
 
     if test_config is None:

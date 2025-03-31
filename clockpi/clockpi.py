@@ -3,7 +3,7 @@ import tempfile
 import shutil
 import hashlib
 import logging
-from . import consts as c
+import subprocess
 from datetime import datetime
 from flask import Blueprint, current_app, flash, g, redirect, render_template, request, url_for, send_from_directory
 from werkzeug.exceptions import abort
@@ -11,13 +11,33 @@ from werkzeug.utils import secure_filename
 from clockpi.auth import login_required
 from clockpi.db import get_db
 from clockpi.image import procsess_image, validate_image
-from clockpi.epd import clear_display, draw_image_with_time, TimePos
+from clockpi.epd import clear_display, draw_image_with_time, TimeMode, COLOR_BLACK, COLOR_WHITE, COLOR_YELLOW, COLOR_RED, COLOR_BLUE, COLOR_GREEN
 
 bp = Blueprint('clockpi', __name__)
 logging.basicConfig(level=logging.DEBUG)
 
+# E-Paper Display Width
+EPD_WIDTH:int = 800
+
+# E-Paper Display Height
+EPD_HEIGHT:int = 480
+
+# E-Paper Display color per channel
+NC:int = 2
+
+# Allowed upload file extensions
+ALLOWED_EXTENSIONS : set[str] = ('png', 'jpg', 'jpeg', 'bmp')
+
+# Directories
+DIR_UPLOAD:str = "upload"
+DIR_PROCESSED:str = "processed"
+
+current_mode:int = TimeMode.SECT_4_BOTTOM_LEFT
+current_color:int = COLOR_WHITE
+current_shadow:int|None = COLOR_BLACK
+
 def allowed_file(filename) -> bool:
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in c.ALLOWED_EXTENSIONS
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 @bp.route('/')
@@ -57,7 +77,7 @@ def upload_file():
             # save file to temp dir
             # TODO: improve location of "uploaded" files so that it doesn't get
             # overwritten by someone else uploading the files with same file name at the same time
-            temp_dir:str = os.path.join(tempfile.gettempdir(), c.DIR_UPLOAD)
+            temp_dir:str = os.path.join(tempfile.gettempdir(), DIR_UPLOAD)
             if not os.path.isdir(temp_dir):
                 os.mkdir(temp_dir)
             temp_path:str = os.path.join(temp_dir, filename)
@@ -70,11 +90,11 @@ def upload_file():
                 return redirect(request.url)
             
             # process image
-            proc_dir:str = os.path.join(temp_dir, c.DIR_PROCESSED)
+            proc_dir:str = os.path.join(temp_dir, DIR_PROCESSED)
             if not os.path.isdir(proc_dir):
                 os.mkdir(proc_dir)
             processed_path:str = os.path.join(proc_dir, filename)
-            process_result:bool = procsess_image(temp_path, processed_path)
+            process_result:bool = procsess_image(temp_path, processed_path, EPD_WIDTH, EPD_HEIGHT, NC)
             if not process_result:
                 flash("Unable to post process uploaded image")
                 if os.path.isfile(temp_path):
@@ -103,7 +123,7 @@ def upload_file():
             
             # copy processed image to upload dir
             try:
-                dest_path:str = os.path.join(current_app.config["UPLOAD_FOLDER"], f"{hashname}.bmp")
+                dest_path:str = os.path.join(DIR_UPLOAD, f"{hashname}.bmp")
                 shutil.copy2(processed_path, dest_path)
                 os.remove(processed_path)
             except OSError as error:
@@ -117,7 +137,7 @@ def upload_file():
             # draw the image on display
             #draw_image(dest_path)
             time:str = f"{datetime.now().hour:02d}:{datetime.now().minute:02d}"
-            draw_image_with_time(dest_path, time, TimePos.TOP_LEFT)
+            draw_image_with_time(dest_path, time, current_mode, current_color, current_shadow)
             
             #return redirect(url_for('clockpi.index'))
     return '''
@@ -134,9 +154,9 @@ def upload_file():
 def test():
     if request.method == 'POST':
         logging.debug(f"{request.form=}")                
-        file_path:str = os.path.join(current_app.config["UPLOAD_FOLDER"], "01fe482628b58eb16f05fbb698063d652261a8ca79e3366d472f003c6168bbb3.bmp")
+        file_path:str = os.path.join(DIR_UPLOAD, "01fe482628b58eb16f05fbb698063d652261a8ca79e3366d472f003c6168bbb3.bmp")
         time:str = f"{datetime.now().hour:02d}:{datetime.now().minute:02d}"
-        time_pos:TimePos = TimePos.OFF
+        mode:TimeMode = TimeMode.OFF
         
         # Get Refresh flag
         if request.form.get("clear", ""):
@@ -147,91 +167,93 @@ def test():
         draw_grids:bool = request.form.get("draw_grids", "") == "true"
         
         # Get Color
-        color:int = c.COLOR_BLACK
         if request.form.get("color", "") == "black":
-            color = c.COLOR_BLACK
+            current_color = COLOR_BLACK
         elif request.form.get("color", "") == "white":
-            color = c.COLOR_WHITE
+            current_color = COLOR_WHITE
         elif request.form.get("color", "") == "yellow":
-            color = c.COLOR_YELLOW
+            current_color = COLOR_YELLOW
         elif request.form.get("color", "") == "red":
-            color = c.COLOR_RED
+            current_color = COLOR_RED
         elif request.form.get("color", "") == "blue":
-            color = c.COLOR_BLUE
+            ccurrent_colorlor = COLOR_BLUE
         elif request.form.get("color", "") == "green":
-            color = c.COLOR_GREEN
+            current_color = COLOR_GREEN
         
         # Get Shadow
-        shadow:int | None = None
         if request.form.get("shadow", "") == "black":
-            shadow = c.COLOR_BLACK
+            current_shadow = COLOR_BLACK
         elif request.form.get("shadow", "") == "white":
-            shadow = c.COLOR_WHITE
+            current_shadow = COLOR_WHITE
         elif request.form.get("shadow", "") == "yellow":
-            shadow = c.COLOR_YELLOW
+            current_shadow = COLOR_YELLOW
         elif request.form.get("shadow", "") == "red":
-            shadow = c.COLOR_RED
+            current_shadow = COLOR_RED
         elif request.form.get("shadow", "") == "blue":
-            shadow = c.COLOR_BLUE
+            current_shadow = COLOR_BLUE
         elif request.form.get("shadow", "") == "green":
-            shadow = c.COLOR_GREEN
+            current_shadow = COLOR_GREEN
+        else:
+            current_shadow = None
         
         # Get Position
         if request.form.get("btn_nine_section", "") == "Top Left":
-            time_pos = TimePos.SECT_9_TOP_LEFT
+            current_mode = TimeMode.SECT_9_TOP_LEFT
         elif request.form.get("btn_nine_section", "") == "Top Center":
-            time_pos = TimePos.SECT_9_TOP_CENTER
+            current_mode = TimeMode.SECT_9_TOP_CENTER
         elif request.form.get("btn_nine_section", "") == "Top Right":
-            time_pos = TimePos.SECT_9_TOP_RIGHT
+            current_mode = TimeMode.SECT_9_TOP_RIGHT
         elif request.form.get("btn_nine_section", "") == "Middle Left":
-            time_pos = TimePos.SECT_9_MIDDLE_LEFT
+            current_mode = TimeMode.SECT_9_MIDDLE_LEFT
         elif request.form.get("btn_nine_section", "") == "Middle Center":
-            time_pos = TimePos.SECT_9_MIDDLE_CENTER
+            current_mode = TimeMode.SECT_9_MIDDLE_CENTER
         elif request.form.get("btn_nine_section", "") == "Middle Right":
-            time_pos = TimePos.SECT_9_MIDDLE_RIGHT
+            current_mode = TimeMode.SECT_9_MIDDLE_RIGHT
         elif request.form.get("btn_nine_section", "") == "Bottom Left":
-            time_pos = TimePos.SECT_9_BOTTOM_LEFT
+            current_mode = TimeMode.SECT_9_BOTTOM_LEFT
         elif request.form.get("btn_nine_section", "") == "Bottom Center":
-            time_pos = TimePos.SECT_9_BOTTOM_CENTER
+            current_mode = TimeMode.SECT_9_BOTTOM_CENTER
         elif request.form.get("btn_nine_section", "") == "Bottom Left":
-            time_pos = TimePos.SECT_9_BOTTOM_RIGHT
+            current_mode = TimeMode.SECT_9_BOTTOM_RIGHT
         elif request.form.get("btn_six_section", "") == "Top Left":
-            time_pos = TimePos.SECT_6_TOP_LEFT
+            current_mode = TimeMode.SECT_6_TOP_LEFT
         elif request.form.get("btn_six_section", "") == "Top Right":
-            time_pos = TimePos.SECT_6_TOP_RIGHT
+            current_mode = TimeMode.SECT_6_TOP_RIGHT
         elif request.form.get("btn_six_section", "") == "Middle Left":
-            time_pos = TimePos.SECT_6_MIDDLE_LEFT
+            current_mode = TimeMode.SECT_6_MIDDLE_LEFT
         elif request.form.get("btn_six_section", "") == "Middle Right":
-            time_pos = TimePos.SECT_6_MIDDLE_RIGHT
+            current_mode = TimeMode.SECT_6_MIDDLE_RIGHT
         elif request.form.get("btn_six_section", "") == "Bottom Left":
-            time_pos = TimePos.SECT_6_BOTTOM_LEFT
+            current_mode = TimeMode.SECT_6_BOTTOM_LEFT
         elif request.form.get("btn_six_section", "") == "Bottom Right":
-            time_pos = TimePos.SECT_6_BOTTOM_RIGHT
+            current_mode = TimeMode.SECT_6_BOTTOM_RIGHT
         elif request.form.get("btn_four_section", "") == "Top Left":
-            time_pos = TimePos.SECT_4_TOP_LEFT
+            current_mode = TimeMode.SECT_4_TOP_LEFT
         elif request.form.get("btn_four_section", "") == "Top Right":
-            time_pos = TimePos.SECT_4_TOP_RIGHT
+            current_mode = TimeMode.SECT_4_TOP_RIGHT
         elif request.form.get("btn_four_section", "") == "Bottom Left":
-            time_pos = TimePos.SECT_4_BOTTOM_LEFT
+            current_mode = TimeMode.SECT_4_BOTTOM_LEFT
         elif request.form.get("btn_four_section", "") == "Bottom Right":
-            time_pos = TimePos.SECT_4_BOTTOM_RIGHT
+            current_mode = TimeMode.SECT_4_BOTTOM_RIGHT
         elif request.form.get("btn_full", "") == "Full Screen 1":
-            time_pos = TimePos.FULL_1
+            current_mode = TimeMode.FULL_1
         elif request.form.get("btn_full", "") == "Full Screen 2":
-            time_pos = TimePos.FULL_2
+            current_mode = TimeMode.FULL_2
         elif request.form.get("btn_full", "") == "Full Screen 3":
-            time_pos = TimePos.FULL_3
+            current_mode = TimeMode.FULL_3
 
-        logging.debug(f"pressed {time_pos=}")
+        logging.debug(f"pressed {current_mode=}")
 
-        draw_image_with_time(file_path, time, time_pos, color, shadow, draw_grids)
+        p= subprocess.run(['python', 'clockpi/epd.py'])
+        logging.debug(f"{p.returncode=}")
+        #draw_image_with_time(file_path, time, current_mode, current_color, current_shadow, draw_grids)
             
     return render_template(('clockpi/test.html'))
     
     
 @bp.route('/uploads/<name>')
 def download_file(name):
-    return send_from_directory(current_app.config["UPLOAD_FOLDER"], name)
+    return send_from_directory(DIR_UPLOAD, name)
     
 
 @bp.route('/create', methods=('GET', 'POST'))

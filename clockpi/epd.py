@@ -4,10 +4,7 @@ from PIL import Image, ImageDraw, ImageFont
 from PIL.ImageFont import FreeTypeFont
 from enum import Enum
 
-from . import consts as c
-
 logging.basicConfig(level=logging.DEBUG)
-
 
 SHADOW_OFFSET_X:int = -5
 SHADOW_OFFSET_Y:int = 5
@@ -21,8 +18,14 @@ SECT_6_OFFSET_Y:int = -10
 SECT_4_OFFSET_X:int = 30
 SECT_4_OFFSET_Y:int = 30
 
+COLOR_BLACK:int = 0
+COLOR_WHITE:int = 1
+COLOR_YELLOW:int = 2
+COLOR_RED:int = 3
+COLOR_BLUE:int = 4
+COLOR_GREEN:int = 5
 
-class TimePos(Enum):
+class TimeMode(Enum):
     OFF = 0
     SECT_9_TOP_LEFT = 1
     SECT_9_TOP_CENTER = 2
@@ -49,110 +52,110 @@ class TimePos(Enum):
     MAX = FULL_3 + 1
 
 
-font_9_sect = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Bold.ttf'), 80)
-font_6_sect = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Bold.ttf'), 130)
-font_4_sect = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Bold.ttf'), 130)
+font_9_sect = ImageFont.truetype(os.path.join("font", 'Roboto-Bold.ttf'), 80)
+font_6_sect = ImageFont.truetype(os.path.join("font", 'Roboto-Bold.ttf'), 130)
+font_4_sect = ImageFont.truetype(os.path.join("font", 'Roboto-Bold.ttf'), 130)
 
-font_full_1 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Bold.ttf'), 200)
-font_full_2 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Bold.ttf'), 250)
-font_full_3 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Bold.ttf'), 300)
+font_full_1 = ImageFont.truetype(os.path.join("font", 'Roboto-Bold.ttf'), 200)
+font_full_2 = ImageFont.truetype(os.path.join("font", 'Roboto-Bold.ttf'), 250)
+font_full_3 = ImageFont.truetype(os.path.join("font", 'Roboto-Bold.ttf'), 300)
 
 
 def is_machine_valid() -> bool:
     return "IS_RASPBERRYPI" in os.environ
 
 
-def get_time_pos(time_pos:TimePos, epd) -> tuple[int, int]:
+def get_time_pos(mode:TimeMode, epd) -> tuple[int, int]:
     # 9 Section
-    if time_pos == TimePos.SECT_9_TOP_LEFT:
+    if mode == TimeMode.SECT_9_TOP_LEFT:
         return 0 * epd.width / 3 + SECT_9_OFFSET_X, 0 * epd.height / 3 + SECT_9_OFFSET_Y
-    elif time_pos == TimePos.SECT_9_TOP_CENTER:
+    elif mode == TimeMode.SECT_9_TOP_CENTER:
         return 1 * epd.width / 3 + SECT_9_OFFSET_X, 0 * epd.height / 3 + SECT_9_OFFSET_Y
-    elif time_pos == TimePos.SECT_9_TOP_RIGHT:
+    elif mode == TimeMode.SECT_9_TOP_RIGHT:
         return 2 * epd.width / 3 + SECT_9_OFFSET_X, 0 * epd.height / 3 + SECT_9_OFFSET_Y
-    elif time_pos == TimePos.SECT_9_MIDDLE_LEFT:
+    elif mode == TimeMode.SECT_9_MIDDLE_LEFT:
         return 0 * epd.width / 3 + SECT_9_OFFSET_X, 1 * epd.height / 3 + SECT_9_OFFSET_Y
-    elif time_pos == TimePos.SECT_9_MIDDLE_CENTER:
+    elif mode == TimeMode.SECT_9_MIDDLE_CENTER:
         return 1 * epd.width / 3 + SECT_9_OFFSET_X, 1 * epd.height / 3 + SECT_9_OFFSET_Y
-    elif time_pos == TimePos.SECT_9_MIDDLE_RIGHT:
+    elif mode == TimeMode.SECT_9_MIDDLE_RIGHT:
         return 2 * epd.width / 3 + SECT_9_OFFSET_X, 1 * epd.height / 3 + SECT_9_OFFSET_Y
-    elif time_pos == TimePos.SECT_9_BOTTOM_LEFT:
+    elif mode == TimeMode.SECT_9_BOTTOM_LEFT:
         return 0 * epd.width / 3 + SECT_9_OFFSET_X, 2 * epd.height / 3 + SECT_9_OFFSET_Y
-    elif time_pos == TimePos.SECT_9_BOTTOM_CENTER:
+    elif mode == TimeMode.SECT_9_BOTTOM_CENTER:
         return 1 * epd.width / 3 + SECT_9_OFFSET_X, 2 * epd.height / 3 + SECT_9_OFFSET_Y
-    elif time_pos == TimePos.SECT_9_BOTTOM_RIGHT:
+    elif mode == TimeMode.SECT_9_BOTTOM_RIGHT:
         return 2 * epd.width / 3 + SECT_9_OFFSET_X, 2 * epd.height / 3 + SECT_9_OFFSET_Y
     
     # 6 Section
-    elif time_pos == TimePos.SECT_6_TOP_LEFT:
+    elif mode == TimeMode.SECT_6_TOP_LEFT:
         return 0 * epd.width / 2 + SECT_6_OFFSET_X, 0 * epd.height / 3 + SECT_6_OFFSET_Y
-    elif time_pos == TimePos.SECT_6_TOP_RIGHT:
+    elif mode == TimeMode.SECT_6_TOP_RIGHT:
         return 1 * epd.width / 2 + SECT_6_OFFSET_X, 0 * epd.height / 3 + SECT_6_OFFSET_Y
-    elif time_pos == TimePos.SECT_6_MIDDLE_LEFT:
+    elif mode == TimeMode.SECT_6_MIDDLE_LEFT:
         return 0 * epd.width / 2 + SECT_6_OFFSET_X, 1 * epd.height / 3 + SECT_6_OFFSET_Y
-    elif time_pos == TimePos.SECT_6_MIDDLE_RIGHT:
+    elif mode == TimeMode.SECT_6_MIDDLE_RIGHT:
         return 1 * epd.width / 2 + SECT_6_OFFSET_X, 1 * epd.height / 3 + SECT_6_OFFSET_Y
-    elif time_pos == TimePos.SECT_6_BOTTOM_LEFT:
+    elif mode == TimeMode.SECT_6_BOTTOM_LEFT:
         return 0 * epd.width / 2 + SECT_6_OFFSET_X, 2 * epd.height / 3 + SECT_6_OFFSET_Y
-    elif time_pos == TimePos.SECT_6_BOTTOM_RIGHT:
+    elif mode == TimeMode.SECT_6_BOTTOM_RIGHT:
         return 1 * epd.width / 2 + SECT_6_OFFSET_X, 2 * epd.height / 3 + SECT_6_OFFSET_Y
     
     # 4 Section
-    elif time_pos == TimePos.SECT_4_TOP_LEFT:
+    elif mode == TimeMode.SECT_4_TOP_LEFT:
         return 0 * epd.width / 2 + SECT_4_OFFSET_X, 0 * epd.height / 2 + SECT_4_OFFSET_Y
-    elif time_pos == TimePos.SECT_4_TOP_RIGHT:
+    elif mode == TimeMode.SECT_4_TOP_RIGHT:
         return 1 * epd.width / 2 + + SECT_4_OFFSET_X, 0 * epd.height / 2 + SECT_4_OFFSET_Y
-    elif time_pos == TimePos.SECT_4_BOTTOM_LEFT:
+    elif mode == TimeMode.SECT_4_BOTTOM_LEFT:
         return 0 * epd.width / 2 + + SECT_4_OFFSET_X, 1 * epd.height / 2 + SECT_4_OFFSET_Y
-    elif time_pos == TimePos.SECT_4_BOTTOM_RIGHT:
+    elif mode == TimeMode.SECT_4_BOTTOM_RIGHT:
         return 1 * epd.width / 2 + + SECT_4_OFFSET_X, 1 * epd.height / 2 + SECT_4_OFFSET_Y
     
     # Full Screen
-    elif time_pos == TimePos.FULL_1:
+    elif mode == TimeMode.FULL_1:
         return 150, 100
-    elif time_pos == TimePos.FULL_2:
+    elif mode == TimeMode.FULL_2:
         return 88, 65
-    elif time_pos == TimePos.FULL_3:
+    elif mode == TimeMode.FULL_3:
         return 25, 30
     else:
         return 0, 0
     
 
-def get_font(time_pos:TimePos) -> FreeTypeFont:
-    if time_pos == TimePos.FULL_1:
+def get_font(mode:TimeMode) -> FreeTypeFont:
+    if mode == TimeMode.FULL_1:
         return font_full_1
-    elif time_pos == TimePos.FULL_2:
+    elif mode == TimeMode.FULL_2:
         return font_full_2
-    elif time_pos == TimePos.FULL_3:
+    elif mode == TimeMode.FULL_3:
         return font_full_3
-    elif time_pos == TimePos.SECT_4_TOP_LEFT or \
-            time_pos == TimePos.SECT_4_TOP_RIGHT or \
-            time_pos == TimePos.SECT_4_BOTTOM_LEFT or \
-            time_pos == TimePos.SECT_4_BOTTOM_RIGHT:
+    elif mode == TimeMode.SECT_4_TOP_LEFT or \
+            mode == TimeMode.SECT_4_TOP_RIGHT or \
+            mode == TimeMode.SECT_4_BOTTOM_LEFT or \
+            mode == TimeMode.SECT_4_BOTTOM_RIGHT:
         return font_4_sect
-    elif time_pos == TimePos.SECT_6_TOP_LEFT or \
-            time_pos == TimePos.SECT_6_TOP_RIGHT or \
-            time_pos == TimePos.SECT_6_MIDDLE_LEFT or \
-            time_pos == TimePos.SECT_6_MIDDLE_RIGHT or \
-            time_pos == TimePos.SECT_6_BOTTOM_LEFT or \
-            time_pos == TimePos.SECT_6_BOTTOM_RIGHT:
+    elif mode == TimeMode.SECT_6_TOP_LEFT or \
+            mode == TimeMode.SECT_6_TOP_RIGHT or \
+            mode == TimeMode.SECT_6_MIDDLE_LEFT or \
+            mode == TimeMode.SECT_6_MIDDLE_RIGHT or \
+            mode == TimeMode.SECT_6_BOTTOM_LEFT or \
+            mode == TimeMode.SECT_6_BOTTOM_RIGHT:
         return font_6_sect
     else:
         return font_9_sect
 
 
 def get_color(color:int, epd) -> int:
-    if color == c.COLOR_BLACK:
+    if color == COLOR_BLACK:
         return epd.BLACK
-    elif color == c.COLOR_WHITE:
+    elif color == COLOR_WHITE:
         return epd.WHITE
-    elif color == c.COLOR_YELLOW:
+    elif color == COLOR_YELLOW:
         return epd.YELLOW
-    elif color == c.COLOR_RED:
+    elif color == COLOR_RED:
         return epd.RED
-    elif color == c.COLOR_BLUE:
+    elif color == COLOR_BLUE:
         return epd.BLUE
-    elif color == c.COLOR_GREEN:
+    elif color == COLOR_GREEN:
         return epd.GREEN
     else:
         logging.warning(f"Selected unknown {color=}")
@@ -195,14 +198,14 @@ def clear_display() -> None:
         logging.error(e)
 
 
-def draw_image_with_time(file_path:str, time:str, pos:TimePos, color:int = c.COLOR_BLACK, shadow:int|None = None, draw_grid:bool = False) -> None:
+def draw_image_with_time(file_path:str, time:str, mode:TimeMode, color:int = COLOR_WHITE, shadow:int|None = None, draw_grid:bool = False) -> int:
     if not is_machine_valid():
         logging.warning(f"Unable to draw image")
-        return
+        return -1
     
     if not os.path.isfile(file_path):
         logging.warning("Cannot display invalid file")
-        return
+        return -1
     
     try:
         #from lib.waveshare_epd import epd7in3e
@@ -211,11 +214,7 @@ def draw_image_with_time(file_path:str, time:str, pos:TimePos, color:int = c.COL
         epd.init()
         
         #  Create image
-        img = Image.open(file_path)
-        
-        if pos == TimePos.OFF or time == "":
-            return
-        
+        img = Image.open(file_path)        
         draw = ImageDraw.Draw(img)
 
         # Debug - draw grids
@@ -223,15 +222,16 @@ def draw_image_with_time(file_path:str, time:str, pos:TimePos, color:int = c.COL
             draw_grids(draw, epd)
 
         # Draw time
-        x, y = get_time_pos(pos, epd)
-        color:int = get_color(color, epd)
-        font:ImageFont = get_font(pos)
-        
-        if shadow is not None:
-            shadow:int = get_color(shadow, epd)
-            draw.text((x + SHADOW_OFFSET_X, y + SHADOW_OFFSET_Y), time, shadow, font)    
-        
-        draw.text((x, y), time, color, font)
+        if mode != TimeMode.OFF and time != "":
+            x, y = get_time_pos(mode, epd)
+            color:int = get_color(color, epd)
+            font:ImageFont = get_font(mode)
+            
+            if shadow is not None:
+                shadow:int = get_color(shadow, epd)
+                draw.text((x + SHADOW_OFFSET_X, y + SHADOW_OFFSET_Y), time, shadow, font)    
+            
+            draw.text((x, y), time, color, font)
 
         # Send to display
         epd.display(epd.getbuffer(img))
@@ -241,30 +241,9 @@ def draw_image_with_time(file_path:str, time:str, pos:TimePos, color:int = c.COL
             
     except IOError as e:
         logging.error(e)
-
-
-def draw_image(file_path:str, refresh:bool = True) -> None:
-    if not is_machine_valid():
-        logging.warning(f"Unable to draw image")
-        return
     
-    if not os.path.isfile(file_path):
-        logging.warning("Cannot display invalid file")
-        return
     
-    try:
-        from lib.waveshare_epd.epd7in3e import EPD
-        epd = EPD()
-        epd.init()
-        
-        if refresh:
-            epd.clear()
-
-        # Drawing on the image
-        img = Image.open(file_path)
-        epd.display(epd.getbuffer(img))
-        epd.sleep()
-            
-    except IOError as e:
-        logging.error(e)
+if __name__ == "__main__":
+    logging.info("test call from subprocess")
+    exit(0)
     

@@ -1,8 +1,6 @@
 import os
 import logging
 import numpy as np
-
-from . import consts as c
 from PIL import Image as Image
 
 def crop(img:Image, w:int, h:int) -> Image:
@@ -64,24 +62,24 @@ def validate_image(file_path:str) -> bool:
         return False
     
 
-def procsess_image(file_path:str, dest_path:str, del_src:bool = True) -> bool:
+def procsess_image(file_path:str, dest_path:str, to_width:int, to_height:int, nc:int, del_src:bool = True) -> bool:
     try:
         img:Image = Image.open(file_path)
         w:int = img.width
         h:int = img.height
         
         # resize
-        r:float = max(c.EPD_WIDTH/w, c.EPD_HEIGHT/h);
+        r:float = max(to_width/w, to_height/h);
         img.thumbnail((w * r, h * r), Image.Resampling.LANCZOS)
         
         # Crop
-        img:Image = crop(img, c.EPD_WIDTH, c.EPD_HEIGHT) 
+        img:Image = crop(img, to_width, to_height) 
         
         # Apply fyold steinburg dithering
-        img = fs_dither(img, c.EPD_NC)
+        img = fs_dither(img, nc)
         
         # Reduce palette color
-        img = palette_reduce(img, c.EPD_NC)
+        img = palette_reduce(img, nc)
         
         # Save file
         img.save(dest_path)
