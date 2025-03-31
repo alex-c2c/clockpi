@@ -66,25 +66,25 @@ def get_time_pos(time_pos:TimePos, epd) -> tuple[int, int]:
     elif time_pos == TimePos.SECT_9_BOTTOM_RIGHT:
         return 2 * epd.width / 3 + 33, 2 * epd.height / 3 + 25
     elif time_pos == TimePos.SECT_6_TOP_LEFT:
-        return 2 * epd.width / 2 + 33, 2 * epd.height / 3 + 25
+        return 0 * epd.width / 2 + 33, 0 * epd.height / 3 + 25
     elif time_pos == TimePos.SECT_6_TOP_RIGHT:
-        return 2 * epd.width / 2 + 33, 2 * epd.height / 3 + 25
+        return 1 * epd.width / 2 + 33, 0 * epd.height / 3 + 25
     elif time_pos == TimePos.SECT_6_MIDDLE_LEFT:
-        return 2 * epd.width / 2 + 33, 2 * epd.height / 3 + 25
+        return 0 * epd.width / 2 + 33, 1 * epd.height / 3 + 25
     elif time_pos == TimePos.SECT_6_MIDDLE_RIGHT:
-        return 2 * epd.width / 2 + 33, 2 * epd.height / 3 + 25
+        return 1 * epd.width / 2 + 33, 1 * epd.height / 3 + 25
     elif time_pos == TimePos.SECT_6_BOTTOM_LEFT:
-        return 2 * epd.width / 2 + 33, 2 * epd.height / 3 + 25
+        return 0 * epd.width / 2 + 33, 2 * epd.height / 3 + 25
     elif time_pos == TimePos.SECT_6_BOTTOM_RIGHT:
-        return 2 * epd.width / 2 + 33, 2 * epd.height / 3 + 25
+        return 1 * epd.width / 2 + 33, 2 * epd.height / 3 + 25
     elif time_pos == TimePos.SECT_4_TOP_LEFT:
-        return 2 * epd.width / 2 + 33, 2 * epd.height / 2 + 25
+        return 0 * epd.width / 2 + 33, 0 * epd.height / 2 + 25
     elif time_pos == TimePos.SECT_4_TOP_RIGHT:
-        return 2 * epd.width / 2 + 33, 2 * epd.height / 2 + 25
+        return 1 * epd.width / 2 + 33, 0 * epd.height / 2 + 25
     elif time_pos == TimePos.SECT_4_BOTTOM_LEFT:
-        return 2 * epd.width / 2 + 33, 2 * epd.height / 2 + 25
+        return 0 * epd.width / 2 + 33, 1 * epd.height / 2 + 25
     elif time_pos == TimePos.SECT_4_BOTTOM_RIGHT:
-        return 2 * epd.width / 2 + 33, 2 * epd.height / 2 + 25
+        return 1 * epd.width / 2 + 33, 1 * epd.height / 2 + 25
     elif time_pos == TimePos.FULL_1:
         return 150, 100
     elif time_pos == TimePos.FULL_2:
