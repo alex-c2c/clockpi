@@ -8,6 +8,20 @@ from . import consts as c
 
 logging.basicConfig(level=logging.DEBUG)
 
+
+SHADOW_OFFSET_X:int = -2
+SHADOW_OFFSET_Y:int = 4
+
+SECT_9_OFFSET_X:int = 33
+SECT_9_OFFSET_Y:int = 25
+
+SECT_6_OFFSET_X:int = 30
+SECT_6_OFFSET_Y:int = -10
+
+SECT_4_OFFSET_X:int = 30
+SECT_4_OFFSET_Y:int = 30
+
+
 class TimePos(Enum):
     OFF = 0
     SECT_9_TOP_LEFT = 1
@@ -39,9 +53,9 @@ font_9_sect = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Bold.ttf'), 80
 font_6_sect = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Bold.ttf'), 130)
 font_4_sect = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Bold.ttf'), 130)
 
-font_full_1 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Light.ttf'), 200)
-font_full_2 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Light.ttf'), 250)
-font_full_3 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Light.ttf'), 300)
+font_full_1 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Bold.ttf'), 200)
+font_full_2 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Bold.ttf'), 250)
+font_full_3 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Bold.ttf'), 300)
 
 
 def is_machine_valid() -> bool:
@@ -51,47 +65,47 @@ def is_machine_valid() -> bool:
 def get_time_pos(time_pos:TimePos, epd) -> tuple[int, int]:
     # 9 Section
     if time_pos == TimePos.SECT_9_TOP_LEFT:
-        return 0 * epd.width / 3 + 33, 0 * epd.height / 3 + 25
+        return 0 * epd.width / 3 + SECT_9_OFFSET_X, 0 * epd.height / 3 + SECT_9_OFFSET_Y
     elif time_pos == TimePos.SECT_9_TOP_CENTER:
-        return 1 * epd.width / 3 + 33, 0 * epd.height / 3 + 25
+        return 1 * epd.width / 3 + SECT_9_OFFSET_X, 0 * epd.height / 3 + SECT_9_OFFSET_Y
     elif time_pos == TimePos.SECT_9_TOP_RIGHT:
-        return 2 * epd.width / 3 + 33, 0 * epd.height / 3 + 25
+        return 2 * epd.width / 3 + SECT_9_OFFSET_X, 0 * epd.height / 3 + SECT_9_OFFSET_Y
     elif time_pos == TimePos.SECT_9_MIDDLE_LEFT:
-        return 0 * epd.width / 3 + 33, 1 * epd.height / 3 + 25
+        return 0 * epd.width / 3 + SECT_9_OFFSET_X, 1 * epd.height / 3 + SECT_9_OFFSET_Y
     elif time_pos == TimePos.SECT_9_MIDDLE_CENTER:
-        return 1 * epd.width / 3 + 33, 1 * epd.height / 3 + 25
+        return 1 * epd.width / 3 + SECT_9_OFFSET_X, 1 * epd.height / 3 + SECT_9_OFFSET_Y
     elif time_pos == TimePos.SECT_9_MIDDLE_RIGHT:
-        return 2 * epd.width / 3 + 33, 1 * epd.height / 3 + 25
+        return 2 * epd.width / 3 + SECT_9_OFFSET_X, 1 * epd.height / 3 + SECT_9_OFFSET_Y
     elif time_pos == TimePos.SECT_9_BOTTOM_LEFT:
-        return 0 * epd.width / 3 + 33, 2 * epd.height / 3 + 25
+        return 0 * epd.width / 3 + SECT_9_OFFSET_X, 2 * epd.height / 3 + SECT_9_OFFSET_Y
     elif time_pos == TimePos.SECT_9_BOTTOM_CENTER:
-        return 1 * epd.width / 3 + 33, 2 * epd.height / 3 + 25
+        return 1 * epd.width / 3 + SECT_9_OFFSET_X, 2 * epd.height / 3 + SECT_9_OFFSET_Y
     elif time_pos == TimePos.SECT_9_BOTTOM_RIGHT:
-        return 2 * epd.width / 3 + 33, 2 * epd.height / 3 + 25
+        return 2 * epd.width / 3 + SECT_9_OFFSET_X, 2 * epd.height / 3 + SECT_9_OFFSET_Y
     
     # 6 Section
     elif time_pos == TimePos.SECT_6_TOP_LEFT:
-        return 0 * epd.width / 2 + 30, 0 * epd.height / 3 - 10
+        return 0 * epd.width / 2 + SECT_6_OFFSET_X, 0 * epd.height / 3 + SECT_6_OFFSET_Y
     elif time_pos == TimePos.SECT_6_TOP_RIGHT:
-        return 1 * epd.width / 2 + 30, 0 * epd.height / 3 - 10
+        return 1 * epd.width / 2 + SECT_6_OFFSET_X, 0 * epd.height / 3 + SECT_6_OFFSET_Y
     elif time_pos == TimePos.SECT_6_MIDDLE_LEFT:
-        return 0 * epd.width / 2 + 30, 1 * epd.height / 3 - 10
+        return 0 * epd.width / 2 + SECT_6_OFFSET_X, 1 * epd.height / 3 + SECT_6_OFFSET_Y
     elif time_pos == TimePos.SECT_6_MIDDLE_RIGHT:
-        return 1 * epd.width / 2 + 30, 1 * epd.height / 3 - 10
+        return 1 * epd.width / 2 + SECT_6_OFFSET_X, 1 * epd.height / 3 + SECT_6_OFFSET_Y
     elif time_pos == TimePos.SECT_6_BOTTOM_LEFT:
-        return 0 * epd.width / 2 + 30, 2 * epd.height / 3 - 10
+        return 0 * epd.width / 2 + SECT_6_OFFSET_X, 2 * epd.height / 3 + SECT_6_OFFSET_Y
     elif time_pos == TimePos.SECT_6_BOTTOM_RIGHT:
-        return 1 * epd.width / 2 + 30, 2 * epd.height / 3 - 10
+        return 1 * epd.width / 2 + SECT_6_OFFSET_X, 2 * epd.height / 3 + SECT_6_OFFSET_Y
     
     # 4 Section
     elif time_pos == TimePos.SECT_4_TOP_LEFT:
-        return 0 * epd.width / 2 + 33, 0 * epd.height / 2 + 30
+        return 0 * epd.width / 2 + SECT_4_OFFSET_X, 0 * epd.height / 2 + SECT_4_OFFSET_Y
     elif time_pos == TimePos.SECT_4_TOP_RIGHT:
-        return 1 * epd.width / 2 + 33, 0 * epd.height / 2 + 30
+        return 1 * epd.width / 2 + + SECT_4_OFFSET_X, 0 * epd.height / 2 + SECT_4_OFFSET_Y
     elif time_pos == TimePos.SECT_4_BOTTOM_LEFT:
-        return 0 * epd.width / 2 + 33, 1 * epd.height / 2 + 30
+        return 0 * epd.width / 2 + + SECT_4_OFFSET_X, 1 * epd.height / 2 + SECT_4_OFFSET_Y
     elif time_pos == TimePos.SECT_4_BOTTOM_RIGHT:
-        return 1 * epd.width / 2 + 33, 1 * epd.height / 2 + 30
+        return 1 * epd.width / 2 + + SECT_4_OFFSET_X, 1 * epd.height / 2 + SECT_4_OFFSET_Y
     
     # Full Screen
     elif time_pos == TimePos.FULL_1:
@@ -215,9 +229,7 @@ def draw_image_with_time(file_path:str, time:str, pos:TimePos, color:int = c.COL
         
         if shadow is not None:
             shadow:int = get_color(shadow, epd)
-            x_s:int  = x - 3
-            y_s:int = y + 5
-            draw.text((x_s, y_s), time, shadow, font)    
+            draw.text((x + SHADOW_OFFSET_X, y + SHADOW_OFFSET_Y), time, shadow, font)    
         
         draw.text((x, y), time, color, font)
 
