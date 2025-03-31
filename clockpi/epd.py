@@ -114,7 +114,7 @@ def clear_display() -> None:
         logging.error(e)
 
 
-def draw_image_with_time(file_path:str, time:str, pos:TimePos, refresh:bool) -> None:
+def draw_image_with_time(file_path:str, time:str, pos:TimePos, refresh:bool = False) -> None:
     if not is_machine_valid():
         logging.warning(f"Unable to draw image")
         return
