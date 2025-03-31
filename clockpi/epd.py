@@ -36,8 +36,8 @@ class TimePos(Enum):
 
 
 font_9_sect = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Bold.ttf'), 80)
-font_6_sect = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Bold.ttf'), 100)
-font_4_sect = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Bold.ttf'), 160)
+font_6_sect = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Bold.ttf'), 130)
+font_4_sect = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Bold.ttf'), 130)
 
 font_full_1 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Light.ttf'), 200)
 font_full_2 = ImageFont.truetype(os.path.join(c.DIR_FONT, 'Roboto-Light.ttf'), 250)
