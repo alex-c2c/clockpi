@@ -196,15 +196,19 @@ def set_epd_busy(busy:bool) -> None:
 
 
 def get_epd_busy() -> bool:
-    return os.environ.get("EPD_BUSY", "0")
+    print(f"{os.environ.get('EPD_BUSY')}")
+    return True if os.environ.get("EPD_BUSY") == "1" else False
 
 
 def clear_display() -> int:
+    logging.debug(f"Attempting to clear display")
+
     if not is_machine_valid():
-        logging.warning("Unable to clear display")
+        logging.warning("Invalid machine")
         return RETURN_CODE_INVALID_MACHINE
 
     if get_epd_busy():
+        logging.warning("EPD is busy")
         return RETURN_CODE_EPD_BUSY
     
     try:
@@ -217,6 +221,8 @@ def clear_display() -> int:
         epd.sleep()
         
         set_epd_busy(False)
+
+        logging.debug(f"Finished clearing display")
         
         return RETURN_CODE_SUCCESS
         
@@ -227,8 +233,10 @@ def clear_display() -> int:
 
 
 def draw_time(time:str, mode: TimeMode, color:int = COLOR_BLACK, shadow:int = COLOR_NONE, draw_grid:bool = False) -> int:
+    logging.debug(f"Attempting to draw time")
+
     if not is_machine_valid():
-        logging.warning(f"Unable to draw image")
+        logging.warning(f"Invalid machine")
         return -1
     
     if os.environ.get('EPD_DRAWING', 0) == 1:
@@ -269,6 +277,10 @@ def draw_time(time:str, mode: TimeMode, color:int = COLOR_BLACK, shadow:int = CO
         epd.sleep()
         
         set_epd_busy(False)
+
+        logging.debug(f"Finished drawing time")
+
+        return RETURN_CODE_SUCCESS
             
     except IOError as e:
         set_epd_busy(False)
@@ -277,8 +289,10 @@ def draw_time(time:str, mode: TimeMode, color:int = COLOR_BLACK, shadow:int = CO
     
 
 def draw_image_with_time(file_path:str, time:str, mode:TimeMode, color:int = COLOR_WHITE, shadow:int = COLOR_NONE, draw_grid:bool = False) -> int:
+    logging.debug(f"Attempting to draw image with time")
+
     if not is_machine_valid():
-        logging.warning(f"Unable to draw image")
+        logging.warning(f"Invalid machine")
         return RETURN_CODE_INVALID_MACHINE
     
     if os.environ.get('EPD_DRAWING', 0) == 1:
@@ -319,6 +333,10 @@ def draw_image_with_time(file_path:str, time:str, mode:TimeMode, color:int = COL
         epd.sleep()
         
         set_epd_busy(False)
+
+        logging.debug(f"Finish drawing image with time")
+        
+        return RETURN_CODE_SUCCESS
             
     except IOError as e:
         set_epd_busy(False)
