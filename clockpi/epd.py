@@ -232,16 +232,16 @@ def clear_display() -> int:
         return RETURN_CODE_EXCEPTION
 
 
-def draw_time(time:str, mode: TimeMode, color:int = COLOR_BLACK, shadow:int = COLOR_NONE, draw_grid:bool = False) -> int:
+def draw_time(time:str, mode:TimeMode = TimeMode.FULL_3, color:int = COLOR_BLACK, shadow:int = COLOR_NONE, draw_grid:bool = False) -> int:
     logging.debug(f"Attempting to draw time")
 
     if not is_machine_valid():
         logging.warning(f"Invalid machine")
-        return -1
+        return RETURN_CODE_INVALID_MACHINE
     
-    if os.environ.get('EPD_DRAWING', 0) == 1:
+    if get_epd_busy():
         logging.warning(f"EPD is busy")
-        return -2
+        return RETURN_CODE_EPD_BUSY
     
     try:
         set_epd_busy(True)
@@ -288,14 +288,14 @@ def draw_time(time:str, mode: TimeMode, color:int = COLOR_BLACK, shadow:int = CO
         return RETURN_CODE_EXCEPTION
     
 
-def draw_image_with_time(file_path:str, time:str, mode:TimeMode, color:int = COLOR_WHITE, shadow:int = COLOR_NONE, draw_grid:bool = False) -> int:
+def draw_image_with_time(file_path:str, time:str, mode:TimeMode = TimeMode.FULL_3, color:int = COLOR_WHITE, shadow:int = COLOR_NONE, draw_grid:bool = False) -> int:
     logging.debug(f"Attempting to draw image with time")
 
     if not is_machine_valid():
         logging.warning(f"Invalid machine")
         return RETURN_CODE_INVALID_MACHINE
     
-    if os.environ.get('EPD_DRAWING', 0) == 1:
+    if get_epd_busy():
         logging.warning(f"EPD is busy")
         return RETURN_CODE_EPD_BUSY
     
@@ -358,7 +358,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("-i", "--image", type=str, help="<Optional> Path to image file, accepted extension: *.bmp", default="", required=False)
     parser.add_argument("-t", "--time", type=str, help="<Optional> Display time, accepted format is 'HH:MM'", default="", required=False)
-    parser.add_argument("-m", "--mode", type=int, help="<Optional> Set text display mode", default=22, required=False)
+    parser.add_argument("-m", "--mode", type=int, help="<Optional> Set text display mode", default=TimeMode.FULL_3, required=False)
     parser.add_argument("-c", "--color", type=int, help="<Optional> Set text color", default=2, required=False)
     parser.add_argument("-s", "--shadow", type=int, help="<Optional> Set text shadow color", default=1, required=False)
     parser.add_argument("-g", "--grid", help="<Optional> Draw grids on screen", action="store_true",required=False)
@@ -378,7 +378,7 @@ if __name__ == "__main__":
     if len(time) != 5 or time[2] != ':':
         time = ""
         
-    mode:int = args.mode
+    mode:TimeMode = TimeMode(args.mode)
     color:int = args.color
     shadow:int = args.shadow
     draw_grids:bool = args.grid
