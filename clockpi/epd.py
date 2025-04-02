@@ -18,12 +18,13 @@ SECT_6_OFFSET_Y:int = -10
 SECT_4_OFFSET_X:int = 30
 SECT_4_OFFSET_Y:int = 30
 
-COLOR_BLACK:int = 0
-COLOR_WHITE:int = 1
-COLOR_YELLOW:int = 2
-COLOR_RED:int = 3
-COLOR_BLUE:int = 4
-COLOR_GREEN:int = 5
+COLOR_NONE:int = 0
+COLOR_BLACK:int = 1
+COLOR_WHITE:int = 2
+COLOR_YELLOW:int = 3
+COLOR_RED:int = 4
+COLOR_BLUE:int = 5
+COLOR_GREEN:int = 6
 
 class TimeMode(Enum):
     OFF = 0
@@ -198,7 +199,7 @@ def clear_display() -> None:
         logging.error(e)
 
 
-def draw_image_with_time(file_path:str, time:str, mode:TimeMode, color:int = COLOR_WHITE, shadow:int|None = None, draw_grid:bool = False) -> int:
+def draw_image_with_time(file_path:str, time:str, mode:TimeMode, color:int = COLOR_WHITE, shadow:int = COLOR_NONE, draw_grid:bool = False) -> int:
     if not is_machine_valid():
         logging.warning(f"Unable to draw image")
         return -1
@@ -227,7 +228,7 @@ def draw_image_with_time(file_path:str, time:str, mode:TimeMode, color:int = COL
             color:int = get_color(color, epd)
             font:ImageFont = get_font(mode)
             
-            if shadow is not None:
+            if shadow is not COLOR_NONE:
                 shadow:int = get_color(shadow, epd)
                 draw.text((x + SHADOW_OFFSET_X, y + SHADOW_OFFSET_Y), time, shadow, font)    
             
