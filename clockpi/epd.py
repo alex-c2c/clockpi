@@ -1,3 +1,4 @@
+import argparse
 import os
 import logging
 from PIL import Image, ImageDraw, ImageFont
@@ -5,6 +6,13 @@ from PIL.ImageFont import FreeTypeFont
 from enum import Enum
 
 logging.basicConfig(level=logging.DEBUG)
+
+ALLOWED_EXTENSIONS : set[str] = ('bmp')
+
+RETURN_CODE_SUCCESS = 0
+RETURN_CODE_INVALID_MACHINE = -1
+RETURN_CODE_EPD_BUSY = -2
+RETURN_CODE_EXCEPTION = -3
 
 SHADOW_OFFSET_X:int = -5
 SHADOW_OFFSET_Y:int = 5
@@ -183,33 +191,103 @@ def draw_grids(draw:ImageDraw, epd) -> None:
     draw.line((0, 240, 800, 240), epd.RED, 1)
 
 
-def clear_display() -> None:
+def set_epd_busy(busy:bool) -> None:
+    os.environ["EPD_BUSY"] = busy
+
+
+def get_epd_busy() -> bool:
+    return os.environ.get("EPD_BUSY", False)
+
+
+def clear_display() -> int:
     if not is_machine_valid():
         logging.warning("Unable to clear display")
-        return
+        return RETURN_CODE_INVALID_MACHINE
 
+    if get_epd_busy():
+        return RETURN_CODE_EPD_BUSY
+    
     try:
+        set_epd_busy(True)
+        
         from lib.waveshare_epd.epd7in3e import EPD
         epd = EPD()
         epd.init()
         epd.clear()
         epd.sleep()
         
+        set_epd_busy(False)
+        
+        return RETURN_CODE_SUCCESS
+        
     except IOError as e:
         logging.error(e)
+        set_epd_busy(False)
+        return RETURN_CODE_EXCEPTION
 
 
-def draw_image_with_time(file_path:str, time:str, mode:TimeMode, color:int = COLOR_WHITE, shadow:int = COLOR_NONE, draw_grid:bool = False) -> int:
+def draw_time(time:str, mode: TimeMode, color:int = COLOR_BLACK, shadow:int = COLOR_NONE, draw_grid:bool = False) -> int:
     if not is_machine_valid():
         logging.warning(f"Unable to draw image")
         return -1
     
-    if not os.path.isfile(file_path):
-        logging.warning("Cannot display invalid file")
-        return -1
+    if os.environ.get('EPD_DRAWING', 0) == 1:
+        logging.warning(f"EPD is busy")
+        return -2
     
     try:
-        #from lib.waveshare_epd import epd7in3e
+        set_epd_busy(True)
+        
+        from lib.waveshare_epd.epd7in3e import EPD
+        epd = EPD()
+        epd.init()
+        
+        #  Create Empty Screen
+        img = Image.new('RGB', (epd.width, epd.height))
+        draw = ImageDraw.Draw(img)
+
+        # Debug - draw grids
+        if draw_grid:
+            draw_grids(draw, epd)
+
+        # Draw time
+        if mode != TimeMode.OFF and time != "":
+            x, y = get_time_pos(mode, epd)
+            color:int = get_color(color, epd)
+            font:ImageFont = get_font(mode)
+            
+            if shadow is not COLOR_NONE:
+                shadow:int = get_color(shadow, epd)
+                draw.text((x + SHADOW_OFFSET_X, y + SHADOW_OFFSET_Y), time, shadow, font)    
+            
+            draw.text((x, y), time, color, font)
+
+        # Send to display
+        epd.display(epd.getbuffer(img))
+        
+        # Sleep
+        epd.sleep()
+        
+        set_epd_busy(False)
+            
+    except IOError as e:
+        set_epd_busy(False)
+        logging.error(e)
+        return RETURN_CODE_EXCEPTION
+    
+
+def draw_image_with_time(file_path:str, time:str, mode:TimeMode, color:int = COLOR_WHITE, shadow:int = COLOR_NONE, draw_grid:bool = False) -> int:
+    if not is_machine_valid():
+        logging.warning(f"Unable to draw image")
+        return RETURN_CODE_INVALID_MACHINE
+    
+    if os.environ.get('EPD_DRAWING', 0) == 1:
+        logging.warning(f"EPD is busy")
+        return RETURN_CODE_EPD_BUSY
+    
+    try:
+        set_epd_busy(True)
+        
         from lib.waveshare_epd.epd7in3e import EPD
         epd = EPD()
         epd.init()
@@ -239,12 +317,59 @@ def draw_image_with_time(file_path:str, time:str, mode:TimeMode, color:int = COL
         
         # Sleep
         epd.sleep()
+        
+        set_epd_busy(False)
             
     except IOError as e:
+        set_epd_busy(False)
         logging.error(e)
+        return RETURN_CODE_EXCEPTION
     
     
 if __name__ == "__main__":
-    logging.info("test call from subprocess")
-    exit(0)
+    parser = argparse.ArgumentParser(
+        prog="EPD",
+        description="Draws to E-Paper 7\"3 E6 Display\n\
+                    --image: if empty or invalid, no images will be drawn.\n\
+                    --time: If empty of invalid, no time will drawn.\n\
+                    --mode: default=FULL_SCREEN_3.\n\
+                    --color: default=WHITE.\n\
+                    --shadow: default-BLACK.\n\
+                    --grid: If included, draw grids to display\n\
+                    --off: If included, clear screen, overwrites all other options."
+    )
+    parser.add_argument("-i", "--image", type=str, help="<Optional> Path to image file, accepted extension: *.bmp", default="", required=False)
+    parser.add_argument("-t", "--time", type=str, help="<Optional> Display time, accepted format is 'HH:MM'", default="", required=False)
+    parser.add_argument("-m", "--mode", type=int, help="<Optional> Set text display mode", default=22, required=False)
+    parser.add_argument("-c", "--color", type=int, help="<Optional> Set text color", default=2, required=False)
+    parser.add_argument("-s", "--shadow", type=int, help="<Optional> Set text shadow color", default=1, required=False)
+    parser.add_argument("-g", "--grid", help="<Optional> Draw grids on screen", action="store_true",required=False)
+    parser.add_argument("-o", "--off", help="<Optional> Clear screen. This option over writes all other options", action="store_true", required=False)
+    
+    args = parser.parse_args()
+    
+    if args.off:
+        result:int = clear_display()
+        exit(result)
+    
+    image_path:str = args.image
+    if not os.path.isfile(image_path) or image_path.rsplit(".", 1)[1] not in ALLOWED_EXTENSIONS:
+        image_path = ""
+        
+    time:str = args.time
+    if len(time) != 5 or time[2] != ':':
+        time = ""
+        
+    mode:int = args.mode
+    color:int = args.color
+    shadow:int = args.shadow
+    draw_grids:bool = args.grid
+    
+    result:int = 0
+    if image_path == "":
+        result = draw_time(time, mode, color, shadow, draw_grids)
+    else:
+        result = draw_image_with_time(image_path, time, mode, color, shadow, draw_grids)
+    
+    exit(result)
     

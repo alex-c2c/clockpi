@@ -206,7 +206,13 @@ def clear():
     current_shadow = COLOR_BLACK
     current_image_id = 0
     
-    clear_display()
+    cmds:list[str] = ["python", "clockpi/epd.py"]
+    cmds.append("-o")
+        
+    logging.debug(f"Calling epd as subprocess with {cmds=}")
+    
+    p= subprocess.run(cmds)
+    
     return redirect(location=url_for('clockpi.test'))
 
 
@@ -223,20 +229,34 @@ def refresh():
         'SELECT * FROM upload where id = ?', (current_image_id,)
     ).fetchone()
     
-    if upload is None:
-        flash(f"Unable to retrieve a valid image id")
-        return redirect(location=url_for('clockpi.test'))
-    
-    file_path:str = os.path.join(DIR_UPLOAD, f"{upload['hash']}.bmp")
-    if not os.path.isfile(file_path):
-        flash(f"Unable to retrieve a valid image file")
-        return redirect(location=url_for('clockpi.test'))
+    file_path:str = ""
+    if upload is not None:    
+        file_path:str = os.path.join(DIR_UPLOAD, f"{upload['hash']}.bmp")
+        if not os.path.isfile(file_path):
+            file_path = ""
 
     time:str = f"{datetime.now().hour:02d}:{datetime.now().minute:02d}"
     
-    #p= subprocess.run(['python', 'clockpi/epd.py'])
+    cmds:list[str] = ["python", "clockpi/epd.py"]
+    cmds.append("-i")
+    cmds.append(file_path)
+    cmds.append("-t")
+    cmds.append(time)
+    cmds.append("-m")
+    cmds.append(f"{current_mode.value}")
+    cmds.append("-c")
+    cmds.append(f"{current_color}")
+    cmds.append("-s")
+    cmds.append(f"{current_shadow}")
+    
+    if draw_grids:
+        cmds.append("-g")
+        
+    logging.debug(f"Calling epd as subprocess with {cmds=}")
+    
+    p= subprocess.run(cmds)
     #logging.debug(f"{p.returncode=}")
-    draw_image_with_time(file_path, time, current_mode, current_color, current_shadow, draw_grids)
+    #draw_image_with_time(file_path, time, current_mode, current_color, current_shadow, draw_grids)
     
     return redirect(location=url_for('clockpi.test'))
 
