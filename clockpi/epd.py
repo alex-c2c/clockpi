@@ -192,11 +192,11 @@ def draw_grids(draw:ImageDraw, epd) -> None:
 
 
 def set_epd_busy(busy:bool) -> None:
-    os.environ["EPD_BUSY"] = busy
+    os.environ["EPD_BUSY"] = "1" if busy else "0"
 
 
 def get_epd_busy() -> bool:
-    return os.environ.get("EPD_BUSY", False)
+    return os.environ.get("EPD_BUSY", "0")
 
 
 def clear_display() -> int:
