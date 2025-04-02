@@ -196,7 +196,6 @@ def set_epd_busy(busy:bool) -> None:
 
 
 def get_epd_busy() -> bool:
-    print(f"{os.environ.get('EPD_BUSY')}")
     return True if os.environ.get("EPD_BUSY") == "1" else False
 
 
@@ -317,6 +316,7 @@ def draw_image_with_time(file_path:str, time:str, mode:TimeMode = TimeMode.FULL_
         # Draw time
         if mode != TimeMode.OFF and time != "":
             x, y = get_time_pos(mode, epd)
+            logging.debug(f"{x=}, {y=}")
             color:int = get_color(color, epd)
             font:ImageFont = get_font(mode)
             
