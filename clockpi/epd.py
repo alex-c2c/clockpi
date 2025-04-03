@@ -197,20 +197,25 @@ def draw_grids(draw:ImageDraw, epd) -> None:
 def set_epd_busy(busy:bool) -> None:
     logging.debug(f"Setting EPD {busy=}")
     with open (TMP_FILE_PATH, 'wb') as f:
-        f.write(0b1 if busy else 0b0)
+        f.write(b'1' if busy else b'0')
 
 
 def get_epd_busy() -> bool:
+    busy:bool = False
+
     if not os.path.isfile(TMP_FILE_PATH):
-        return False
+        logging.debug(f"Unable to find {TMP_FILE_PATH=}") 
     
     else:
         with open(TMP_FILE_PATH, 'rb') as f:
             b:bytes = f.read(1)
             if len(b) > 0:
-                return True if b[0] == 0b1 else False
-            
-        return False
+                busy = True if b == b'1' else False
+        
+        logging.debug(f"Opened {TMP_FILE_PATH=} but file is empty.")
+
+    logging.debug(f"Getting EPD {busy=}")
+    return busy
 
 
 def clear_display() -> int:
