@@ -1,6 +1,7 @@
 import argparse
 import os
 import logging
+import tempfile
 from PIL import Image, ImageDraw, ImageFont
 from PIL.ImageFont import FreeTypeFont
 from enum import Enum
@@ -8,6 +9,8 @@ from enum import Enum
 logging.basicConfig(level=logging.DEBUG)
 
 ALLOWED_EXTENSIONS : set[str] = ('bmp')
+
+TMP_FILE_PATH:str = os.path.join(tempfile.gettempdir(), 'clockpi_temp')
 
 RETURN_CODE_SUCCESS = 0
 RETURN_CODE_INVALID_MACHINE = -1
@@ -192,11 +195,22 @@ def draw_grids(draw:ImageDraw, epd) -> None:
 
 
 def set_epd_busy(busy:bool) -> None:
-    os.environ["EPD_BUSY"] = "1" if busy else "0"
+    logging.debug(f"Setting EPD {busy=}")
+    with open (TMP_FILE_PATH, 'wb') as f:
+        f.write(0b1 if busy else 0b0)
 
 
 def get_epd_busy() -> bool:
-    return True if os.environ.get("EPD_BUSY") == "1" else False
+    if not os.path.isfile(TMP_FILE_PATH):
+        return False
+    
+    else:
+        with open(TMP_FILE_PATH, 'rb') as f:
+            b:bytes = f.read(1)
+            if len(b) > 0:
+                return True if b[0] == 0b1 else False
+            
+        return False
 
 
 def clear_display() -> int:
