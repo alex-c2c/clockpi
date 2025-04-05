@@ -1,3 +1,4 @@
+import logging
 import sqlite3
 from datetime import datetime
 
@@ -40,6 +41,118 @@ def init_db_command():
     """Clear the existing data and create new tables."""
     init_db()
     click.echo('Initialized the database.')
+    
+
+def update_epd_busy(busy:bool) -> None:
+    db = get_db()
+    db.execute(
+        'UPDATE epd SET busy = ? WHERE id = 0',
+        (1 if busy else 0)
+    )
+    db.commit()
+    
+
+def get_epd_busy() -> bool:
+    db = get_db()
+    col = db.execute(
+        'SELECT * FROM epd where id = 0'
+    ).fetchone()
+    return True if col['busy'] == 1 else False
+
+
+def get_settings():
+    db = get_db()
+    settings = db.execute(
+        'SELECT * FROM settings where id = 0'
+    ).fetchone()
+    return settings
+    
+
+def update_settings_image(id:int) -> None:
+    db = get_db()
+    db.execute(
+        'UPDATE settings SET image_id = ? WHERE id = 0', (id,)
+    )
+    db.commit()
+    
+    
+def update_settings_mode(mode:int) -> None:
+    db = get_db()
+    db.execute(
+        'UPDATE settings SET mode = ? WHERE id = 0', (mode,)
+    )
+    db.commit()
+    
+
+def update_settings_color(color:int) -> None:
+    db = get_db()
+    db.execute(
+        'UPDATE settings SET color = ? WHERE id = 0', (color,)
+    )
+    db.commit()
+    
+
+def update_settings_shadow(shadow:int) -> None:
+    db = get_db()
+    db.execute(
+        'UPDATE settings SET shadow = ? WHERE id = 0', (shadow,)
+    )
+    db.commit()
+    
+
+def update_settings_draw_grids(draw:bool) -> None:
+    db = get_db()
+    db.execute(
+        'UPDATE settings SET draw_grids = ? WHERE id = 0', (1 if draw else 0,)
+    )
+    db.commit()
+    
+    
+def update_settings_image(id:int) -> None:
+    db = get_db()
+    db.execute(
+        'UPDATE settings SET image_id = ? WHERE id = 0', (id,)
+    )
+    db.commit()
+
+
+def update_settings(image_id:int, mode:int, color:int, shadow:int, draw_grids:bool) -> None:
+    db = get_db()
+    db.execute(
+        'UPDATE settings SET image_id = ?, mode = ?, color = ?, shadow = ?, draw_grids = ? WHERE id = 0',
+        (image_id, mode, color, shadow, 1 if draw_grids else 0)
+    )
+    db.commit()
+
+
+def get_uploads():
+    db = get_db()
+    uploads = db.execute(
+        'SELECT id, name, hash, size, created'
+        ' FROM upload'
+        ' ORDER BY created DESC'
+    ).fetchall() 
+    return uploads
+
+
+def get_upload(id:int):
+    db = get_db()
+    upload = db.execute(
+        'SELECT id, name, hash, size, created'
+        ' FROM upload'
+        ' WHERE id = ?', (id,)
+    ).fetchone() 
+    return upload
+
+
+def add_upload(name:str, hash:str, filesize:int) -> None:
+    db = get_db()
+    db.execute(
+        'INSERT INTO upload (name, hash, size)'
+        ' VALUES (?, ?, ?)',
+        (name, hash, filesize)
+    )
+    db.commit()
 
 
 sqlite3.register_converter(

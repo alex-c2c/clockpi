@@ -6,12 +6,13 @@ import hashlib
 import logging
 import subprocess
 from datetime import datetime
+from typing import Any
 from flask import Blueprint, current_app, flash, g, redirect, render_template, request, url_for, send_from_directory
 from werkzeug import Response
 from werkzeug.exceptions import abort
 from werkzeug.utils import secure_filename
 from clockpi.auth import login_required
-from clockpi.db import get_db
+from clockpi.db import get_db, get_epd_busy, add_upload, get_upload, get_uploads, get_settings, update_settings, update_settings_image, update_settings_mode, update_settings_color, update_settings_shadow, update_settings_draw_grids
 from clockpi.image import procsess_image, validate_image
 from clockpi.epd import clear_display, draw_image_with_time, TimeMode, COLOR_NONE, COLOR_BLACK, COLOR_WHITE, COLOR_YELLOW, COLOR_RED, COLOR_BLUE, COLOR_GREEN
 
@@ -33,7 +34,6 @@ ALLOWED_EXTENSIONS : set[str] = ('png', 'jpg', 'jpeg', 'bmp')
 # Directories
 DIR_UPLOAD:str = "upload"
 DIR_PROCESSED:str = "processed"
-
 
 draw_grids:bool = False
 current_image_id:int = 0
@@ -149,13 +149,9 @@ def upload_file():
             try:
                 filename_no_ext:str = filename.rsplit(".", 1)[0]
                 filesize:int = os.path.getsize(dest_path)
-                db = get_db()
-                db.execute(
-                    'INSERT INTO upload (name, hash, size)'
-                    ' VALUES (?, ?, ?)',
-                    (filename_no_ext, hash, filesize)
-                )
-                db.commit()
+                
+                # Insert to DB
+                add_upload(filename_no_ext, hash, filesize)
                 
             except OSError as error:
                 flash("Unable to save entry of upload")
@@ -169,69 +165,56 @@ def upload_file():
     
 @bp.route('/test', methods=['GET'])
 def test():
-    global draw_grids
-    global current_mode
-    global current_color
-    global current_shadow
-    global current_image_id
-        
+    # Get Clock Pi Settings
+    settings = get_settings()
+    
     # Get all uploads
-    db = get_db()
-    uploads = db.execute(
-        'SELECT id, name, hash, size, created'
-        ' FROM upload'
-        ' ORDER BY created DESC'
-    ).fetchall() 
+    uploads = get_uploads()
+
+    # Get EPD Busy    
+    busy:bool = get_epd_busy()
     
     return render_template('clockpi/test.html',
-                           draw_grids=draw_grids,
-                           current_color=current_color,
-                           current_shadow=current_shadow,
-                           current_mode=current_mode.value,
-                           current_image_id=current_image_id,
-                           uploads=uploads)
+                           draw_grids=settings["draw_grids"],
+                           current_color=settings["color"],
+                           current_shadow=settings["shadow"],
+                           current_mode=settings["mode"],
+                           current_image_id=settings["image_id"],
+                           uploads=uploads,
+                           epd_busy=busy)
 
 
 @bp.route('/clear', methods=['GET'])
 def clear():
-    global draw_grids
-    global current_mode
-    global current_color
-    global current_shadow
-    global current_image_id
-    
-    draw_grids = False
-    current_mode = TimeMode.OFF
-    current_color = COLOR_WHITE
-    current_shadow = COLOR_BLACK
-    current_image_id = 0
-    
+    # Update DB
+    update_settings(0, TimeMode.OFF.value, COLOR_WHITE, COLOR_BLACK, False)
+        
     cmds:list[str] = ["python", "clockpi/epd.py"]
     cmds.append("-o")
         
     logging.debug(f"Calling epd as subprocess with {cmds=}")
     
-    p= subprocess.run(cmds)
+    subprocess.run(cmds)
     
     return redirect(location=url_for('clockpi.test'))
 
 
 @bp.route('/refresh', methods=['GET'])
 def refresh():
-    global draw_grids
-    global current_mode
-    global current_color
-    global current_shadow
-    global current_image_id
-    
-    db = get_db()
-    upload = db.execute(
-        'SELECT * FROM upload where id = ?', (current_image_id,)
-    ).fetchone()
-    
+    # Get settings
+    settings = get_settings()
+    current_image_id:int = settings["image_id"]
+    current_mode:int = settings["mode"]
+    current_color:int = settings["color"]
+    current_shadow:int = settings["shadow"]
+    draw_grids:bool = True if settings["draw_grids"] == "1" else False
+        
+    upload = get_upload(current_image_id)
+    hash:str = upload["hash"] if upload is not None else ""    
     file_path:str = ""
-    if upload is not None:    
-        file_path:str = os.path.join(DIR_UPLOAD, f"{upload['hash']}.bmp")
+    
+    if len(hash) > 0:
+        file_path:str = os.path.join(DIR_UPLOAD, f"{hash}.bmp")
         if not os.path.isfile(file_path):
             file_path = ""
 
@@ -254,18 +237,18 @@ def refresh():
         
     logging.debug(f"Calling epd as subprocess with {cmds=}")
     
-    p= subprocess.run(cmds)
-    #logging.debug(f"{p.returncode=}")
-    #draw_image_with_time(file_path, time, current_mode, current_color, current_shadow, draw_grids)
-    
+    subprocess.run(cmds)
+
     return redirect(location=url_for('clockpi.test'))
 
 
 @bp.route('/draw_grids', methods=['POST'])
 def set_draw_grids():
     if request.method == 'POST':
-        global draw_grids
-        draw_grids = request.form.get("draw_grids", "") == "true"
+        draw_grids:bool = request.form.get("draw_grids", "") == "true"
+        
+        # Update DB
+        update_settings_draw_grids(draw_grids)
         
         logging.debug(f"/draw_grids {draw_grids=}")
         
@@ -275,7 +258,7 @@ def set_draw_grids():
 @bp.route('/set_mode', methods=['POST'])
 def set_mode():
     if request.method == 'POST':
-        global current_mode
+        current_mode:int = TimeMode.OFF
 
         # Get Mode
         if request.form.get("btn_nine_section", "") == "Top Left":
@@ -323,6 +306,9 @@ def set_mode():
         elif request.form.get("btn_full", "") == "Full Screen 3":
             current_mode = TimeMode.FULL_3
 
+        # Update DB
+        update_settings_mode(current_mode.value)
+        
         logging.debug(f"/set_mode {current_mode=}")
         
     return redirect(url_for('clockpi.test'))
@@ -331,7 +317,7 @@ def set_mode():
 @bp.route('/set_color', methods=['POST'])
 def set_color():
     if request.method == 'POST':
-        global current_color
+        current_color:int = COLOR_WHITE
         
         if request.form.get("color", "") == "black":
             current_color = COLOR_BLACK
@@ -342,10 +328,13 @@ def set_color():
         elif request.form.get("color", "") == "red":
             current_color = COLOR_RED
         elif request.form.get("color", "") == "blue":
-            ccurrent_colorlor = COLOR_BLUE
+            current_color = COLOR_BLUE
         elif request.form.get("color", "") == "green":
             current_color = COLOR_GREEN
-            
+        
+        # Update DB
+        update_settings_color(current_color)
+        
         logging.debug(f"/set_color {current_color=}")
                 
     return redirect(url_for('clockpi.test'))
@@ -354,7 +343,7 @@ def set_color():
 @bp.route('/set_shadow', methods=['POST'])
 def set_shadow():
     if request.method == 'POST':
-        global current_shadow
+        current_shadow:int = COLOR_NONE
         
         if request.form.get("shadow", "") == "black":
             current_shadow = COLOR_BLACK
@@ -368,9 +357,10 @@ def set_shadow():
             current_shadow = COLOR_BLUE
         elif request.form.get("shadow", "") == "green":
             current_shadow = COLOR_GREEN
-        else:
-            current_shadow = COLOR_NONE
-            
+
+        # Update DB
+        update_settings_shadow(current_shadow)
+                    
         logging.debug(f"/set_shadow {current_shadow=}")
                 
     return redirect(url_for('clockpi.test'))
@@ -379,17 +369,15 @@ def set_shadow():
 @bp.route('/select/<int:id>', methods=['GET'])
 def select(id:int):
     if request.method == 'GET':
-        db = get_db()
-        upload = db.execute(
-            'SELECT * FROM upload where id = ?', (id,)
-        ).fetchone()
-                
+        
+        # Get Upload with ID
+        upload = get_upload(id)
         if upload is None:
             flash(f"Selected invalid {id=}")
             return redirect(location=url_for('clockpi.test'))
 
-        global current_image_id
-        current_image_id = upload['id']
+        # Update DB
+        update_settings_image(upload['id'])
         
         logging.debug(f"/select {current_image_id=}")
         

@@ -1,11 +1,32 @@
 DROP TABLE IF EXISTS user;
 DROP TABLE IF EXISTS post;
+DROP TABLE IF EXISTS epd;
+DROP TABLE IF EXISTS settings;
+DROP TABLE IF EXISTS upload;
 
 CREATE TABLE user (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   username TEXT UNIQUE NOT NULL,
   password TEXT NOT NULL
 );
+
+CREATE TABLE epd (
+  id INTEGER PRIMARY KEY CHECK (id = 0),
+  busy BOOLEAN NOT NULL
+);
+
+INSERT INTO epd (id, busy) VALUES (0, 0);
+
+CREATE TABLE settings (
+  id INTEGER PRIMARY KEY CHECK (id = 0),
+  image_id INTEGER NOT NULL,
+  mode INTEGER NOT NULL,
+  color INTEGER NOT NULL,
+  shadow INTEGER NOT NULL,
+  draw_grids BOOLEAN NOT NULL
+);
+
+INSERT INTO settings (id, image_id, mode, color, shadow, draw_grids) VALUES (0, 0, 22, 2, 1, 0);
 
 CREATE TABLE upload (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
