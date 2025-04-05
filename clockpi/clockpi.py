@@ -226,7 +226,7 @@ def refresh():
     cmds.append("-t")
     cmds.append(time)
     cmds.append("-m")
-    cmds.append(f"{current_mode.value}")
+    cmds.append(f"{current_mode}")
     cmds.append("-c")
     cmds.append(f"{current_color}")
     cmds.append("-s")
