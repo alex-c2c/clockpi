@@ -385,8 +385,16 @@ if __name__ == "__main__":
     parser.add_argument("-s", "--shadow", type=int, help="<Optional> Set text shadow color", default=1, required=False)
     parser.add_argument("-g", "--grid", help="<Optional> Draw grids on screen", action="store_true",required=False)
     parser.add_argument("-o", "--off", help="<Optional> Clear screen. This option over writes all other options", action="store_true", required=False)
-    
+    parser.add_argument("-z", "--test", help="<Optional> Test", action="store_true",required=False)
+
     args = parser.parse_args()
+    
+    if args.test:
+        busy:bool = get_epd_busy()
+        
+        logging.debug(f"get_epd_busy() - {busy=}")
+        
+        exit(RETURN_CODE_SUCCESS)
     
     if args.off:
         result:int = clear_display()
