@@ -5,6 +5,7 @@ import tempfile
 from PIL import Image, ImageDraw, ImageFont
 from PIL.ImageFont import FreeTypeFont
 from enum import Enum
+from clockpi.db import get_epd_busy, update_epd_busy
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -194,6 +195,7 @@ def draw_grids(draw:ImageDraw, epd) -> None:
     draw.line((0, 240, 800, 240), epd.RED, 1)
 
 
+'''
 def set_epd_busy(busy:bool) -> None:
     logging.debug(f"Setting EPD {busy=}")
     with open (TMP_FILE_PATH, 'wb') as f:
@@ -216,6 +218,7 @@ def get_epd_busy() -> bool:
 
     logging.debug(f"Getting EPD {busy=}")
     return busy
+'''
 
 
 def clear_display() -> int:
@@ -230,7 +233,7 @@ def clear_display() -> int:
         return RETURN_CODE_EPD_BUSY
     
     try:
-        set_epd_busy(True)
+        update_epd_busy(True)
         
         from lib.waveshare_epd.epd7in3e import EPD
         epd = EPD()
@@ -238,7 +241,7 @@ def clear_display() -> int:
         epd.clear()
         epd.sleep()
         
-        set_epd_busy(False)
+        update_epd_busy(False)
 
         logging.debug(f"Finished clearing display")
         
@@ -262,7 +265,7 @@ def draw_time(time:str, mode:TimeMode = TimeMode.FULL_3, color:int = COLOR_BLACK
         return RETURN_CODE_EPD_BUSY
     
     try:
-        set_epd_busy(True)
+        update_epd_busy(True)
         
         from lib.waveshare_epd.epd7in3e import EPD
         epd = EPD()
@@ -294,7 +297,7 @@ def draw_time(time:str, mode:TimeMode = TimeMode.FULL_3, color:int = COLOR_BLACK
         # Sleep
         epd.sleep()
         
-        set_epd_busy(False)
+        update_epd_busy(False)
 
         logging.debug(f"Finished drawing time")
 
@@ -318,7 +321,7 @@ def draw_image_with_time(file_path:str, time:str, mode:TimeMode = TimeMode.FULL_
         return RETURN_CODE_EPD_BUSY
     
     try:
-        set_epd_busy(True)
+        update_epd_busy(True)
         
         from lib.waveshare_epd.epd7in3e import EPD
         epd = EPD()
@@ -351,7 +354,7 @@ def draw_image_with_time(file_path:str, time:str, mode:TimeMode = TimeMode.FULL_
         # Sleep
         epd.sleep()
         
-        set_epd_busy(False)
+        update_epd_busy(False)
 
         logging.debug(f"Finish drawing image with time")
         
