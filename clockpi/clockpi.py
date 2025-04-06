@@ -18,6 +18,12 @@ from clockpi.image import procsess_image, validate_image
 from clockpi.consts import *
 
 
+# Directories
+DIR_APP_UPLOAD:str = os.path.join(os.path.dirname(current_app.instance_path), "upload")
+DIR_TMP_UPLOAD:str = os.path.join(tempfile.gettempdir(), "upload")
+DIR_TMP_PROCESSED:str = os.path.join(tempfile.gettempdir(), "processed")
+
+
 bp = Blueprint('clockpi', __name__)
 logging.basicConfig(level=logging.DEBUG)
 
