@@ -5,11 +5,11 @@ import tempfile
 from PIL import Image, ImageDraw, ImageFont
 from PIL.ImageFont import FreeTypeFont
 from enum import Enum
-from redis import Redis
+import redis
 
 logging.basicConfig(level=logging.DEBUG)
 
-r = Redis(host='localhost', port=6379, decode_responses=True)
+r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 
 ALLOWED_EXTENSIONS : set[str] = ('bmp')
 
