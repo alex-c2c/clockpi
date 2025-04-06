@@ -13,28 +13,12 @@ from werkzeug import Response
 from werkzeug.exceptions import abort
 from werkzeug.utils import secure_filename
 from clockpi.auth import login_required
-from clockpi.db import get_db, add_upload, get_upload, get_uploads, get_settings, update_settings, update_settings_image, update_settings_mode, update_settings_color, update_settings_shadow, update_settings_draw_grids
+from clockpi.db import get_db, add_upload, get_upload, get_uploads
 from clockpi.image import procsess_image, validate_image
-from clockpi.epd import TimeMode, COLOR_NONE, COLOR_BLACK, COLOR_WHITE, COLOR_YELLOW, COLOR_RED, COLOR_BLUE, COLOR_GREEN
+from clockpi.consts import *
 
 bp = Blueprint('clockpi', __name__)
 logging.basicConfig(level=logging.DEBUG)
-
-# E-Paper Display Width
-EPD_WIDTH:int = 800
-
-# E-Paper Display Height
-EPD_HEIGHT:int = 480
-
-# E-Paper Display color per channel
-EPD_NC:int = 2
-
-# Allowed upload file extensions
-ALLOWED_EXTENSIONS : set[str] = ('png', 'jpg', 'jpeg', 'bmp')
-
-# Directories
-DIR_UPLOAD:str = "upload"
-DIR_PROCESSED:str = "processed"
 
 
 def allowed_file(filename) -> bool:
@@ -160,87 +144,72 @@ def upload_file():
     
 @bp.route('/test', methods=['GET'])
 def test():
-    # Get Clock Pi Settings
-    settings = get_settings()
-    
-    # Test Redis
-    r = current_app.extensions['redis']
-    epd_busy:bool = True if r.get('epd_busy') == "1" else False
-    
-    logging.debug(f"EPD_BUSY = {r.get('epd_busy')}")
-    
+    # Get settings from Redis
+    rc = current_app.extensions['redis']
+    epd_busy:bool = True if rc.get('epd_busy') == "1" else False
+    draw_grids:bool = True if rc.get('draw_grids') == "1" else False
+    mode:int = int(rc.get('mode'))
+    color:int = int(rc.get('color'))
+    shadow:int = int(rc.get('shadow'))
+    image_id:int = int(rc.get('image_id'))
+
     # Get all uploads
     uploads = get_uploads()
-    
+
     return render_template('clockpi/test.html',
-                           draw_grids=settings["draw_grids"],
-                           current_color=settings["color"],
-                           current_shadow=settings["shadow"],
-                           current_mode=settings["mode"],
-                           current_image_id=settings["image_id"],
+                           draw_grids=draw_grids,
+                           current_color=color,
+                           current_shadow=shadow,
+                           current_mode=mode,
+                           current_image_id=image_id,
                            uploads=uploads,
                            epd_busy=epd_busy)
 
 
 @bp.route('/reset', methods=['GET'])
 def reset():
-    # Update DB
-    update_settings(0, TimeMode.OFF.value, COLOR_WHITE, COLOR_BLACK, False)
-    
+    # Update Redis
+    rc = current_app.extensions['redis']
+    rc.set("mode", "22")
+    rc.set("color", "2")
+    rc.set("shadow", "1")
+    rc.set("image_id", "0")
+    rc.set("draw_grids", "0")
+    rc.set("epd_busy", "0")
+
     return redirect(location=url_for('clockpi.test'))
 
 
 @bp.route('/clear', methods=['GET'])
 def clear():
-    cmds:list[str] = ["python", "clockpi/epd.py"]
-    cmds.append("-o")
-        
-    logging.debug(f"Calling epd as subprocess with {cmds=}")
-    
-    subprocess.run(cmds)
-    
+    rc = current_app.extensions['redis']
+    rc.publish("epd", "clear")
+
     return redirect(location=url_for('clockpi.test'))
 
 
 @bp.route('/refresh', methods=['GET'])
-def refresh():
+def refresh():    
     # Get settings
-    settings = get_settings()
-    current_image_id:int = settings["image_id"]
-    current_mode:int = settings["mode"]
-    current_color:int = settings["color"]
-    current_shadow:int = settings["shadow"]
-    draw_grids:bool = True if settings["draw_grids"] == "1" else False
-        
+    rc = current_app.extensions["redis"]
+    current_image_id:int = int(rc.get("image_id"))
+    current_mode:int = int(rc.get("mode"))
+    current_color:int = int(rc.get("color"))
+    current_shadow:int = int(rc.get("shadow"))
+    draw_grids:bool = True if rc.get("draw_grids") == "1" else False
+
     upload = get_upload(current_image_id)
     hash:str = upload["hash"] if upload is not None else ""    
     file_path:str = ""
-    
+
     if len(hash) > 0:
         file_path:str = os.path.join(DIR_UPLOAD, f"{hash}.bmp")
         if not os.path.isfile(file_path):
             file_path = ""
 
     time:str = f"{datetime.now().hour:02d}:{datetime.now().minute:02d}"
-    
-    cmds:list[str] = ["python", "clockpi/epd.py"]
-    cmds.append("-i")
-    cmds.append(file_path)
-    cmds.append("-t")
-    cmds.append(time)
-    cmds.append("-m")
-    cmds.append(f"{current_mode}")
-    cmds.append("-c")
-    cmds.append(f"{current_color}")
-    cmds.append("-s")
-    cmds.append(f"{current_shadow}")
-    
-    if draw_grids:
-        cmds.append("-g")
-        
-    logging.debug(f"Calling epd as subprocess with {cmds=}")
-    
-    subprocess.run(cmds)
+
+    rc.publish("epd", f"draw^{file_path}^{time}^{current_mode}^{current_color}^{current_shadow}^{draw_grids}")
 
     return redirect(location=url_for('clockpi.test'))
 
@@ -249,12 +218,13 @@ def refresh():
 def set_draw_grids():
     if request.method == 'POST':
         draw_grids:bool = request.form.get("draw_grids", "") == "true"
-        
-        # Update DB
-        update_settings_draw_grids(draw_grids)
-        
+
+        # Update Redis
+        rc = current_app.extensions["redis"]
+        rc.set("draw_grids", "1" if draw_grids else "0")
+
         logging.debug(f"/draw_grids {draw_grids=}")
-        
+
     return redirect(url_for('clockpi.test'))
 
 
@@ -309,9 +279,10 @@ def set_mode():
         elif request.form.get("btn_full", "") == "Full Screen 3":
             current_mode = TimeMode.FULL_3
 
-        # Update DB
-        update_settings_mode(current_mode.value)
-        
+        # Update Redis
+        rc = current_app.extensions["redis"]
+        rc.set("mode", str(current_mode.value))
+
         logging.debug(f"/set_mode {current_mode=}")
         
     return redirect(url_for('clockpi.test'))
@@ -321,7 +292,7 @@ def set_mode():
 def set_color():
     if request.method == 'POST':
         current_color:int = COLOR_WHITE
-        
+
         if request.form.get("color", "") == "black":
             current_color = COLOR_BLACK
         elif request.form.get("color", "") == "white":
@@ -334,12 +305,13 @@ def set_color():
             current_color = COLOR_BLUE
         elif request.form.get("color", "") == "green":
             current_color = COLOR_GREEN
-        
-        # Update DB
-        update_settings_color(current_color)
-        
+
+        # Update Redis
+        rc = current_app.extensions["redis"]
+        rc.set("color", str(current_color))
+
         logging.debug(f"/set_color {current_color=}")
-                
+
     return redirect(url_for('clockpi.test'))
 
 
@@ -347,7 +319,7 @@ def set_color():
 def set_shadow():
     if request.method == 'POST':
         current_shadow:int = COLOR_NONE
-        
+
         if request.form.get("shadow", "") == "black":
             current_shadow = COLOR_BLACK
         elif request.form.get("shadow", "") == "white":
@@ -361,11 +333,12 @@ def set_shadow():
         elif request.form.get("shadow", "") == "green":
             current_shadow = COLOR_GREEN
 
-        # Update DB
-        update_settings_shadow(current_shadow)
-                    
+        # Update Redis
+        rc = current_app.extensions["redis"]
+        rc.set("shadow", str(current_shadow))
+
         logging.debug(f"/set_shadow {current_shadow=}")
-                
+
     return redirect(url_for('clockpi.test'))
 
 
@@ -374,9 +347,14 @@ def select(id:int):
     if request.method == 'GET':
         logging.debug(f"/select {id=}")
 
+        # Update Redis
+        rc = current_app.extensions["redis"]
+
         if id == 0:
+            # Update Redis
+            rc.set("image_id", "0")
             # Update DB
-            update_settings_image(0)
+            #update_settings_image(0)
         else:
             # Get Upload with ID
             upload = get_upload(id)
@@ -384,11 +362,14 @@ def select(id:int):
                 flash(f"Selected invalid {id=}")
                 return redirect(location=url_for('clockpi.test'))
 
+            # Update Redis
+            rc.set("image_id", str(id))
+
             # Update DB
-            update_settings_image(upload['id'])
-        
+            #update_settings_image(upload['id'])
+
     return redirect(url_for('clockpi.test'))
-    
+
     
 '''
 @bp.route('/create', methods=('GET', 'POST'))

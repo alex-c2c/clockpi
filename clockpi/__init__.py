@@ -20,9 +20,17 @@ def celery_init_app(app: Flask) -> Celery:
 
 
 def redis_init_app(app: Flask) -> FlaskRedis:
-    redis_client = FlaskRedis(app, decode_responses=True)
-    app.extensions["redis"] = redis_client
-    return redis_client
+    rc = FlaskRedis(app, decode_responses=True)
+    rc.set("mode", "22")
+    rc.set("color", "2")
+    rc.set("shadow", "1")
+    rc.set("image_id", "0")
+    rc.set("draw_grids", "0")
+    rc.set("epd_busy", "0")
+    
+    app.extensions["redis"] = rc
+    
+    return rc
 
 
 def create_app(test_config=None):
