@@ -1,16 +1,9 @@
-from genericpath import isfile
 import os
-import tempfile
 import shutil
 import hashlib
 import logging
-import subprocess
 from datetime import datetime
-from typing import Any
 from flask import Blueprint, current_app, flash, g, redirect, render_template, request, url_for, send_from_directory
-from redis import Redis
-from werkzeug import Response
-from werkzeug.exceptions import abort
 from werkzeug.utils import secure_filename
 from clockpi.auth import login_required
 from clockpi.db import get_db, add_upload, get_upload, get_uploads

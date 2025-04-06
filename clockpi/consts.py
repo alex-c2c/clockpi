@@ -1,5 +1,3 @@
-import os
-import tempfile
 from enum import Enum
 
 # E-Paper Display Width
