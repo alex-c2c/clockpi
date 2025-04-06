@@ -167,6 +167,8 @@ def test():
     r:Redis = current_app.extensions['redis']
     epd_busy:bool = True if r.get('epd_busy') == "1" else False
     
+    logging.debug(f"EPD_BUSY = {epd_busy}")
+    
     # Get all uploads
     uploads = get_uploads()
     
