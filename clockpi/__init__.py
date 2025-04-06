@@ -1,7 +1,7 @@
 import os
 
 from redis import Redis
-from . import db, auth, clockpi, redis
+from . import db, auth, clockpi
 from flask import Flask
 from celery import Celery, Task
 from flask_redis import FlaskRedis
