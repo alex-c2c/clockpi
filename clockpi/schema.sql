@@ -10,17 +10,6 @@ CREATE TABLE user (
   password TEXT NOT NULL
 );
 
-CREATE TABLE settings (
-  id INTEGER PRIMARY KEY CHECK (id = 0),
-  image_id INTEGER NOT NULL,
-  mode INTEGER NOT NULL,
-  color INTEGER NOT NULL,
-  shadow INTEGER NOT NULL,
-  draw_grids BOOLEAN NOT NULL
-);
-
-INSERT INTO settings (id, image_id, mode, color, shadow, draw_grids) VALUES (0, 0, 22, 2, 1, 0);
-
 CREATE TABLE upload (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

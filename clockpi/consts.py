@@ -1,5 +1,7 @@
+import os
+import tempfile
 from enum import Enum
-
+from flask import current_app
 
 # E-Paper Display Width
 EPD_WIDTH:int = 800
@@ -14,8 +16,9 @@ EPD_NC:int = 2
 ALLOWED_EXTENSIONS : set[str] = ('png', 'jpg', 'jpeg', 'bmp')
 
 # Directories
-DIR_UPLOAD:str = "upload"
-DIR_PROCESSED:str = "processed"
+DIR_APP_UPLOAD:str = os.path.join(os.path.dirname(current_app.instance_path), "upload")
+DIR_TMP_UPLOAD:str = os.path.join(tempfile.gettempdir(), "upload")
+DIR_TMP_PROCESSED:str = os.path.join(tempfile.gettempdir(), "processed")
 
 # Colors
 COLOR_NONE:int = 0

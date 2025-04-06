@@ -17,6 +17,7 @@ from clockpi.db import get_db, add_upload, get_upload, get_uploads
 from clockpi.image import procsess_image, validate_image
 from clockpi.consts import *
 
+
 bp = Blueprint('clockpi', __name__)
 logging.basicConfig(level=logging.DEBUG)
 
@@ -62,10 +63,9 @@ def upload_file():
             # save file to temp dir
             # TODO: improve location of "uploaded" files so that it doesn't get
             # overwritten by someone else uploading the files with same file name at the same time
-            temp_dir:str = os.path.join(tempfile.gettempdir(), DIR_UPLOAD)
-            if not os.path.isdir(temp_dir):
-                os.mkdir(temp_dir)
-            temp_path:str = os.path.join(temp_dir, filename)
+            if not os.path.isdir(DIR_TMP_UPLOAD):
+                os.mkdir(DIR_TMP_UPLOAD)
+            temp_path:str = os.path.join(DIR_TMP_UPLOAD, filename)
             file.save(temp_path)
             
             # validate image
@@ -75,11 +75,10 @@ def upload_file():
                 return redirect(url_for('clockpi.test'))
             
             # process image
-            proc_dir:str = os.path.join(temp_dir, DIR_PROCESSED)
-            if not os.path.isdir(proc_dir):
-                os.mkdir(proc_dir)
+            if not os.path.isdir(DIR_TMP_PROCESSED):
+                os.mkdir(DIR_TMP_PROCESSED)
                 
-            processed_path:str = os.path.join(proc_dir, filename)
+            processed_path:str = os.path.join(DIR_TMP_PROCESSED, filename)
             process_result:bool = procsess_image(temp_path, processed_path, EPD_WIDTH, EPD_HEIGHT, EPD_NC)
             
             if not process_result:
@@ -112,7 +111,7 @@ def upload_file():
             # copy processed image to upload dir
             try:
                 hashname:str = f"{hash}.bmp"
-                dest_path:str = os.path.join(DIR_UPLOAD, hashname)
+                dest_path:str = os.path.join(DIR_APP_UPLOAD, hashname)
                 shutil.copy2(processed_path, dest_path)
                 os.remove(processed_path)
                 
@@ -203,7 +202,7 @@ def refresh():
     file_path:str = ""
 
     if len(hash) > 0:
-        file_path:str = os.path.join(current_app.instance_path, DIR_UPLOAD, f"{hash}.bmp")
+        file_path:str = os.path.join(DIR_APP_UPLOAD, f"{hash}.bmp")
         if not os.path.isfile(file_path):
             file_path = ""
 
