@@ -21,7 +21,7 @@ def celery_init_app(app: Flask) -> Celery:
 
 def redis_init_app(app: Flask) -> FlaskRedis:
     redis_client = FlaskRedis(app)
-    app.extensions["redis"] = redis_client    
+    app.extensions["redis"] = redis_client
     return redis_client
 
 

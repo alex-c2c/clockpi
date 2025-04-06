@@ -164,10 +164,10 @@ def test():
     settings = get_settings()
     
     # Test Redis
-    r:Redis = current_app.extensions['redis']
+    r = current_app.extensions['redis']
     epd_busy:bool = True if r.get('epd_busy') == "1" else False
     
-    logging.debug(f"EPD_BUSY = {epd_busy}")
+    logging.debug(f"EPD_BUSY = {r.get('epd_busy')}")
     
     # Get all uploads
     uploads = get_uploads()
