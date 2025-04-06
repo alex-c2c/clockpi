@@ -29,7 +29,11 @@ def redis_init_app(app: Flask) -> FlaskRedis:
     rc.set("draw_grids", "0")
     rc.set("epd_busy", "0")
     
+    rp = rc.pubsub()
+    rp.subscribe("epd")
+    
     app.extensions["redis"] = rc
+    app.extensions["redis-sub"] = rp
     
     return rc
 

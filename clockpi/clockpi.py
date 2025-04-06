@@ -4,6 +4,7 @@ import hashlib
 import logging
 from datetime import datetime
 from flask import Blueprint, current_app, flash, g, redirect, render_template, request, url_for, send_from_directory
+from werkzeug import Response
 from werkzeug.utils import secure_filename
 from clockpi.auth import login_required
 from clockpi.db import get_db, add_upload, get_upload, get_uploads
@@ -357,6 +358,15 @@ def select(id:int):
             rc.set("image_id", str(id))
             
     return redirect(url_for('clockpi.test'))
+
+
+@bp.route('/stream')
+def streamed_response():
+    rp = current_app.extensions["redis-sub"]
+    def generate():
+        for msg in rp.listen():
+            yield f"<p>{msg}"
+    return Response(generate(), mimetype="text/event-stream")
 
     
 '''
