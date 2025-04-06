@@ -64,7 +64,7 @@ def create_app(test_config=None):
     
     app.register_blueprint(auth.bp)
     app.register_blueprint(clockpi.bp)
-    app.register_blueprint(redis.bp)
+    #app.register_blueprint(redis.bp)
     
     app.add_url_rule('/', endpoint='index')
 
