@@ -11,8 +11,7 @@ logging.basicConfig(level=logging.DEBUG)
 def redis_get():
     if request.method != 'GET':
         return redirect(url_for('clockpi.test'))
-    logging.debug(f"test test")
-    logging.debug(f"{current_app.extensions["redis"]=}")
+
     r:Redis = current_app.extensions["redis"]
     busy:bool = r.get('busy')
     logging.debug(f"{busy=}")
@@ -27,8 +26,6 @@ def redis_set(busy:int):
     if request.method != 'GET':
         return redirect(url_for('clockpi.test'))
     
-    logging.debug(f"test test")
-    logging.debug(f"{current_app.extensions["redis"]=}")
     r:Redis = current_app.extensions["redis"]
     r.set('busy', 0 if busy == 0 else 1)
 
