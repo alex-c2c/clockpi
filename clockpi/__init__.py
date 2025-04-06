@@ -1,6 +1,5 @@
 import os
 
-from redis import Redis
 from . import db, auth, clockpi
 from flask import Flask
 from celery import Celery, Task
@@ -20,7 +19,7 @@ def celery_init_app(app: Flask) -> Celery:
     return celery_app
 
 
-def redis_init_app(app: Flask) -> Redis:
+def redis_init_app(app: Flask) -> FlaskRedis:
     redis_client = FlaskRedis(app)
     app.extensions["redis"] = redis_client    
     return redis_client
