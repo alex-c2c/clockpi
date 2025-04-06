@@ -1,4 +1,5 @@
 import os
+import tempfile
 
 from . import db, auth, clockpi
 from flask import Flask
@@ -45,7 +46,9 @@ def create_app(test_config=None):
             result_backend="redis://localhost",
             task_ignore_result=True,
         ),
-        REDIS_CLIENT=FlaskRedis(app),
+        DIR_APP_UPLOAD = os.path.join(os.path.dirname(app.instance_path), "upload"),
+        DIR_TMP_UPLOAD = os.path.join(tempfile.gettempdir(), "upload"),
+        DIR_TMP_PROCESSED = os.path.join(tempfile.gettempdir(), "processed"),
     )
 
     # Create Redis app

@@ -18,12 +18,6 @@ from clockpi.image import procsess_image, validate_image
 from clockpi.consts import *
 
 
-# Directories
-DIR_APP_UPLOAD:str = os.path.join(os.path.dirname(current_app.instance_path), "upload")
-DIR_TMP_UPLOAD:str = os.path.join(tempfile.gettempdir(), "upload")
-DIR_TMP_PROCESSED:str = os.path.join(tempfile.gettempdir(), "processed")
-
-
 bp = Blueprint('clockpi', __name__)
 logging.basicConfig(level=logging.DEBUG)
 
@@ -69,9 +63,9 @@ def upload_file():
             # save file to temp dir
             # TODO: improve location of "uploaded" files so that it doesn't get
             # overwritten by someone else uploading the files with same file name at the same time
-            if not os.path.isdir(DIR_TMP_UPLOAD):
-                os.mkdir(DIR_TMP_UPLOAD)
-            temp_path:str = os.path.join(DIR_TMP_UPLOAD, filename)
+            if not os.path.isdir(current_app.config["DIR_TMP_UPLOAD"]):
+                os.mkdir(current_app.config["DIR_TMP_UPLOAD"])
+            temp_path:str = os.path.join(current_app.config["DIR_TMP_UPLOAD"], filename)
             file.save(temp_path)
             
             # validate image
@@ -81,10 +75,10 @@ def upload_file():
                 return redirect(url_for('clockpi.test'))
             
             # process image
-            if not os.path.isdir(DIR_TMP_PROCESSED):
-                os.mkdir(DIR_TMP_PROCESSED)
+            if not os.path.isdir(current_app.config["DIR_TMP_PROCESSED"]):
+                os.mkdir(current_app.config["DIR_TMP_PROCESSED"])
                 
-            processed_path:str = os.path.join(DIR_TMP_PROCESSED, filename)
+            processed_path:str = os.path.join(current_app.config["DIR_TMP_PROCESSED"], filename)
             process_result:bool = procsess_image(temp_path, processed_path, EPD_WIDTH, EPD_HEIGHT, EPD_NC)
             
             if not process_result:
@@ -117,7 +111,7 @@ def upload_file():
             # copy processed image to upload dir
             try:
                 hashname:str = f"{hash}.bmp"
-                dest_path:str = os.path.join(DIR_APP_UPLOAD, hashname)
+                dest_path:str = os.path.join(current_app.config["DIR_APP_UPLOAD"], hashname)
                 shutil.copy2(processed_path, dest_path)
                 os.remove(processed_path)
                 
@@ -208,7 +202,7 @@ def refresh():
     file_path:str = ""
 
     if len(hash) > 0:
-        file_path:str = os.path.join(DIR_APP_UPLOAD, f"{hash}.bmp")
+        file_path:str = os.path.join(current_app.config["DIR_APP_UPLOAD"], f"{hash}.bmp")
         if not os.path.isfile(file_path):
             file_path = ""
 
@@ -358,8 +352,7 @@ def select(id:int):
         if id == 0:
             # Update Redis
             rc.set("image_id", "0")
-            # Update DB
-            #update_settings_image(0)
+
         else:
             # Get Upload with ID
             upload = get_upload(id)
@@ -369,10 +362,7 @@ def select(id:int):
 
             # Update Redis
             rc.set("image_id", str(id))
-
-            # Update DB
-            #update_settings_image(upload['id'])
-
+            
     return redirect(url_for('clockpi.test'))
 
     
