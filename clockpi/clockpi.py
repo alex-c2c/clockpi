@@ -165,7 +165,7 @@ def test():
     
     # Test Redis
     r:Redis = current_app.extensions['redis']
-    busy:bool = True if r.get('epd_busy') == "1" else False
+    epd_busy:bool = True if r.get('epd_busy') == "1" else False
     
     # Get all uploads
     uploads = get_uploads()
@@ -177,7 +177,7 @@ def test():
                            current_mode=settings["mode"],
                            current_image_id=settings["image_id"],
                            uploads=uploads,
-                           busy=busy)
+                           epd_busy=epd_busy)
 
 
 @bp.route('/reset', methods=['GET'])
