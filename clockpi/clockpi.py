@@ -8,6 +8,7 @@ import subprocess
 from datetime import datetime
 from typing import Any
 from flask import Blueprint, current_app, flash, g, redirect, render_template, request, url_for, send_from_directory
+from redis import Redis
 from werkzeug import Response
 from werkzeug.exceptions import abort
 from werkzeug.utils import secure_filename
@@ -162,6 +163,10 @@ def test():
     # Get Clock Pi Settings
     settings = get_settings()
     
+    # Test Redis
+    r:Redis = current_app.extensions['redis']
+    busy:bool = True if r.get('epd_busy') == 1 else False
+    
     # Get all uploads
     uploads = get_uploads()
     
@@ -171,7 +176,8 @@ def test():
                            current_shadow=settings["shadow"],
                            current_mode=settings["mode"],
                            current_image_id=settings["image_id"],
-                           uploads=uploads)
+                           uploads=uploads,
+                           busy=busy)
 
 
 @bp.route('/reset', methods=['GET'])

@@ -1,3 +1,4 @@
+'''
 from doctest import debug
 import logging
 from typing import Any
@@ -30,3 +31,4 @@ def redis_set(busy:int):
     r.set('busy', 0 if busy == 0 else 1)
 
     return redirect(url_for('clockpi.test'))
+'''
