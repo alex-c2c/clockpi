@@ -203,7 +203,7 @@ def refresh():
     file_path:str = ""
 
     if len(hash) > 0:
-        file_path:str = os.path.join(DIR_UPLOAD, f"{hash}.bmp")
+        file_path:str = os.path.join(current_app.instance_path, DIR_UPLOAD, f"{hash}.bmp")
         if not os.path.isfile(file_path):
             file_path = ""
 
