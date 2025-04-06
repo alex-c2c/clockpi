@@ -199,10 +199,10 @@ def draw_grids(draw:ImageDraw, epd) -> None:
 
 def update_epd_busy(busy:bool) -> None:
     logging.debug(f"Settings EPD {busy=}")
-    r.set('epd_busy', 1 if busy else 0)
+    r.set('epd_busy', "1" if busy else "0")
     
 def get_epd_busy() -> bool:
-    busy:bool = True if r.get('epd_busy') == 1 else False
+    busy:bool = True if r.get('epd_busy') == "1" else False
     logging.debug(f"Getting EPD {busy=}")
     return busy
 
