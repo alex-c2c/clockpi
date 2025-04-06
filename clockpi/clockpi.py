@@ -35,13 +35,6 @@ ALLOWED_EXTENSIONS : set[str] = ('png', 'jpg', 'jpeg', 'bmp')
 DIR_UPLOAD:str = "upload"
 DIR_PROCESSED:str = "processed"
 
-'''
-draw_grids:bool = False
-current_image_id:int = 0
-current_mode:int = TimeMode.SECT_4_BOTTOM_LEFT
-current_color:int = COLOR_WHITE
-current_shadow:int = COLOR_BLACK
-'''
 
 def allowed_file(filename) -> bool:
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS

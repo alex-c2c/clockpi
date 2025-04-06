@@ -5,8 +5,11 @@ import tempfile
 from PIL import Image, ImageDraw, ImageFont
 from PIL.ImageFont import FreeTypeFont
 from enum import Enum
+from redis import Redis
 
 logging.basicConfig(level=logging.DEBUG)
+
+r = Redis(host='localhost', port=6379, decode_responses=True)
 
 ALLOWED_EXTENSIONS : set[str] = ('bmp')
 
@@ -195,6 +198,16 @@ def draw_grids(draw:ImageDraw, epd) -> None:
 
 
 def update_epd_busy(busy:bool) -> None:
+    logging.debug(f"Settings EPD {busy=}")
+    r.set('epd_busy', 1 if busy else 0)
+    
+def get_epd_busy() -> bool:
+    busy:bool = True if r.get('epd_busy') == 1 else False
+    logging.debug(f"Getting EPD {busy=}")
+    return busy
+
+'''
+def update_epd_busy(busy:bool) -> None:
     logging.debug(f"Setting EPD {busy=}")
     with open (TMP_FILE_PATH, 'wb') as f:
         f.write(b'1' if busy else b'0')
@@ -216,7 +229,7 @@ def get_epd_busy() -> bool:
 
     logging.debug(f"Getting EPD {busy=}")
     return busy
-
+'''
 
 def clear_display() -> int:
     logging.debug(f"Attempting to clear display")
