@@ -43,23 +43,6 @@ def init_db_command():
     click.echo('Initialized the database.')
     
 
-def update_epd_busy(busy:bool) -> None:
-    db = get_db()
-    db.execute(
-        'UPDATE epd SET busy = ? WHERE id = 0',
-        (1 if busy else 0)
-    )
-    db.commit()
-    
-
-def get_epd_busy() -> bool:
-    db = get_db()
-    col = db.execute(
-        'SELECT * FROM epd where id = 0'
-    ).fetchone()
-    return True if col['busy'] == 1 else False
-
-
 def get_settings():
     db = get_db()
     settings = db.execute(

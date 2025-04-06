@@ -12,9 +12,9 @@ from werkzeug import Response
 from werkzeug.exceptions import abort
 from werkzeug.utils import secure_filename
 from clockpi.auth import login_required
-from clockpi.db import get_db, get_epd_busy, add_upload, get_upload, get_uploads, get_settings, update_settings, update_settings_image, update_settings_mode, update_settings_color, update_settings_shadow, update_settings_draw_grids
+from clockpi.db import get_db, add_upload, get_upload, get_uploads, get_settings, update_settings, update_settings_image, update_settings_mode, update_settings_color, update_settings_shadow, update_settings_draw_grids
 from clockpi.image import procsess_image, validate_image
-from clockpi.epd import clear_display, draw_image_with_time, TimeMode, COLOR_NONE, COLOR_BLACK, COLOR_WHITE, COLOR_YELLOW, COLOR_RED, COLOR_BLUE, COLOR_GREEN
+from clockpi.epd import TimeMode, COLOR_NONE, COLOR_BLACK, COLOR_WHITE, COLOR_YELLOW, COLOR_RED, COLOR_BLUE, COLOR_GREEN
 
 bp = Blueprint('clockpi', __name__)
 logging.basicConfig(level=logging.DEBUG)
@@ -35,12 +35,13 @@ ALLOWED_EXTENSIONS : set[str] = ('png', 'jpg', 'jpeg', 'bmp')
 DIR_UPLOAD:str = "upload"
 DIR_PROCESSED:str = "processed"
 
+'''
 draw_grids:bool = False
 current_image_id:int = 0
 current_mode:int = TimeMode.SECT_4_BOTTOM_LEFT
 current_color:int = COLOR_WHITE
 current_shadow:int = COLOR_BLACK
-
+'''
 
 def allowed_file(filename) -> bool:
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -170,9 +171,6 @@ def test():
     
     # Get all uploads
     uploads = get_uploads()
-
-    # Get EPD Busy    
-    busy:bool = get_epd_busy()
     
     return render_template('clockpi/test.html',
                            draw_grids=settings["draw_grids"],
@@ -180,15 +178,19 @@ def test():
                            current_shadow=settings["shadow"],
                            current_mode=settings["mode"],
                            current_image_id=settings["image_id"],
-                           uploads=uploads,
-                           epd_busy=busy)
+                           uploads=uploads)
+
+
+@bp.route('/reset', methods=['GET'])
+def reset():
+    # Update DB
+    update_settings(0, TimeMode.OFF.value, COLOR_WHITE, COLOR_BLACK, False)
+    
+    return redirect(location=url_for('clockpi.test'))
 
 
 @bp.route('/clear', methods=['GET'])
 def clear():
-    # Update DB
-    update_settings(0, TimeMode.OFF.value, COLOR_WHITE, COLOR_BLACK, False)
-        
     cmds:list[str] = ["python", "clockpi/epd.py"]
     cmds.append("-o")
         
@@ -369,17 +371,20 @@ def set_shadow():
 @bp.route('/select/<int:id>', methods=['GET'])
 def select(id:int):
     if request.method == 'GET':
-        
-        # Get Upload with ID
-        upload = get_upload(id)
-        if upload is None:
-            flash(f"Selected invalid {id=}")
-            return redirect(location=url_for('clockpi.test'))
+        logging.debug(f"/select {id=}")
 
-        # Update DB
-        update_settings_image(upload['id'])
-        
-        logging.debug(f"/select {current_image_id=}")
+        if id == 0:
+            # Update DB
+            update_settings_image(0)
+        else:
+            # Get Upload with ID
+            upload = get_upload(id)
+            if upload is None:
+                flash(f"Selected invalid {id=}")
+                return redirect(location=url_for('clockpi.test'))
+
+            # Update DB
+            update_settings_image(upload['id'])
         
     return redirect(url_for('clockpi.test'))
     

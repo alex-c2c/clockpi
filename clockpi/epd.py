@@ -5,7 +5,6 @@ import tempfile
 from PIL import Image, ImageDraw, ImageFont
 from PIL.ImageFont import FreeTypeFont
 from enum import Enum
-from clockpi.db import get_epd_busy, update_epd_busy
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -195,8 +194,7 @@ def draw_grids(draw:ImageDraw, epd) -> None:
     draw.line((0, 240, 800, 240), epd.RED, 1)
 
 
-'''
-def set_epd_busy(busy:bool) -> None:
+def update_epd_busy(busy:bool) -> None:
     logging.debug(f"Setting EPD {busy=}")
     with open (TMP_FILE_PATH, 'wb') as f:
         f.write(b'1' if busy else b'0')
@@ -218,7 +216,6 @@ def get_epd_busy() -> bool:
 
     logging.debug(f"Getting EPD {busy=}")
     return busy
-'''
 
 
 def clear_display() -> int:
@@ -249,7 +246,7 @@ def clear_display() -> int:
         
     except IOError as e:
         logging.error(e)
-        set_epd_busy(False)
+        update_epd_busy(False)
         return RETURN_CODE_EXCEPTION
 
 
@@ -304,7 +301,7 @@ def draw_time(time:str, mode:TimeMode = TimeMode.FULL_3, color:int = COLOR_BLACK
         return RETURN_CODE_SUCCESS
             
     except IOError as e:
-        set_epd_busy(False)
+        update_epd_busy(False)
         logging.error(e)
         return RETURN_CODE_EXCEPTION
     
@@ -361,7 +358,7 @@ def draw_image_with_time(file_path:str, time:str, mode:TimeMode = TimeMode.FULL_
         return RETURN_CODE_SUCCESS
             
     except IOError as e:
-        set_epd_busy(False)
+        update_epd_busy(False)
         logging.error(e)
         return RETURN_CODE_EXCEPTION
     

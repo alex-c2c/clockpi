@@ -51,11 +51,32 @@
     </div>
   </div>
   
+  <!-- Reset Settings -->
+  <div style="padding-top: 10px">
+    <label>Reset Settings?</label>
+    <div class="section_outline">
+      <div style="padding: 10px 0px 0px 20px">
+        <form method="get" action="/reset">
+          <input type="submit" value="Reset">
+        </form>
+      </div>
+    </div>
+  </div>
+  
   <!-- UPLOADS -->
   <div style="padding-top: 10px">
     <label>Uploads</label>
     <div class="section_outline">
       <div style="padding: 10px 0px 0px 20px">
+        <form method="get" action="/select/0">
+          <div>
+              {% if 0 == current_image_id %}
+              <button href="/select/0" style="padding-left: 10px" disabled>Clear Selection</button>
+              {% else %}
+              <button href="/select/0" style="padding-left: 10px">Clear Selection</button>
+              {% endif %}
+          </div>
+        </form>
         {% for upload in uploads%}
         <form method="get" action="/select/{{upload.id}}">
           <div>

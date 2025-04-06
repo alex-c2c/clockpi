@@ -10,13 +10,6 @@ CREATE TABLE user (
   password TEXT NOT NULL
 );
 
-CREATE TABLE epd (
-  id INTEGER PRIMARY KEY CHECK (id = 0),
-  busy BOOLEAN NOT NULL
-);
-
-INSERT INTO epd (id, busy) VALUES (0, 0);
-
 CREATE TABLE settings (
   id INTEGER PRIMARY KEY CHECK (id = 0),
   image_id INTEGER NOT NULL,
