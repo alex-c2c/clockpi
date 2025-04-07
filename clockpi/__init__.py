@@ -1,3 +1,4 @@
+import logging
 import os
 import tempfile
 
@@ -5,6 +6,7 @@ from . import db, auth, clockpi
 from flask import Flask
 from celery import Celery, Task
 from flask_redis import FlaskRedis
+from clockpi.logic import redis_event_handler
 
 
 def celery_init_app(app: Flask) -> Celery:
@@ -30,8 +32,9 @@ def redis_init_app(app: Flask) -> FlaskRedis:
     rc.set("epd_busy", "0")
     
     rp = rc.pubsub()
-    rp.subscribe("epd")
-    
+    rp.psubscribe(**{'epd': redis_event_handler})
+    rp.run_in_thread(sleep_time=0.5)
+
     app.extensions["redis"] = rc
     app.extensions["redis-sub"] = rp
     

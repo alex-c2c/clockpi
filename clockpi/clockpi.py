@@ -10,6 +10,7 @@ from clockpi.auth import login_required
 from clockpi.db import get_db, add_upload, get_upload, get_uploads
 from clockpi.image import procsess_image, validate_image
 from clockpi.consts import *
+from clockpi.logic import get_epd_busy
 
 
 bp = Blueprint('clockpi', __name__)
@@ -139,12 +140,12 @@ def upload_file():
 def test():
     # Get settings from Redis
     rc = current_app.extensions['redis']
-    epd_busy:bool = True if rc.get('epd_busy') == "1" else False
     draw_grids:bool = True if rc.get('draw_grids') == "1" else False
     mode:int = int(rc.get('mode'))
     color:int = int(rc.get('color'))
     shadow:int = int(rc.get('shadow'))
     image_id:int = int(rc.get('image_id'))
+    epd_busy:bool = get_epd_busy()
 
     # Get all uploads
     uploads = get_uploads()
@@ -182,7 +183,7 @@ def clear():
 
 
 @bp.route('/refresh', methods=['GET'])
-def refresh():    
+def refresh():
     # Get settings
     rc = current_app.extensions["redis"]
     current_image_id:int = int(rc.get("image_id"))
