@@ -6,6 +6,7 @@ from flask import Flask
 from flask_redis import FlaskRedis
 from clockpi.consts import *
 
+
 redis_client: FlaskRedis | None = None
 redis_pubsub: Any | None = None
 redis_thread: Thread | None = None
@@ -23,15 +24,15 @@ def redis_init_app(app: Flask) -> FlaskRedis:
     global redis_pubsub
     redis_pubsub = redis_client.pubsub()
     redis_pubsub.subscribe(**{f"{CHANNEL_CLOCKPI}": event_handler})
-
-    global redis_thread
-    redis_thread = redis_pubsub.run_in_thread(
+    redis_pubsub.run_in_thread(
         sleep_time=1, exception_handler=exception_handler
     )
-    redis_thread.name = "redis pubsub thread"
 
-    app.extensions["redis"] = redis_client
-    app.extensions["redis_pubsub"] = redis_pubsub
+    #global redis_thread
+    #redis_thread = redis_pubsub.run_in_thread(
+    #    sleep_time=1, exception_handler=exception_handler
+    #)
+    #redis_thread.name = "redis pubsub thread"
 
     return redis_client
 
