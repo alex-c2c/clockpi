@@ -15,11 +15,12 @@ redis_thread: Thread | None = None
 def redis_init_app(app: Flask) -> FlaskRedis:
     global redis_client
     redis_client = FlaskRedis(app, decode_responses=True)
-    redis_client.set("image_id", "0")
-    redis_client.set("mode", "22")
-    redis_client.set("color", "2")
-    redis_client.set("shadow", "1")
-    redis_client.set("draw_grids", "0")
+    redis_client.set(SETTINGS_EPD_BUSY, "0")
+    redis_client.set(SETTINGS_IMAGE_ID, "0")
+    redis_client.set(SETTINGS_MODE, "22")
+    redis_client.set(SETTINGS_COLOR, "2")
+    redis_client.set(SETTINGS_SHADOW, "1")
+    redis_client.set(SETTINGS_DRAW_GRIDS, "0")
 
     global redis_pubsub
     redis_pubsub = redis_client.pubsub(ignore_subscribe_messages=True)
@@ -37,14 +38,13 @@ def redis_init_app(app: Flask) -> FlaskRedis:
 def event_handler(msg) -> None:
     logging.debug(msg=f"event_handler {msg=}")
 
-    if msg["type"] != "message" or msg["channel"] != CHANNEL_CLOCKPI:
+    if msg["type"] != "message" or msg["channel"] != CHANNEL_CLOCKPI or len(msg["data"]) == 0:
         return
 
     data: list[str] = msg["data"].split("^")
-    if len(data) != 2 or data[0] != "busy":
-        return
-
-    set_epd_busy(data[1])
+    if data[0] == MSG_BUSY:
+        # get notification from epd-pi that epd_busy has been updated
+        ...
 
 
 def exception_handler(ex, pubsub, thread):
@@ -59,7 +59,7 @@ def publish_epdpi_draw(file_path: str, time: str) -> None:
     _, mode, color, shadow, draw_grids = get_clockpi_settings()
 
     redis_client.publish(
-        "epdpi",
+        CHANNEL_EPDPI,
         f"{MSG_DRAW}^{file_path}^{time}^{mode}^{color}^{shadow}^{'1' if draw_grids else '0'}",
     )
 
@@ -86,60 +86,49 @@ def redis_set(key: str, value: str) -> None:
 def get_clockpi_settings() -> tuple[int, int, int, int, bool]:
     global redis_client
 
-    image_id: int = int(redis_get("image_id", "0"))
-    mode: int = int(redis_get("mode", "22"))
-    color: int = int(redis_get("color", "2"))
-    shadow: int = int(redis_get("shadow", "1"))
-    draw_grids: bool = True if redis_get("draw_grids", "0") == "1" else False
+    image_id: int = int(redis_get(SETTINGS_IMAGE_ID, "0"))
+    mode: int = int(redis_get(SETTINGS_MODE, "22"))
+    color: int = int(redis_get(SETTINGS_COLOR, "2"))
+    shadow: int = int(redis_get(SETTINGS_SHADOW, "1"))
+    draw_grids: bool = True if redis_get(SETTINGS_DRAW_GRIDS, "0") == "1" else False
 
     return image_id, mode, color, shadow, draw_grids
 
 
 def get_clockpi_image_id() -> int:
-    return int(redis_get("image_id", "0"))
+    return int(redis_get(SETTINGS_IMAGE_ID, "0"))
 
 
 def set_clockpi_defaults() -> None:
     logging.debug(f"set_clockpi_defaults")
 
-    redis_set("image_id", "0")
-    redis_set("mode", "22")
-    redis_set("color", "2")
-    redis_set("shadow", "1")
-    redis_set("draw_grids", "0")
+    redis_set(SETTINGS_IMAGE_ID, "0")
+    redis_set(SETTINGS_MODE, "22")
+    redis_set(SETTINGS_COLOR, "2")
+    redis_set(SETTINGS_SHADOW, "1")
+    redis_set(SETTINGS_DRAW_GRIDS, "0")
 
 
 def set_clockpi_image_id(id: int) -> None:
-    redis_set("image_id", str(id))
+    redis_set(SETTINGS_IMAGE_ID, str(id))
 
 
 def set_clockpi_mode(mode: int) -> None:
-    redis_set("mode", str(mode))
+    redis_set(SETTINGS_MODE, str(mode))
 
 
 def set_clockpi_color(color: int) -> None:
-    redis_set("color", str(color))
+    redis_set(SETTINGS_COLOR, str(color))
 
 
 def set_clockpi_shadow(shadow: int) -> None:
-    redis_set("shadow", str(shadow))
+    redis_set(SETTINGS_SHADOW, str(shadow))
 
 
 def set_clockpi_draw_grids(draw_grids: bool) -> None:
-    redis_set("draw_grids", "1" if draw_grids else "0")
-
-
-def set_epd_busy(busy: str) -> None:
-    logging.debug(f"update_epd_busy {busy=}")
-    set_epd_busy(True if busy == "1" else False)
-
-
-def set_epd_busy(busy: bool) -> None:
-    logging.debug(f"update_epd_busy {busy=}")
-    redis_set("epd_busy", "1" if busy else "0")
+    redis_set(SETTINGS_DRAW_GRIDS, "1" if draw_grids else "0")
 
 
 def get_epd_busy() -> bool:
-    global redis_client
-    busy: bool = True if redis_get("epd_busy", "0") == "1" else False
+    busy: bool = True if redis_get(SETTINGS_EPD_BUSY, "0") == "1" else False
     return busy
