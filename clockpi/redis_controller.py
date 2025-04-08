@@ -22,11 +22,13 @@ def redis_init_app(app: Flask) -> FlaskRedis:
     redis_client.set("draw_grids", "0")
 
     global redis_pubsub
-    redis_pubsub = redis_client.pubsub()
+    redis_pubsub = redis_client.pubsub(ignore_subscribe_messages=True)
     redis_pubsub.subscribe(**{f"{CHANNEL_CLOCKPI}": event_handler})
 
-    #global redis_thread
-    redis_thread = redis_pubsub.run_in_thread(sleep_time=1, exception_handler=exception_handler)
+    # global redis_thread
+    redis_thread = redis_pubsub.run_in_thread(
+        sleep_time=0.1, exception_handler=exception_handler
+    )
     redis_thread.name = "redis pubsub thread"
 
     return redis_client
@@ -43,7 +45,7 @@ def event_handler(msg) -> None:
         return
 
     set_epd_busy(data[1])
-    
+
 
 def exception_handler(ex, pubsub, thread):
     thread.stop()
