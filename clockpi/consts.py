@@ -1,5 +1,12 @@
 from enum import Enum
 
+# Redis
+CHANNEL_CLOCKPI: str = "clockpi"
+CHANNEL_EPDPI: str = "epdpi"
+MSG_CLEAR: str = "clear"
+MSG_DRAW: str = "draw"
+
+
 # E-Paper Display Width
 EPD_WIDTH: int = 800
 

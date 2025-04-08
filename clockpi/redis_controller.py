@@ -4,17 +4,11 @@ from threading import Thread
 from typing import Any
 from flask import Flask
 from flask_redis import FlaskRedis
-
+from clockpi.consts import *
 
 redis_client: FlaskRedis | None = None
 redis_pubsub: Any | None = None
 redis_thread: Thread | None = None
-
-
-CHANNEL_CLOCKPI: str = "clockpi"
-CHANNEL_EPDPI: str = "epdpi"
-MSG_CLEAR: str = "clear"
-MSG_DRAW: str = "draw"
 
 
 def redis_init_app(app: Flask) -> FlaskRedis:
