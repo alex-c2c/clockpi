@@ -63,7 +63,7 @@ def publish_epdpi_draw(file_path: str, time: str) -> None:
 
     redis_client.publish(
         "epdpi",
-        f"{MSG_DRAW}^{file_path}^{time}^{mode}^{color}^{shadow}^{"1" if draw_grids else "0"}",
+        f"{MSG_DRAW}^{file_path}^{time}^{mode}^{color}^{shadow}^{'1' if draw_grids else '0'}",
     )
 
 
