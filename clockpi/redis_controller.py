@@ -45,6 +45,10 @@ def event_handler(msg) -> None:
     if data[0] == MSG_BUSY:
         # get notification from epd-pi that epd_busy has been updated
         ...
+    
+    elif data[0] == MSG_RESULT:
+        # get notification from epd-pi that changes to the display has finished
+        ...
 
 
 def exception_handler(ex, pubsub, thread):
