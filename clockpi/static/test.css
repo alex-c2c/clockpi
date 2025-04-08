@@ -1,106 +1,106 @@
 .section_outline {
-    width: 800px;
-    border: 4px solid black;
+  width: 800px;
+  border: 4px solid black;
 }
 
 .nine_section_div {
-    width: 800px;
-    height: 480px;
-    border: 4px solid black;
+  width: 800px;
+  height: 480px;
+  border: 4px solid black;
 }
 
 .nine_section_div div {
-    width: 266.6px;
-    height: 160px;
-    outline: 1px solid black;
-    float: left;
-    display: flex;
-    justify-content: center;
+  width: 266.6px;
+  height: 160px;
+  outline: 1px solid black;
+  float: left;
+  display: flex;
+  justify-content: center;
 }
 
 .nine_section_div div input {
-    width: 200px;
-    height: 100px;
-    margin-top: 30px;
-    vertical-align: middle;
+  width: 200px;
+  height: 100px;
+  margin-top: 30px;
+  vertical-align: middle;
 }
 
 .six_section_div {
-    width: 800px;
-    height: 480px;
-    border: 4px solid black;
+  width: 800px;
+  height: 480px;
+  border: 4px solid black;
 }
 
 .six_section_div div {
-    width: 400px;
-    height: 160px;
-    outline: 1px solid black;
-    float: left;
-    display: flex;
-    justify-content: center;
+  width: 400px;
+  height: 160px;
+  outline: 1px solid black;
+  float: left;
+  display: flex;
+  justify-content: center;
 }
 
 .six_section_div div input {
-    width: 300px;
-    height: 100px;
-    margin-top: 35px;
-    vertical-align: middle;
+  width: 300px;
+  height: 100px;
+  margin-top: 35px;
+  vertical-align: middle;
 }
 
 .four_section_div {
-    width: 800px;
-    height: 480px;
-    border: 4px solid black;
+  width: 800px;
+  height: 480px;
+  border: 4px solid black;
 }
 
 .four_section_div div {
-    width: 400px;
-    height: 240px;
-    outline: 1px solid black;
-    float: left;
-    display: flex;
-    justify-content: center;
+  width: 400px;
+  height: 240px;
+  outline: 1px solid black;
+  float: left;
+  display: flex;
+  justify-content: center;
 }
 
 .four_section_div div input {
-    width: 300px;
-    height: 140px;
-    margin-top: 50px;
-    vertical-align: middle;
+  width: 300px;
+  height: 140px;
+  margin-top: 50px;
+  vertical-align: middle;
 }
 
 .full_div {
-    width: 800px;
-    height: 480px;
-    border: 4px solid black;
+  width: 800px;
+  height: 480px;
+  border: 4px solid black;
 }
 
 .full_div div {
-    width: 800px;
-    height: 480px;
-    float: left;
-    display: flex;
-    justify-content: center;
+  width: 800px;
+  height: 480px;
+  float: left;
+  display: flex;
+  justify-content: center;
 }
 
 .full_div_button_1 {
-    width: 400px;
-    height: 200px;
-    margin-top: 140px;
+  width: 400px;
+  height: 200px;
+  margin-top: 140px;
 }
 
 .full_div_button_2 {
-    width: 500px;
-    height: 250px;
-    margin-top: 125px;
+  width: 500px;
+  height: 250px;
+  margin-top: 125px;
 }
 
 .full_div_button_3 {
-    width: 600px;
-    height: 300px;
-    margin-top: 90px;
+  width: 600px;
+  height: 300px;
+  margin-top: 90px;
 }
 
 .selected_btn {
-    background-color: green;
+  background-color: green;
 }
