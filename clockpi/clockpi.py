@@ -15,28 +15,20 @@ from flask import (
     send_from_directory,
 )
 from werkzeug import Response
-from werkzeug.utils import secure_filename
 from clockpi.auth import login_required
 from clockpi.db import get_db, add_upload, get_upload, get_uploads
-from clockpi.image import procsess_image, validate_image
 from clockpi.consts import *
 from clockpi.redis_controller import (
-    get_clockpi_image_id,
-    get_clockpi_settings,
-    get_epd_busy,
-    publish_epdpi_clear,
-    publish_epdpi_draw,
-    set_clockpi_color,
-    set_clockpi_image_id,
-    set_clockpi_shadow,
-    set_clockpi_defaults,
-    set_clockpi_draw_grids,
-    set_clockpi_mode,
+    get_settings,
+    rset,
+    rget,
+    reset_settings,
 )
+from clockpi.logic import epd_update, epd_clear, process_uploaded_file
 
 
 bp = Blueprint("clockpi", __name__)
-logging.basicConfig(level=logging.DEBUG)
+LOGGER = logging.getLogger(name="clockpi")
 
 
 def allowed_file(filename) -> bool:
@@ -58,110 +50,25 @@ def index():
 
 
 @bp.route("/upload", methods=["POST"])
-def upload_file():
-    if request.method == "POST":
-        # check if the post request has the file part
-        if "file" not in request.files:
-            flash("No file part")
-            return redirect(url_for("clockpi.test"))
-
+def upload():
+    if request.method == "POST" and "file" in request.files:
         file = request.files["file"]
-
-        # If the user does not select a file, the browser submits an
-        # empty file without a filename.
-        if file.filename == "":
+        result: int = process_uploaded_file(file)
+                
+        if result == ERR_UPLOAD_NO_FILE:
             flash("No selected file")
-            return redirect(url_for("clockpi.test"))
-
-        if file and allowed_file(file.filename):
-            # secure file name
-            filename = secure_filename(file.filename)
-
-            # save file to temp dir
-            # TODO: improve location of "uploaded" files so that it doesn't get
-            # overwritten by someone else uploading the files with same file name at the same time
-            if not os.path.isdir(current_app.config["DIR_TMP_UPLOAD"]):
-                os.mkdir(current_app.config["DIR_TMP_UPLOAD"])
-            temp_path: str = os.path.join(
-                current_app.config["DIR_TMP_UPLOAD"], filename
-            )
-            file.save(temp_path)
-
-            # validate image
-            if not validate_image(temp_path):
-                flash("Uploaded invalid image file")
-                os.remove(temp_path)
-                return redirect(url_for("clockpi.test"))
-
-            # process image
-            if not os.path.isdir(current_app.config["DIR_TMP_PROCESSED"]):
-                os.mkdir(current_app.config["DIR_TMP_PROCESSED"])
-
-            processed_path: str = os.path.join(
-                current_app.config["DIR_TMP_PROCESSED"], filename
-            )
-            process_result: bool = procsess_image(
-                temp_path, processed_path, EPD_WIDTH, EPD_HEIGHT, EPD_NC
-            )
-
-            if not process_result:
-                flash("Unable to post process uploaded image")
-                if os.path.isfile(temp_path):
-                    os.remove(temp_path)
-                if os.path.isfile(processed_path):
-                    os.remove(processed_path)
-                return redirect(url_for("clockpi.test"))
-
-            # get hash of processed image
-            try:
-                h = hashlib.sha256()
-                with open(processed_path, "rb") as f:
-                    while True:
-                        chunk = f.read(h.block_size)
-                        if not chunk:
-                            break
-                        h.update(chunk)
-                hash: str = h.hexdigest()
-
-            except OSError as error:
-                flash("Unable to get hash of processed file")
-                if os.path.isfile(temp_path):
-                    os.remove(temp_path)
-                if os.path.isfile(processed_path):
-                    os.remove(processed_path)
-                return redirect(url_for("clockpi.test"))
-
-            # copy processed image to upload dir
-            try:
-                hashname: str = f"{hash}.bmp"
-                dest_path: str = os.path.join(
-                    current_app.config["DIR_APP_UPLOAD"], hashname
-                )
-                shutil.copy2(processed_path, dest_path)
-                os.remove(processed_path)
-
-            except OSError as error:
-                flash("Unable to copy file")
-                if os.path.isfile(temp_path):
-                    os.remove(temp_path)
-                if os.path.isfile(processed_path):
-                    os.remove(processed_path)
-                return redirect(url_for("clockpi.test"))
-
-            # Save upload entry to DB
-            try:
-                filename_no_ext: str = filename.rsplit(".", 1)[0]
-                filesize: int = os.path.getsize(dest_path)
-
-                # Insert to DB
-                add_upload(filename_no_ext, hash, filesize)
-
-            except OSError as error:
-                flash("Unable to save entry of upload")
-                return redirect(url_for("clockpi.test"))
-
-            # return redirect(url_for('clockpi.index'))
-            return redirect(url_for("clockpi.test"))
+        elif result == ERR_UPLOAD_INVALID_EXT:
+            flash("Uploaded image file with invalid extension")
+        elif result == ERR_UPLOAD_INVALID_IMAGE:
+            flash("Uploaded invalid image file")
+        elif result == ERR_UPLOAD_POST_PROC:
+            flash("Unable to post process uploaded image")
+        elif result == ERR_UPLOAD_HASH:
+            flash("Unable to get hash of processed file")
+        elif result == ERR_UPLOAD_COPY:
+            flash("Unable to copy file")
+        elif result == ERR_UPLOAD_SAVE:
+            flash("Unable to save entry of upload")
 
     return redirect(url_for("clockpi.test"))
 
@@ -169,8 +76,8 @@ def upload_file():
 @bp.route("/test", methods=["GET"])
 def test():
     # Get settings from Redis
-    image_id, mode, color, shadow, draw_grids = get_clockpi_settings()
-    epd_busy: bool = get_epd_busy()
+    image_id, mode, color, shadow, draw_grids = get_settings()
+    epd_busy: bool = False if rget(SETTINGS_EPD_BUSY, "0") == "0" else True
 
     # Get all uploads
     uploads = get_uploads()
@@ -190,37 +97,21 @@ def test():
 @bp.route("/reset", methods=["GET"])
 def reset():
     # Reset clockpi redis settings
-    set_clockpi_defaults()
+    reset_settings()
 
     return redirect(location=url_for("clockpi.test"))
 
 
 @bp.route("/clear", methods=["GET"])
 def clear():
-    # Redis Publish
-    publish_epdpi_clear()
+    epd_clear()
 
     return redirect(location=url_for("clockpi.test"))
 
 
 @bp.route("/refresh", methods=["GET"])
 def refresh():
-    # Get settings
-    image_id: int = get_clockpi_image_id()
-    upload = get_upload(image_id)
-    hash: str = upload["hash"] if upload is not None else ""
-    file_path: str = ""
-
-    if len(hash) > 0:
-        file_path: str = os.path.join(
-            current_app.config["DIR_APP_UPLOAD"], f"{hash}.bmp"
-        )
-        if not os.path.isfile(file_path):
-            file_path = ""
-
-    time: str = f"{datetime.now().hour:02d}:{datetime.now().minute:02d}"
-
-    publish_epdpi_draw(file_path, time)
+    epd_update()
 
     return redirect(location=url_for("clockpi.test"))
 
@@ -231,7 +122,7 @@ def set_draw_grids():
         draw_grids: bool = request.form.get("draw_grids", "") == "true"
 
         # Update Redis
-        set_clockpi_draw_grids(draw_grids)
+        rset(SETTINGS_DRAW_GRIDS, "1" if draw_grids else "0")
 
     return redirect(url_for("clockpi.test"))
 
@@ -288,7 +179,7 @@ def set_mode():
             mode = TimeMode.FULL_3
 
         # Update Redis
-        set_clockpi_mode(mode.value)
+        rset(SETTINGS_MODE, str(mode.value))
 
     return redirect(url_for("clockpi.test"))
 
@@ -312,7 +203,7 @@ def set_color():
             color = COLOR_GREEN
 
         # Update Redis
-        set_clockpi_color(color)
+        rset(SETTINGS_COLOR, str(color))
 
     return redirect(url_for("clockpi.test"))
 
@@ -336,7 +227,7 @@ def set_shadow():
             shadow = COLOR_GREEN
 
         # Update Redis
-        set_clockpi_shadow(shadow)
+        rset(SETTINGS_SHADOW, str(shadow))
 
     return redirect(url_for("clockpi.test"))
 
@@ -346,7 +237,7 @@ def select(id: int):
     if request.method == "GET":
         if id == 0:
             # Update Redis
-            set_clockpi_image_id(0)
+            rset(SETTINGS_IMAGE_ID, "0")
 
         else:
             # Get Upload with ID
@@ -356,7 +247,7 @@ def select(id: int):
                 return redirect(location=url_for("clockpi.test"))
 
             # Update Redis
-            set_clockpi_image_id(id)
+            rset(SETTINGS_IMAGE_ID, str(id))
 
     return redirect(url_for("clockpi.test"))
 

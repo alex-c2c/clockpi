@@ -70,3 +70,12 @@ class TimeMode(Enum):
     FULL_2 = 21  # Medium
     FULL_3 = 22  # Large
     MAX = FULL_3 + 1
+
+# Exceptions
+ERR_UPLOAD_NO_FILE = -1
+ERR_UPLOAD_INVALID_EXT = -2
+ERR_UPLOAD_INVALID_IMAGE = -3
+ERR_UPLOAD_POST_PROC = -4
+ERR_UPLOAD_HASH = -5
+ERR_UPLOAD_COPY = -6
+ERR_UPLOAD_SAVE = -7

@@ -1,25 +1,47 @@
+import atexit
 import os
 import tempfile
 import logging
 
-from flask import Flask
-from celery import Celery, Task
+from flask import Flask, current_app
+from flask_apscheduler import APScheduler
 
 from . import db, auth, clockpi
-from clockpi.redis_controller import redis_init_app
+from clockpi.redis_controller import init_app as redis_init_app
+from clockpi.logic import epd_update
+
+LOGGER = logging.getLogger(name="__init__")
+
+scheduler = APScheduler()
+
+"""
+@scheduler.task("interval", id="test_job", seconds=5)
+def test_job() -> None:
+    print("test_job")
+"""
 
 
-def celery_init_app(app: Flask) -> Celery:
-    class FlaskTask(Task):
-        def __call__(self, *args: object, **kwargs: object) -> object:
-            with app.app_context():
-                return self.run(*args, **kwargs)
+@scheduler.task("cron", id="update_clock", minute="*")
+def update_clock() -> None:
+    with scheduler.app.app_context():
+        epd_update()
 
-    celery_app = Celery(app.name, task_cls=FlaskTask)
-    celery_app.config_from_object(app.config["CELERY"])
-    celery_app.set_default()
-    app.extensions["celery"] = celery_app
-    return celery_app
+
+@scheduler.task("cron", id="update_image", hour="*")
+def update_image() -> None:
+    with scheduler.app.app_context():
+        pass
+
+
+def on_app_exit() -> None:
+    LOGGER.info(f"on_app_exit")
+    from clockpi.redis_controller import redis_client, redis_thread
+
+    redis_thread.stop()
+    redis_thread.join(timeout=1.0)
+
+    redis_pubsub = redis_client.pubsub()
+    redis_pubsub.close()
 
 
 def create_app(test_config=None):
@@ -34,6 +56,7 @@ def create_app(test_config=None):
             result_backend="redis://localhost",
             task_ignore_result=True,
         ),
+        SCHEDULER_API_ENABLED=True,
         DIR_APP_UPLOAD=os.path.join(os.path.dirname(app.instance_path), "upload"),
         DIR_TMP_UPLOAD=os.path.join(tempfile.gettempdir(), "upload"),
         DIR_TMP_PROCESSED=os.path.join(tempfile.gettempdir(), "processed"),
@@ -41,9 +64,6 @@ def create_app(test_config=None):
 
     # Create Redis app
     redis_init_app(app)
-
-    # Create Celery app
-    celery_init_app(app)
 
     if test_config is None:
         # load the instance config, if it exists, when not testing
@@ -62,8 +82,15 @@ def create_app(test_config=None):
 
     app.register_blueprint(auth.bp)
     app.register_blueprint(clockpi.bp)
-    # app.register_blueprint(redis.bp)
 
     app.add_url_rule("/", endpoint="index")
+
+    # Register exit callback
+    atexit.register(on_app_exit)
+
+    # Scheduler
+    global scheduler
+    scheduler.init_app(app)
+    scheduler.start()
 
     return app
