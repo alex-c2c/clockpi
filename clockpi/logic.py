@@ -1,6 +1,7 @@
 import hashlib
 import os
 import logging
+import random
 from datetime import datetime
 import shutil
 from flask import current_app
@@ -10,6 +11,7 @@ from clockpi.image import procsess_image, validate_image
 from clockpi.redis_controller import get_settings, rpublish
 from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
+
 
 LOGGER = logging.getLogger(name="logic")
 

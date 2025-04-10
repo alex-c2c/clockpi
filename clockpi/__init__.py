@@ -9,6 +9,7 @@ from flask_apscheduler import APScheduler
 from . import db, auth, clockpi
 from clockpi.redis_controller import init_app as redis_init_app
 from clockpi.logic import epd_update
+from clockpi.queue import generate_random_queue
 
 LOGGER = logging.getLogger(name="__init__")
 
@@ -92,5 +93,9 @@ def create_app(test_config=None):
     global scheduler
     scheduler.init_app(app)
     scheduler.start()
+    
+    # Generate randomized image queue
+    with app.app_context():
+        generate_random_queue()
 
     return app

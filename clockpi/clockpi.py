@@ -1,4 +1,5 @@
 import os
+import queue
 import shutil
 import hashlib
 import logging
@@ -17,6 +18,7 @@ from flask import (
 from werkzeug import Response
 from clockpi.auth import login_required
 from clockpi.db import get_db, add_image, get_image, get_images
+from clockpi.queue import get_queue, shuffle_queue
 from clockpi.consts import *
 from clockpi.redis_controller import (
     get_settings,
@@ -81,6 +83,9 @@ def test():
 
     # Get all images
     images = get_images()
+    
+    # Get Image Queue
+    image_queue: tuple[int] = get_queue()
 
     return render_template(
         "clockpi/test.html",
@@ -91,13 +96,20 @@ def test():
         current_image_id=image_id,
         images=images,
         epd_busy=epd_busy,
+        image_queue=image_queue
     )
 
 
 @bp.route("/reset", methods=["GET"])
 def reset():
-    # Reset clockpi redis settings
     reset_settings()
+
+    return redirect(location=url_for("clockpi.test"))
+
+
+@bp.route("/shuffle", methods=["GET"])
+def shuffle():
+    shuffle_queue()
 
     return redirect(location=url_for("clockpi.test"))
 
@@ -124,7 +136,19 @@ def set_draw_grids():
         # Update Redis
         rset(SETTINGS_DRAW_GRIDS, "1" if draw_grids else "0")
 
-    return redirect(url_for("clockpi.test"))
+    return redirect(url_for(endpoint="clockpi.test"))
+
+
+@bp.route("/update_image/<int:id>", methods=["POST"])
+def update_image(id: int):
+    if request.method == "POST":
+        mode: str = request.form.get("mode", "")
+        color: str = request.form.get("color", "")
+        shadow: str = request.form.get("shadow", "")
+        
+        LOGGER.debug(f"{id=} {mode=} {color=} {shadow=}")
+        
+    return redirect(url_for(endpoint="clockpi.test"))
 
 
 @bp.route("/set_mode", methods=["POST"])

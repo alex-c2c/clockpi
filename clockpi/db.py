@@ -44,18 +44,18 @@ def init_db_command():
 
 def get_images():
     db = get_db()
-    uploads = db.execute(
+    images = db.execute(
         "SELECT * FROM image ORDER BY created ASC"
     ).fetchall()
-    return uploads
+    return images
 
 
 def get_image(id: int):
     db = get_db()
-    upload = db.execute(
+    image = db.execute(
         "SELECT * FROM image WHERE id = ?", (id,)
     ).fetchone()
-    return upload
+    return image
 
 
 def add_image(name: str, hash: str, filesize: int) -> None:

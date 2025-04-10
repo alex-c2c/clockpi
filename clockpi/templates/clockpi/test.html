@@ -10,34 +10,11 @@
   <span>current_mode: {{current_mode}}</span><br>
   <span>current_color: {{current_color}}</span><br>
   <span>current_shadow: {{current_shadow}}</span><br>
-  <span>epd_busy: {{epd_busy}}</span>
+  <span>epd_busy: {{epd_busy}}</span><br>
+  <span>image_queue: {{image_queue}}</span>
 </div>
 
 <div>
-  <!-- REFRESH DISPLAY -->
-  <div style="padding-top: 10px">
-    <label>Refresh Display?</label>
-    <div class="section_outline">
-      <div style="padding: 10px 0px 0px 20px">
-        <form method="get" action="/refresh">
-          <input type="submit" value="Refresh">
-        </form>
-      </div>
-    </div>
-  </div>
-  
-  <!-- CLEAR DISPLAY -->
-  <div style="padding-top: 10px">
-    <label>Clear Display?</label>
-    <div class="section_outline">
-      <div style="padding: 10px 0px 0px 20px">
-        <form method="get" action="/clear">
-          <input type="submit" value="Clear">
-        </form>
-      </div>
-    </div>
-  </div>
-  
   <!-- UPLOAD FILE -->
   <div style="padding-top: 10px">
     <label>Upload File</label>
@@ -51,18 +28,32 @@
     </div>
   </div>
   
-  <!-- Reset Settings -->
+  <!-- REFRESH DISPLAY -->
   <div style="padding-top: 10px">
-    <label>Reset Settings?</label>
+    <label>Actions</label>
     <div class="section_outline">
       <div style="padding: 10px 0px 0px 20px">
+        <form method="post" action="/draw_grids">
+          <span>Draw grids? 
+            <input name="draw_grids" type="checkbox" value="true" {% if draw_grids == 1 %} checked=true {% endif %} onChange="this.form.submit()">
+          </span>
+        </form>
+        <form method="get" action="/refresh">
+          <input type="submit" value="Refresh">
+        </form>
+        <form method="get" action="/clear">
+          <input type="submit" value="Clear">
+        </form>
         <form method="get" action="/reset">
           <input type="submit" value="Reset">
+        </form>
+        <form method="get" action="/shuffle">
+          <input type="submit" value="Shuffle">
         </form>
       </div>
     </div>
   </div>
-  
+
   <!-- IMAGES -->
   <div style="padding-top: 10px">
     <label>Images</label>
@@ -98,15 +89,6 @@
   <div style="padding-top: 10px">
     <label>Options</label>
     <div class="section_outline">
-      <!-- DRAW GRIDS -->
-      <div style="margin-bottom:-10px; padding-left:10px">
-        <form method="post" action="/draw_grids">
-          <span>Draw grids? 
-            <input name="draw_grids" type="checkbox" value="true" {% if draw_grids == 1 %} checked=true {% endif %} onChange="this.form.submit()">
-          </span>
-        </form>
-      </div>
-        
       <!-- SET COLOR -->
       <div style="padding-left:10px">
         <form method="post" action="/set_color">
