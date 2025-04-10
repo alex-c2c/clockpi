@@ -63,9 +63,9 @@
     </div>
   </div>
   
-  <!-- UPLOADS -->
+  <!-- IMAGES -->
   <div style="padding-top: 10px">
-    <label>Uploads</label>
+    <label>Images</label>
     <div class="section_outline">
       <div style="padding: 10px 0px 0px 20px">
         <form method="get" action="/select/0">
@@ -77,15 +77,15 @@
               {% endif %}
           </div>
         </form>
-        {% for upload in uploads%}
-        <form method="get" action="/select/{{upload.id}}">
+        {% for img in images%}
+        <form method="get" action="/select/{{img.id}}">
           <div>
-              <span>ID: {{upload.id}} - {{upload.name}}</span>
-              {% if upload.id == current_image_id %}
-              <button href="/select/{{upload.id}}" style="padding-left: 10px" disabled>Select</button>
+              <span>ID: {{img.id}} - {{img.name}}</span>
+              {% if img.id == current_image_id %}
+              <button href="/select/{{img.id}}" style="padding-left: 10px" disabled>Select</button>
               <span style="padding-left: 10px">&#9989;</span>
               {% else %}
-              <button href="/select/{{upload.id}}" style="padding-left: 10px">Select</button>
+              <button href="/select/{{img.id}}" style="padding-left: 10px">Select</button>
               {% endif %}
           </div>
         </form>

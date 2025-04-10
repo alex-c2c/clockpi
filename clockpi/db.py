@@ -42,26 +42,26 @@ def init_db_command():
     click.echo("Initialized the database.")
 
 
-def get_uploads():
+def get_images():
     db = get_db()
     uploads = db.execute(
-        "SELECT id, name, hash, size, created" " FROM upload" " ORDER BY created DESC"
+        "SELECT * FROM image ORDER BY created ASC"
     ).fetchall()
     return uploads
 
 
-def get_upload(id: int):
+def get_image(id: int):
     db = get_db()
     upload = db.execute(
-        "SELECT id, name, hash, size, created" " FROM upload" " WHERE id = ?", (id,)
+        "SELECT * FROM image WHERE id = ?", (id,)
     ).fetchone()
     return upload
 
 
-def add_upload(name: str, hash: str, filesize: int) -> None:
+def add_image(name: str, hash: str, filesize: int) -> None:
     db = get_db()
     db.execute(
-        "INSERT INTO upload (name, hash, size)" " VALUES (?, ?, ?)",
+        "INSERT INTO image (name, hash, size) VALUES (?, ?, ?)",
         (name, hash, filesize),
     )
     db.commit()

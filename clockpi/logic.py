@@ -4,7 +4,7 @@ import logging
 from datetime import datetime
 import shutil
 from flask import current_app
-from clockpi.db import add_upload, get_upload
+from clockpi.db import add_image, get_image
 from clockpi.consts import *
 from clockpi.image import procsess_image, validate_image
 from clockpi.redis_controller import get_settings, rpublish
@@ -18,8 +18,8 @@ def epd_update() -> None:
     LOGGER.debug(f"epd_update")
 
     image_id, mode, color, shadow, draw_grids = get_settings()
-    upload = get_upload(image_id)
-    hash: str = upload["hash"] if upload is not None else ""
+    image = get_image(image_id)
+    hash: str = image["hash"] if image is not None else ""
     file_path: str = ""
 
     if len(hash) > 0:
@@ -127,7 +127,7 @@ def process_uploaded_file(file: FileStorage) -> int:
         filesize: int = os.path.getsize(dest_path)
 
         # Insert to DB
-        add_upload(filename_no_ext, hash, filesize)
+        add_image(filename_no_ext, hash, filesize)
 
     except OSError as error:
         return ERR_UPLOAD_SAVE

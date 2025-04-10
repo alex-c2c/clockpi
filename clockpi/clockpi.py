@@ -16,7 +16,7 @@ from flask import (
 )
 from werkzeug import Response
 from clockpi.auth import login_required
-from clockpi.db import get_db, add_upload, get_upload, get_uploads
+from clockpi.db import get_db, add_image, get_image, get_images
 from clockpi.consts import *
 from clockpi.redis_controller import (
     get_settings,
@@ -79,8 +79,8 @@ def test():
     image_id, mode, color, shadow, draw_grids = get_settings()
     epd_busy: bool = False if rget(SETTINGS_EPD_BUSY, "0") == "0" else True
 
-    # Get all uploads
-    uploads = get_uploads()
+    # Get all images
+    images = get_images()
 
     return render_template(
         "clockpi/test.html",
@@ -89,7 +89,7 @@ def test():
         current_shadow=shadow,
         current_mode=mode,
         current_image_id=image_id,
-        uploads=uploads,
+        images=images,
         epd_busy=epd_busy,
     )
 
@@ -240,8 +240,8 @@ def select(id: int):
             rset(SETTINGS_IMAGE_ID, "0")
 
         else:
-            # Get Upload with ID
-            upload = get_upload(id)
+            # Get image with ID
+            image = get_image(id)
             if upload is None:
                 flash(f"Selected invalid {id=}")
                 return redirect(location=url_for("clockpi.test"))
