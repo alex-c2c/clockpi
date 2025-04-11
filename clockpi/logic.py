@@ -1,28 +1,33 @@
 import hashlib
 import os
-import logging
-import random
 from datetime import datetime
 import shutil
 from flask import current_app
+from logging import Logger, getLogger
+from clockpi.consts import *
 from clockpi.db import add_image, get_image
 from clockpi.consts import *
 from clockpi.image import procsess_image, validate_image
-from clockpi.redis_controller import get_settings, rpublish
+from clockpi.redis_controller import rpublish, rget
+from clockpi.queue import get_queue
 from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
 
 
-LOGGER = logging.getLogger(name="logic")
+logger: Logger = getLogger(__name__)
 
 
 def epd_update() -> None:
-    LOGGER.debug(f"epd_update")
+    logger.debug(f"epd_update")
 
-    image_id, mode, color, shadow, draw_grids = get_settings()
-    image = get_image(image_id)
+    draw_grids: bool = True if rget(SETTINGS_DRAW_GRIDS, "1") == "1" else False
+    image_queue: tuple[int] = get_queue()
+
+    if len(image_queue) == 0:
+        return
+
+    image = get_image(image_queue[0])
     hash: str = image["hash"] if image is not None else ""
-    file_path: str = ""
 
     if len(hash) > 0:
         file_path: str = os.path.join(
@@ -34,12 +39,12 @@ def epd_update() -> None:
     time: str = f"{datetime.now().hour:02d}:{datetime.now().minute:02d}"
 
     rpublish(
-        f"{MSG_DRAW}^{file_path}^{time}^{mode}^{color}^{shadow}^{'1' if draw_grids else '0'}"
+        f"{MSG_DRAW}^{file_path}^{time}^{image["mode"]}^{image["color"]}^{image["shadow"]}^{'1' if draw_grids else '0'}"
     )
 
 
 def epd_clear() -> None:
-    LOGGER.debug(f"epd_clear")
+    logger.debug(f"epd_clear")
     rpublish(MSG_CLEAR)
 
 
@@ -135,3 +140,29 @@ def process_uploaded_file(file: FileStorage) -> int:
         return ERR_UPLOAD_SAVE
 
     return 0
+
+
+def convert_string_to_color(value: str) -> TextColor:
+    color: TextColor = TextColor.COLOR_NONE
+
+    if value == "black":
+        color = TextColor.COLOR_BLACK
+    elif value == "white":
+        color = TextColor.COLOR_WHITE
+    elif value == "yellow":
+        color = TextColor.COLOR_YELLOW
+    elif value == "red":
+        color = TextColor.COLOR_RED
+    elif value == "blue":
+        color = TextColor.COLOR_BLUE
+    elif value == "green":
+        color = TextColor.COLOR_GREEN
+
+    return color
+
+
+def convert_string_to_mode(value: str) -> TimeMode:
+    mode: TimeMode = TimeMode.FULL_3
+
+    if value == "":
+        mode = TimeMode.SECT_9_TOP_LEFT

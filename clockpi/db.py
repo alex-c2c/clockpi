@@ -1,9 +1,12 @@
-import logging
 import sqlite3
 from datetime import datetime
 
 import click
 from flask import current_app, g
+from logging import Logger, getLogger
+
+
+logger: Logger = getLogger(__name__)
 
 
 def init_app(app):
@@ -44,17 +47,13 @@ def init_db_command():
 
 def get_images():
     db = get_db()
-    images = db.execute(
-        "SELECT * FROM image ORDER BY created ASC"
-    ).fetchall()
+    images = db.execute("SELECT * FROM image ORDER BY created ASC").fetchall()
     return images
 
 
 def get_image(id: int):
     db = get_db()
-    image = db.execute(
-        "SELECT * FROM image WHERE id = ?", (id,)
-    ).fetchone()
+    image = db.execute("SELECT * FROM image WHERE id = ?", (id,)).fetchone()
     return image
 
 
@@ -63,6 +62,15 @@ def add_image(name: str, hash: str, filesize: int) -> None:
     db.execute(
         "INSERT INTO image (name, hash, size) VALUES (?, ?, ?)",
         (name, hash, filesize),
+    )
+    db.commit()
+
+
+def update_image(id: int, mode: int, color: int, shadow: int) -> None:
+    db = get_db()
+    db.execute(
+        "UPDATE image SET mode = ?, color = ?, shadow = ? WHERE id = ?",
+        (mode, color, shadow, id),
     )
     db.commit()
 

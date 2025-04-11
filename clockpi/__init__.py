@@ -1,9 +1,10 @@
 import atexit
 import os
 import tempfile
-import logging
 
-from flask import Flask, current_app
+import logging
+from logging import Logger, getLogger
+from flask import Flask
 from flask_apscheduler import APScheduler
 
 from . import db, auth, clockpi
@@ -11,9 +12,11 @@ from clockpi.redis_controller import init_app as redis_init_app
 from clockpi.logic import epd_update
 from clockpi.queue import generate_random_queue
 
-LOGGER = logging.getLogger(name="__init__")
 
+logging.basicConfig(level=logging.DEBUG)
+logger: Logger = getLogger(__name__)
 scheduler = APScheduler()
+
 
 """
 @scheduler.task("interval", id="test_job", seconds=5)
@@ -35,7 +38,7 @@ def update_image() -> None:
 
 
 def on_app_exit() -> None:
-    LOGGER.info(f"on_app_exit")
+    logger.info(f"on_app_exit")
     from clockpi.redis_controller import redis_client, redis_thread
 
     redis_thread.stop()
@@ -93,7 +96,7 @@ def create_app(test_config=None):
     global scheduler
     scheduler.init_app(app)
     scheduler.start()
-    
+
     # Generate randomized image queue
     with app.app_context():
         generate_random_queue()

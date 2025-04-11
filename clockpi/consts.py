@@ -17,10 +17,6 @@ MSG_BTN_ONOFF: str = "on_off"
 
 # Settings Key
 SETTINGS_EPD_BUSY: str = "epd_busy"
-SETTINGS_IMAGE_ID: str = "image_id"
-SETTINGS_MODE: str = "mode"
-SETTINGS_COLOR: str = "color"
-SETTINGS_SHADOW: str = "shadow"
 SETTINGS_DRAW_GRIDS: str = "draw_grids"
 
 # E-Paper Display Width
@@ -43,6 +39,7 @@ COLOR_YELLOW: int = 3
 COLOR_RED: int = 4
 COLOR_BLUE: int = 5
 COLOR_GREEN: int = 6
+
 
 # Time Mode
 class TimeMode(Enum):
@@ -69,7 +66,56 @@ class TimeMode(Enum):
     FULL_1 = 20  # Small
     FULL_2 = 21  # Medium
     FULL_3 = 22  # Large
-    MAX = FULL_3 + 1
+
+
+TIME_MODE_DICT: dict[str, int] = {
+    "off": int(TimeMode.OFF.value),
+    "sect_9_top_left": int(TimeMode.SECT_9_TOP_LEFT.value),
+    "sect_9_top_center": int(TimeMode.SECT_9_TOP_CENTER.value),
+    "sect_9_top_right": int(TimeMode.SECT_9_TOP_RIGHT.value),
+    "sect_9_middle_left": int(TimeMode.SECT_9_MIDDLE_LEFT.value),
+    "sect_9_middle_center": int(TimeMode.SECT_9_MIDDLE_CENTER.value),
+    "sect_9_middle_right": int(TimeMode.SECT_9_MIDDLE_RIGHT.value),
+    "sect_9_bottom_left": int(TimeMode.SECT_9_BOTTOM_LEFT.value),
+    "sect_9_bottom_center": int(TimeMode.SECT_9_BOTTOM_CENTER.value),
+    "sect_6_top_left": int(TimeMode.SECT_6_TOP_LEFT.value),
+    "sect_6_top_right": int(TimeMode.SECT_6_TOP_RIGHT.value),
+    "sect_6_middle_left": int(TimeMode.SECT_6_MIDDLE_LEFT.value),
+    "sect_6_middle_right": int(TimeMode.SECT_6_MIDDLE_RIGHT.value),
+    "sect_6_bottom_left": int(TimeMode.SECT_6_BOTTOM_LEFT.value),
+    "sect_6_bottom_right": int(TimeMode.SECT_6_BOTTOM_RIGHT.value),
+    "sect_4_top_left": int(TimeMode.SECT_4_TOP_LEFT.value),
+    "sect_4_top_right": int(TimeMode.SECT_4_TOP_RIGHT.value),
+    "sect_4_bottom_left": int(TimeMode.SECT_4_BOTTOM_LEFT.value),
+    "sect_4_bottom_right": int(TimeMode.SECT_4_BOTTOM_RIGHT.value),
+    "full_1": int(TimeMode.FULL_1.value),
+    "full_2": int(TimeMode.FULL_2.value),
+    "full_3": int(TimeMode.FULL_3.value),
+}
+
+
+# Text Colors
+class TextColor(Enum):
+    NONE: int = 0
+    BLACK: int = 1
+    WHITE: int = 2
+    YELLOW: int = 3
+    RED: int = 4
+    BLUE: int = 5
+    GREEN: int = 6
+
+
+# Text Colors Dictionary
+TEXT_COLOR_DICT: dict[str, int] = {
+    "none": int(TextColor.NONE.value),
+    "black": int(TextColor.BLACK.value),
+    "white": int(TextColor.WHITE.value),
+    "yellow": int(TextColor.YELLOW.value),
+    "red": int(TextColor.RED.value),
+    "blue": int(TextColor.BLUE.value),
+    "green": int(TextColor.GREEN.value),
+}
+
 
 # Exceptions
 ERR_UPLOAD_NO_FILE = -1

@@ -1,9 +1,11 @@
 import os
-import logging
 import numpy as np
 from PIL import Image as Image
+from logging import Logger, getLogger
 
-LOGGER = logging.getLogger(name="image")
+
+logger: Logger = getLogger(__name__)
+
 
 def crop(img: Image, w: int, h: int) -> Image:
     l: float = (img.width - w) * 0.5
@@ -99,5 +101,5 @@ def procsess_image(
         return True
 
     except IOError as error:
-        LOGGER.error(error)
+        logger.error(error)
         return False

@@ -1,5 +1,6 @@
 import functools
 
+from logging import Logger, getLogger
 from flask import (
     Blueprint,
     flash,
@@ -15,6 +16,7 @@ from clockpi.db import get_db
 
 
 bp = Blueprint("auth", __name__, url_prefix="/auth")
+logger: Logger = getLogger(__name__)
 
 
 @bp.route("/register", methods=("GET", "POST"))
