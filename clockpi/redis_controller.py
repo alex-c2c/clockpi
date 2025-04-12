@@ -77,7 +77,6 @@ def event_handler(msg) -> None:
 
 def rget(key: str, default: str) -> str:
     global redis_client
-    redis_client = current_app.extensions["redis"]
     value: Any = redis_client.get(key)
     if value is None:
         return default
@@ -87,7 +86,6 @@ def rget(key: str, default: str) -> str:
 
 def rset(key: str, value: str) -> None:
     global redis_client
-    redis_client = current_app.extensions["redis"]
     redis_client[key] = value
 
 

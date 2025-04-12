@@ -54,7 +54,11 @@ def epd_clear() -> None:
 def process_uploaded_file(file: FileStorage) -> int:
     filename: str = file.filename
 
-    # If the user does not select a file, the browser submits an
+    """_summary_
+
+    Returns:
+        _type_: _description_
+    """    # If the user does not select a file, the browser submits an
     # empty file without a filename.
     if filename == "":
         return ERR_UPLOAD_NO_FILE

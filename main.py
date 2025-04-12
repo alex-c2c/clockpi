@@ -36,21 +36,20 @@ def on_app_exit() -> None:
     redis_controller.unsub_from_channel()
 
 
-if __name__ == "__main__":
-    # MAIN
-    app: Flask = create_app()
+# MAIN
+app: Flask = create_app()
 
-    # Redis
-    redis_controller.init_app(app)
-    redis_controller.sub_to_channel()
+# Redis
+redis_controller.init_app(app)
+redis_controller.sub_to_channel()
 
-    # Scheduler for jobs
-    scheduler.init_app(app)
-    scheduler.start()
+# Scheduler for jobs
+scheduler.init_app(app)
+scheduler.start()
 
-    # Register exit callback
-    atexit.register(on_app_exit)
+# Register exit callback
+atexit.register(on_app_exit)
 
-    # Generate randomized image queue
-    with app.app_context():
-        generate_random_queue()
+# Generate randomized image queue
+with app.app_context():
+    generate_random_queue()
