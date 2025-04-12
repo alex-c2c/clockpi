@@ -57,13 +57,16 @@ def get_image(id: int):
     return image
 
 
-def add_image(name: str, hash: str, filesize: int) -> None:
+def add_image(name: str, hash: str, filesize: int) -> int:
     db = get_db()
-    db.execute(
+    cursor = db.execute(
         "INSERT INTO image (name, hash, size) VALUES (?, ?, ?)",
         (name, hash, filesize),
     )
     db.commit()
+    
+    return cursor.lastrowid    
+
 
 
 def update_image(id: int, mode: int, color: int, shadow: int) -> None:
@@ -73,6 +76,7 @@ def update_image(id: int, mode: int, color: int, shadow: int) -> None:
         (mode, color, shadow, id),
     )
     db.commit()
+    
 
 
 sqlite3.register_converter("timestamp", lambda v: datetime.fromisoformat(v.decode()))

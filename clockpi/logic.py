@@ -9,7 +9,7 @@ from clockpi.db import add_image, get_image
 from clockpi.consts import *
 from clockpi.image import procsess_image, validate_image
 from clockpi.redis_controller import rpublish, rget
-from clockpi.queue import get_queue
+from clockpi.queue import append_to_queue, get_queue
 from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
 
@@ -54,11 +54,7 @@ def epd_clear() -> None:
 def process_uploaded_file(file: FileStorage) -> int:
     filename: str = file.filename
 
-    """_summary_
-
-    Returns:
-        _type_: _description_
-    """    # If the user does not select a file, the browser submits an
+    # If the user does not select a file, the browser submits an
     # empty file without a filename.
     if filename == "":
         return ERR_UPLOAD_NO_FILE
@@ -141,7 +137,10 @@ def process_uploaded_file(file: FileStorage) -> int:
         filesize: int = os.path.getsize(dest_path)
 
         # Insert to DB
-        add_image(filename_no_ext, hash, filesize)
+        image_id: int = add_image(filename_no_ext, hash, filesize)
+        
+        # Append to image queue
+        append_to_queue(image_id)
 
     except OSError as error:
         return ERR_UPLOAD_SAVE
