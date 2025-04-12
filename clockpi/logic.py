@@ -37,9 +37,12 @@ def epd_update() -> None:
             file_path = ""
 
     time: str = f"{datetime.now().hour:02d}:{datetime.now().minute:02d}"
+    mode: str = image["mode"]
+    color: str = image["color"]
+    shadow: str = image["shadow"]
 
     rpublish(
-        f"{MSG_DRAW}^{file_path}^{time}^{image["mode"]}^{image["color"]}^{image["shadow"]}^{'1' if draw_grids else '0'}"
+        f"{MSG_DRAW}^{file_path}^{time}^{mode}^{color}^{shadow}^{'1' if draw_grids else '0'}"
     )
 
 
