@@ -14,17 +14,17 @@ logger.info(f"app.py")
 scheduler = APScheduler()
 
 
-@scheduler.task("interval", id="test", seconds=5)
+#@scheduler.task("interval", id="test", seconds=5)
 def job_test() -> None: ...
 
 
-@scheduler.task("cron", id="update_clock", minute="*")
+#@scheduler.task("cron", id="update_clock", minute="*")
 def job_update_clock() -> None:
     with scheduler.app.app_context():
         epd_update()
 
 
-@scheduler.task("cron", id="update_image", hour="*")
+#@scheduler.task("cron", id="update_image", hour="*")
 def job_update_image() -> None:
     with scheduler.app.app_context():
         pass
