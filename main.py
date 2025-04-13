@@ -7,7 +7,7 @@ from clockpi import create_app
 from clockpi import redis_controller
 from clockpi.consts import *
 from clockpi.logic import epd_update
-from clockpi.queue import generate_random_queue
+from clockpi.queue import generate_random_queue, shift_next
 
 logger: Logger = getLogger(__name__)
 logger.info(f"app.py")
@@ -18,16 +18,16 @@ scheduler = APScheduler()
 def job_test() -> None: ...
 
 
-#@scheduler.task("cron", id="update_clock", minute="*")
+@scheduler.task("cron", id="update_clock", minute="*")
 def job_update_clock() -> None:
     with scheduler.app.app_context():
         epd_update()
 
 
-#@scheduler.task("cron", id="update_image", hour="*")
-def job_update_image() -> None:
+@scheduler.task("cron", id="queue_shift_next", hour="*")
+def job_queue_shift_next() -> None:
     with scheduler.app.app_context():
-        pass
+        shift_next()
 
 
 def on_app_exit() -> None:
