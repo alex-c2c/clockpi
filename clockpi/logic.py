@@ -1,15 +1,17 @@
+from genericpath import isfile
 import hashlib
 import os
-from datetime import datetime
 import shutil
+import clockpi.db as db
+import clockpi.image as image
+import clockpi.queue as queue
+import clockpi.redis_controller as redis
+
+from datetime import datetime
 from flask import current_app
 from logging import Logger, getLogger
 from clockpi.consts import *
-from clockpi.db import add_image, get_image
-from clockpi.consts import *
-from clockpi.image import procsess_image, validate_image
-from clockpi.redis_controller import rpublish, rget
-from clockpi.queue import append_to_queue, get_queue
+
 from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
 
@@ -20,13 +22,13 @@ logger: Logger = getLogger(__name__)
 def epd_update() -> None:
     logger.debug(f"epd_update")
 
-    draw_grids: bool = True if rget(SETTINGS_DRAW_GRIDS, "1") == "1" else False
-    image_queue: tuple[int] = get_queue()
+    draw_grids: bool = True if redis.rget(SETTINGS_DRAW_GRIDS, "1") == "1" else False
+    image_queue: tuple[int] = queue.get_queue()
 
     if len(image_queue) == 0:
         return
 
-    image = get_image(image_queue[0])
+    image = db.get_image(image_queue[0])
     hash: str = image["hash"] if image is not None else ""
 
     if len(hash) > 0:
@@ -41,14 +43,14 @@ def epd_update() -> None:
     color: str = image["color"]
     shadow: str = image["shadow"]
 
-    rpublish(
+    redis.rpublish(
         f"{MSG_DRAW}^{file_path}^{time}^{mode}^{color}^{shadow}^{'1' if draw_grids else '0'}"
     )
 
 
 def epd_clear() -> None:
     logger.debug(f"epd_clear")
-    rpublish(MSG_CLEAR)
+    redis.rpublish(MSG_CLEAR)
 
 
 def process_uploaded_file(file: FileStorage) -> int:
@@ -77,7 +79,7 @@ def process_uploaded_file(file: FileStorage) -> int:
     file.save(temp_path)
 
     # validate image
-    if not validate_image(temp_path):
+    if not image.validate_image(temp_path):
         os.remove(temp_path)
         return ERR_UPLOAD_INVALID_IMAGE
 
@@ -88,7 +90,7 @@ def process_uploaded_file(file: FileStorage) -> int:
     processed_path: str = os.path.join(
         current_app.config["DIR_TMP_PROCESSED"], filename
     )
-    process_result: bool = procsess_image(
+    process_result: bool = image.procsess_image(
         temp_path, processed_path, EPD_WIDTH, EPD_HEIGHT, EPD_NC
     )
 
@@ -137,10 +139,10 @@ def process_uploaded_file(file: FileStorage) -> int:
         filesize: int = os.path.getsize(dest_path)
 
         # Insert to DB
-        image_id: int = add_image(filename_no_ext, hash, filesize)
-        
+        image_id: int = db.add_image(filename_no_ext, hash, filesize)
+
         # Append to image queue
-        append_to_queue(image_id)
+        queue.append_to_queue(image_id)
 
     except OSError as error:
         return ERR_UPLOAD_SAVE
@@ -148,27 +150,16 @@ def process_uploaded_file(file: FileStorage) -> int:
     return 0
 
 
-def convert_string_to_color(value: str) -> TextColor:
-    color: TextColor = TextColor.COLOR_NONE
+def delete_image(id: int) -> None:
+    image = db.get_image(id)
+    if image is None:
+        return
 
-    if value == "black":
-        color = TextColor.COLOR_BLACK
-    elif value == "white":
-        color = TextColor.COLOR_WHITE
-    elif value == "yellow":
-        color = TextColor.COLOR_YELLOW
-    elif value == "red":
-        color = TextColor.COLOR_RED
-    elif value == "blue":
-        color = TextColor.COLOR_BLUE
-    elif value == "green":
-        color = TextColor.COLOR_GREEN
+    hash: str = image["hash"]
+    file_path: str = os.path.join(current_app.config["DIR_APP_UPLOAD"], f"{hash}.bmp")
+    logger.info(msg=f"Deleting {file_path=}")
+    if os.path.isfile(file_path):
+        os.remove(file_path)
 
-    return color
-
-
-def convert_string_to_mode(value: str) -> TimeMode:
-    mode: TimeMode = TimeMode.FULL_3
-
-    if value == "":
-        mode = TimeMode.SECT_9_TOP_LEFT
+    db.delete_image(id)
+    queue.remove_id(id)

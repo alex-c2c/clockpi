@@ -65,8 +65,16 @@ def add_image(name: str, hash: str, filesize: int) -> int:
     )
     db.commit()
     
-    return cursor.lastrowid    
+    return cursor.lastrowid
 
+
+def delete_image(id: int) -> None:
+    db = get_db()
+    db.execute(
+        'DELETE FROM image WHERE id = ?',
+        (id,)
+    )
+    db.commit()
 
 
 def update_image(id: int, mode: int, color: int, shadow: int) -> None:

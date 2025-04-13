@@ -50,7 +50,19 @@ def append_to_queue(id: int) -> None:
     image_queue.append(id)
 
 
-def remove_from_queue(index: int) -> None:
+def remove_id(id: int) -> None:
+    global image_queue
+    size: int = len(image_queue)
+    if size <= 0:
+        return
+    
+    for x in range(size):
+        if image_queue[x] == id:
+            image_queue.pop(x)
+            return
+            
+
+def remove_index(index: int) -> None:
     global image_queue
     image_queue.pop(index)
 

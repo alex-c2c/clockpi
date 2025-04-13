@@ -1,3 +1,7 @@
+import queue
+import clockpi.db as db
+import clockpi.logic as logic
+import clockpi.queue as queue
 from logging import Logger, getLogger
 from flask import (
     Blueprint,
@@ -9,7 +13,7 @@ from flask import (
 )
 from werkzeug import Response
 from clockpi.auth import login_required
-from clockpi.db import get_db, get_images, update_image
+from clockpi.db import delete_image, get_db, get_image, get_images, update_image
 from clockpi.queue import get_queue, move_to_first, shuffle_queue
 from clockpi.consts import *
 from clockpi.redis_controller import (
@@ -131,16 +135,21 @@ def set_draw_grids():
 @bp.route("/update/<int:id>", methods=["POST"])
 def update(id: int):
     if request.method == "POST":
-        select: bool = request.form.get("select") is not None
+        is_select: bool = request.form.get("select") is not None
+        is_delete: bool = request.form.get("delete") is not None
         mode: int = int(request.form.get("mode", TimeMode.FULL_3))
         color: int = int(request.form.get("color", TextColor.NONE))
         shadow: int = int(request.form.get("shadow", TextColor.NONE))
-        logger.info(f"update image {id=} {mode=} {color=} {shadow=} {select=}")
+        logger.info(f"update image {id=} {mode=} {color=} {shadow=} {is_select=} {is_delete=}")
+        
+        if is_delete:
+            logic.delete_image(id)
+            
+        else:
+            update_image(id, mode, color, shadow)
 
-        update_image(id, mode, color, shadow)
-
-        if select:
-            move_to_first(id)
+            if is_select:
+                move_to_first(id)
 
     return redirect(url_for(endpoint="clockpi.test"))
 
@@ -151,6 +160,23 @@ def select():
         if request.form.get("id") is not None:
             image_id: int = int(request.form.get("id"))
             move_to_first(image_id)
+
+    return redirect(url_for(endpoint="clockpi.test"))
+
+
+@bp.route("/delete", methods=["POST"])
+def delete():
+    if request.method == "POST":
+        if request.form.get("id") is not None:
+            image_id: int = int(request.form.get("id"))
+            logic.delete_image(id)
+
+
+            image = get_image(id)
+            if image is not None:
+                db.delete_image(image_id)
+                logic.delete_image(image_id)
+                queue.remove_id(image_id)
 
     return redirect(url_for(endpoint="clockpi.test"))
 
