@@ -78,6 +78,7 @@ TIME_MODE_DICT: dict[str, int] = {
     "sect_9_middle_right": int(TimeMode.SECT_9_MIDDLE_RIGHT.value),
     "sect_9_bottom_left": int(TimeMode.SECT_9_BOTTOM_LEFT.value),
     "sect_9_bottom_center": int(TimeMode.SECT_9_BOTTOM_CENTER.value),
+    "sect_9_bottom_right": int(TimeMode.SECT_9_BOTTOM_RIGHT.value),
     "sect_6_top_left": int(TimeMode.SECT_6_TOP_LEFT.value),
     "sect_6_top_right": int(TimeMode.SECT_6_TOP_RIGHT.value),
     "sect_6_middle_left": int(TimeMode.SECT_6_MIDDLE_LEFT.value),
