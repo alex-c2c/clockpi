@@ -43,6 +43,18 @@
         <form method="get" action="/shuffle">
           <input type="submit" value="Shuffle">
         </form>
+        <form method="post" action="/select">
+          <div>
+            <span>Select ID:
+              <select name="id">
+                {% for image_id in image_queue %}
+                <option value={{image_id}}>{{image_id}}</option>
+                {% endfor %}
+              </select>
+              <input type="submit" value="Select">
+            </span>
+          </div>
+        </form>
       </div>
     </div>
   </div>

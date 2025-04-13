@@ -145,6 +145,16 @@ def update(id: int):
     return redirect(url_for(endpoint="clockpi.test"))
 
 
+@bp.route("/select", methods=["POST"])
+def select():
+    if request.method == "POST":
+        if request.form.get("id") is not None:
+            image_id: int = int(request.form.get("id"))
+            move_to_first(image_id)
+
+    return redirect(url_for(endpoint="clockpi.test"))
+
+
 """
 @bp.route('/create', methods=('GET', 'POST'))
 @login_required
