@@ -15,30 +15,26 @@ MSG_BTN_PREV: str = "prev"
 MSG_BTN_CHANGE: str = "change"
 MSG_BTN_ONOFF: str = "on_off"
 
+
 # Settings Key
 SETTINGS_EPD_BUSY: str = "epd_busy"
 SETTINGS_DRAW_GRIDS: str = "draw_grids"
 
+
 # E-Paper Display Width
 EPD_WIDTH: int = 800
+
 
 # E-Paper Display Height
 EPD_HEIGHT: int = 480
 
+
 # E-Paper Display color per channel
 EPD_NC: int = 2
 
+
 # Allowed upload file extensions
 ALLOWED_EXTENSIONS: set[str] = ("png", "jpg", "jpeg", "bmp")
-
-# Colors
-COLOR_NONE: int = 0
-COLOR_BLACK: int = 1
-COLOR_WHITE: int = 2
-COLOR_YELLOW: int = 3
-COLOR_RED: int = 4
-COLOR_BLUE: int = 5
-COLOR_GREEN: int = 6
 
 
 # Time Mode

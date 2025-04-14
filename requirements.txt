@@ -1,15 +1,17 @@
 amqp==5.3.1
+APScheduler==3.11.0
 billiard==4.2.1
 blinker==1.9.0
 build==1.2.2.post1
-celery==5.5.0
 click==8.1.8
 click-didyoumean==0.3.1
 click-plugins==1.1.1
 click-repl==0.3.0
--e git+ssh://git@github.com/alex-c2c/clockpi.git@fd63b865a387f07800dab9eddaf9f7a147206a2f#egg=clockpi
+-e git+ssh://git@github.com/alex-c2c/clockpi.git@dfa0409867f74e6061f7578b82683649d99c7043#egg=clockpi
 Flask==3.1.0
+Flask-APScheduler==1.13.1
 flask-redis==0.4.0
+gunicorn==23.0.0
 itsdangerous==2.2.0
 Jinja2==3.1.6
 kombu==5.5.2
@@ -23,6 +25,7 @@ python-dateutil==2.9.0.post0
 redis==5.2.1
 six==1.17.0
 tzdata==2025.2
+tzlocal==5.3.1
 vine==5.1.0
 wcwidth==0.2.13
 Werkzeug==3.1.3
