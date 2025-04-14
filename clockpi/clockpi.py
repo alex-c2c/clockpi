@@ -1,10 +1,15 @@
 import queue
+import os
+
 import clockpi.db as db
 import clockpi.logic as logic
 import clockpi.queue as queue
 from logging import Logger, getLogger
+from threading import Thread
 from flask import (
     Blueprint,
+    app,
+    current_app,
     flash,
     redirect,
     render_template,
@@ -16,11 +21,11 @@ from clockpi.auth import login_required
 from clockpi.db import delete_image, get_db, get_image, get_images, update_image
 from clockpi.queue import get_queue, move_to_first, shuffle_queue
 from clockpi.consts import *
-from clockpi.redis_controller import (
-    rset,
-    rget,
-)
+from clockpi.redis_controller import rset,rget
 from clockpi.logic import epd_update, epd_clear, process_uploaded_file
+
+from werkzeug.utils import secure_filename
+from werkzeug.datastructures import FileStorage
 
 
 bp = Blueprint("clockpi", __name__)
@@ -45,27 +50,57 @@ def index():
     return render_template(("clockpi/index.html"))
 
 
-@bp.route("/upload", methods=["POST"])
-def upload():
+@bp.route("/upload_file", methods=["POST"])
+def upload_file():
     if request.method == "POST" and "file" in request.files:
-        file = request.files["file"]
-        result: int = process_uploaded_file(file)
+        if "file" not in request.files:
+            flash("No file part")
+            return redirect(url_for("clockpi.test"))
+        
+        files: list[FileStorage] = request.files.getlist('file')
+        
+        for file in files:
+            # secure file name
+            file_name = secure_filename(file.filename)
+            
+            if file_name == "":
+                flash("No file part")
+                continue
+            
+            if "." not in file_name or file_name.rsplit(".", 1)[1].lower() not in ALLOWED_EXTENSIONS:
+                flash(f"Uploaded image {file_name=} with invalid extension")
+                continue
+            
+            # save file to temp dir
+            # TODO: improve location of "uploaded" files so that it doesn't get
+            # overwritten by someone else uploading the files with same file name at the same time
+            if not os.path.isdir(current_app.config["DIR_TMP_UPLOAD"]):
+                os.mkdir(current_app.config["DIR_TMP_UPLOAD"])
 
-        if result == ERR_UPLOAD_NO_FILE:
-            flash("No selected file")
-        elif result == ERR_UPLOAD_INVALID_EXT:
-            flash("Uploaded image file with invalid extension")
-        elif result == ERR_UPLOAD_INVALID_IMAGE:
-            flash("Uploaded invalid image file")
-        elif result == ERR_UPLOAD_POST_PROC:
-            flash("Unable to post process uploaded image")
-        elif result == ERR_UPLOAD_HASH:
-            flash("Unable to get hash of processed file")
-        elif result == ERR_UPLOAD_COPY:
-            flash("Unable to copy file")
-        elif result == ERR_UPLOAD_SAVE:
-            flash("Unable to save entry of upload")
-
+            temp_path: str = os.path.join(current_app.config["DIR_TMP_UPLOAD"], file_name)
+            file.save(temp_path)
+            
+            t: Thread = Thread(target=process_uploaded_file, args=(current_app.app_context(), file_name,))
+            t.start()
+            '''
+            result: int = process_uploaded_file(file)
+            if result != 0:
+                file_name: str = file.filename
+                if result == ERR_UPLOAD_NO_FILE:
+                    flash(f"No file part")
+                if result == ERR_UPLOAD_INVALID_EXT:
+                    flash(f"Uploaded image {file_name=} with invalid extension")
+                elif result == ERR_UPLOAD_INVALID_IMAGE:
+                    flash(f"Uploaded invalid image {file_name=}")
+                elif result == ERR_UPLOAD_POST_PROC:
+                    flash(f"Unable to post process uploaded {file_name=}")
+                elif result == ERR_UPLOAD_HASH:
+                    flash(f"Unable to get hash of processed {file_name=}")
+                elif result == ERR_UPLOAD_COPY:
+                    flash(f"Unable to copy {file_name=}")
+                elif result == ERR_UPLOAD_SAVE:
+                    flash(f"Unable to save entry of upload for {file_name=}")
+            '''
     return redirect(url_for("clockpi.test"))
 
 

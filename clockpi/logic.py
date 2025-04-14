@@ -2,6 +2,8 @@ from genericpath import isfile
 import hashlib
 import os
 import shutil
+
+from flask.ctx import AppContext
 import clockpi.db as db
 import clockpi.image as image
 import clockpi.queue as queue
@@ -53,31 +55,12 @@ def epd_clear() -> None:
     redis.rpublish(MSG_CLEAR)
 
 
-def process_uploaded_file(file: FileStorage) -> int:
-    filename: str = file.filename
-
-    # If the user does not select a file, the browser submits an
-    # empty file without a filename.
-    if filename == "":
-        return ERR_UPLOAD_NO_FILE
-
-    if (
-        "." not in filename
-        or filename.rsplit(".", 1)[1].lower() not in ALLOWED_EXTENSIONS
-    ):
-        return ERR_UPLOAD_INVALID_EXT
-
-    # secure file name
-    filename = secure_filename(file.filename)
-
-    # save file to temp dir
-    # TODO: improve location of "uploaded" files so that it doesn't get
-    # overwritten by someone else uploading the files with same file name at the same time
-    if not os.path.isdir(current_app.config["DIR_TMP_UPLOAD"]):
-        os.mkdir(current_app.config["DIR_TMP_UPLOAD"])
-    temp_path: str = os.path.join(current_app.config["DIR_TMP_UPLOAD"], filename)
-    file.save(temp_path)
-
+def process_uploaded_file(app_context: AppContext, file_name: str) -> int:
+    app_context.push()
+        
+    logger.info(f"Processing {file_name=}")
+    temp_path: str = os.path.join(current_app.config["DIR_TMP_UPLOAD"], file_name)
+    
     # validate image
     if not image.validate_image(temp_path):
         os.remove(temp_path)
@@ -88,7 +71,7 @@ def process_uploaded_file(file: FileStorage) -> int:
         os.mkdir(current_app.config["DIR_TMP_PROCESSED"])
 
     processed_path: str = os.path.join(
-        current_app.config["DIR_TMP_PROCESSED"], filename
+        current_app.config["DIR_TMP_PROCESSED"], file_name
     )
     process_result: bool = image.procsess_image(
         temp_path, processed_path, EPD_WIDTH, EPD_HEIGHT, EPD_NC
@@ -135,7 +118,7 @@ def process_uploaded_file(file: FileStorage) -> int:
 
     # Save upload entry to DB
     try:
-        filename_no_ext: str = filename.rsplit(".", 1)[0]
+        filename_no_ext: str = file_name.rsplit(".", 1)[0]
         filesize: int = os.path.getsize(dest_path)
 
         # Insert to DB
