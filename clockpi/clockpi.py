@@ -4,6 +4,7 @@ import os
 import clockpi.db as db
 import clockpi.logic as logic
 import clockpi.queue as queue
+from datetime import datetime
 from logging import Logger, getLogger
 from threading import Thread
 from flask import (
@@ -82,25 +83,7 @@ def upload_file():
             
             t: Thread = Thread(target=process_uploaded_file, args=(current_app.app_context(), file_name,))
             t.start()
-            '''
-            result: int = process_uploaded_file(file)
-            if result != 0:
-                file_name: str = file.filename
-                if result == ERR_UPLOAD_NO_FILE:
-                    flash(f"No file part")
-                if result == ERR_UPLOAD_INVALID_EXT:
-                    flash(f"Uploaded image {file_name=} with invalid extension")
-                elif result == ERR_UPLOAD_INVALID_IMAGE:
-                    flash(f"Uploaded invalid image {file_name=}")
-                elif result == ERR_UPLOAD_POST_PROC:
-                    flash(f"Unable to post process uploaded {file_name=}")
-                elif result == ERR_UPLOAD_HASH:
-                    flash(f"Unable to get hash of processed {file_name=}")
-                elif result == ERR_UPLOAD_COPY:
-                    flash(f"Unable to copy {file_name=}")
-                elif result == ERR_UPLOAD_SAVE:
-                    flash(f"Unable to save entry of upload for {file_name=}")
-            '''
+
     return redirect(url_for("clockpi.test"))
 
 
@@ -121,6 +104,11 @@ def test():
 
     # Time Modes
     mode: dict[str, int] = TIME_MODE_DICT
+    
+    # Sleep Schedules
+    now_hr: int = datetime.now().hour
+    now_min: int = datetime.now().minute
+    
 
     return render_template(
         "clockpi/test.html",

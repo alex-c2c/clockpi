@@ -1,5 +1,6 @@
 import sqlite3
 from datetime import datetime
+from typing import Any
 
 import click
 from flask import current_app, g
@@ -85,6 +86,42 @@ def update_image(id: int, mode: int, color: int, shadow: int) -> None:
     )
     db.commit()
     
+
+def get_sleep_schedules() -> list[Any]:
+    db = get_db()
+    sleep_schdedules = db.execute(
+        "SELECT * FROM sleep_schedule ORDER BY id"
+    ).fetchall()
+    return sleep_schdedules
+
+
+def delete_sleep_schedule(id: int) -> None:
+    db = get_db()
+    db.execute(
+        'DELETE FROM sleep_schedule WHERE id = ?',
+        (id,)
+    )
+    db.commit()
+
+
+def add_sleep_schedule(days: tuple[bool, bool, bool, bool, bool, bool, bool], time: tuple[int, int, int, int]) -> int:
+    db = get_db()
+    cursor = db.execute(
+        "INSERT INTO sleep_schedule (days, time) VALUES (?, ?)",
+        ("^".join("1" if d else "0" for d in days), "^".join(str(t) for t in time))
+    )
+    db.commit()
+    
+    return cursor.lastrowid
+
+
+def update_sleep_schedule(id: int, days: tuple[bool, bool, bool, bool, bool, bool, bool], time: tuple[int, int, int, int]) -> None:
+    db = get_db()
+    db.execute(
+        'UPDATE sleep_schedule SET days = ?, time = ? WHERE id = ?',
+        ("^".join("1" if d else "0" for d in days), "^".join(str(t) for t in time), id)
+    )
+    db.commit()
 
 
 sqlite3.register_converter("timestamp", lambda v: datetime.fromisoformat(v.decode()))

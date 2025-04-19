@@ -7,7 +7,7 @@ import logging
 from logging import Logger, getLogger
 from flask import Flask
 
-from . import db, auth, clockpi
+from . import db, auth, clockpi, sleep
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -17,6 +17,7 @@ logger: Logger = getLogger(__name__)
 def register_blueprints(app: Flask) -> None:
     app.register_blueprint(auth.bp)
     app.register_blueprint(clockpi.bp)
+    app.register_blueprint(sleep.bp)
 
 
 def add_url(app: Flask) -> None:

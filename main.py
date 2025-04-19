@@ -1,33 +1,14 @@
 import atexit
+import logging
+
 from logging import Logger, getLogger
 from flask import Flask
-from flask_apscheduler import APScheduler
 
-from clockpi import create_app
-from clockpi import redis_controller
+from clockpi import create_app, redis_controller, logic, queue, scheduler
 from clockpi.consts import *
-from clockpi.logic import epd_update
-from clockpi.queue import generate_random_queue, shift_next
 
+logging.basicConfig(level=logging.DEBUG)
 logger: Logger = getLogger(__name__)
-logger.info(f"app.py")
-scheduler = APScheduler()
-
-
-#@scheduler.task("interval", id="test", seconds=5)
-def job_test() -> None: ...
-
-
-@scheduler.task("cron", id="update_clock", minute="*")
-def job_update_clock() -> None:
-    with scheduler.app.app_context():
-        epd_update()
-
-
-@scheduler.task("cron", id="queue_shift_next", hour="*")
-def job_queue_shift_next() -> None:
-    with scheduler.app.app_context():
-        shift_next()
 
 
 def on_app_exit() -> None:
@@ -44,12 +25,11 @@ redis_controller.init_app(app)
 redis_controller.sub_to_channel()
 
 # Scheduler for jobs
-scheduler.init_app(app)
-scheduler.start()
+scheduler.init(app)
 
 # Register exit callback
 atexit.register(on_app_exit)
 
 # Generate randomized image queue
 with app.app_context():
-    generate_random_queue()
+    queue.generate_random_queue()

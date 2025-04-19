@@ -1,9 +1,8 @@
-from genericpath import isfile
 import hashlib
 import os
 import shutil
 
-from flask.ctx import AppContext
+from clockpi.consts import *
 import clockpi.db as db
 import clockpi.image as image
 import clockpi.queue as queue
@@ -11,8 +10,9 @@ import clockpi.redis_controller as redis
 
 from datetime import datetime
 from flask import current_app
+from flask.ctx import AppContext
+
 from logging import Logger, getLogger
-from clockpi.consts import *
 
 from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
