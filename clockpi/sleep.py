@@ -15,16 +15,19 @@ from clockpi import db, job_scheduler
 
 
 class sleep_schedule:
+    id: int
     days: tuple[bool, bool, bool, bool, bool, bool, bool]
     time: tuple[int, int, int, int]
 
     def __init__(
         self,
+        id: int,
         days: tuple[bool, bool, bool, bool, bool, bool, bool],
         time: tuple[int, int, int, int],
     ) -> None:
         logger.debug(f"New sleep_schedule: {days=} {time=}")
 
+        self.id = id
         self.days = days
         self.time = time
 
@@ -82,8 +85,8 @@ def init(app: Flask) -> None:
             time: tuple[int, int, int, int] = tuple(
                 int(t) for t in sch["time"].split("^")
             )
-            sch_dict: dict = {"id": id, "days": days, "time": time}
-            schedules.append(sch_dict)
+            sch: sleep_schedule = sleep_schedule(id, days, time)
+            schedules.append(sch)
 
             # Add cron jobs
             job_scheduler.add_or_update_cron_job(
@@ -119,8 +122,8 @@ def _add(
 
     # Add to list
     global schedules
-    sch_dict: dict = {"id": id, "days": days, "time": time}
-    schedules.append(sch_dict)
+    sch: sleep_schedule = sleep_schedule(id, days, time)
+    schedules.append(sch)
 
     if add_job:
         job_scheduler.add_or_update_cron_job(
@@ -143,7 +146,7 @@ def _remove(id: int) -> None:
     logger.info(f"Remove {id=}")
 
     # Remove from DB
-    db.delete_sleep_schedule(id)
+    db.remove_sleep_schedule(id)
 
     # Remove from list
     global schedules
@@ -153,8 +156,8 @@ def _remove(id: int) -> None:
             return
 
     # Remove jobs
-    job_scheduler.remove_job(f"job_make_sleep_active_{id}")
-    job_scheduler.remove_job(f"job_make_sleep_inactive{id}")
+    job_scheduler.remove_cron_job(f"job_make_sleep_active_{id}")
+    job_scheduler.remove_cron_job(f"job_make_sleep_inactive{id}")
 
 
 def _update(
@@ -175,9 +178,9 @@ def _update(
     # Update list
     global schedules
     for sch in schedules:
-        if sch["id"] == id:
-            sch["days"] = days
-            sch["time"] = time
+        if sch.id == id:
+            sch.days = days
+            sch.time = time
             break
 
     # Reschedule cron jobs

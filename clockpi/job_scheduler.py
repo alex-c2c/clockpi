@@ -16,13 +16,13 @@ def job_test() -> None:
     print("job_test")
 
 
-@job_scheduler.task("cron", id="update_clock", minute="*")
+# @job_scheduler.task("cron", id="update_clock", minute="*")
 def job_update_clock() -> None:
     with job_scheduler.app.app_context():
         logic.epd_update()
 
 
-@job_scheduler.task("cron", id="queue_shift_next", hour="*")
+# @job_scheduler.task("cron", id="queue_shift_next", hour="*")
 def job_queue_shift_next() -> None:
     with job_scheduler.app.app_context():
         queue.shift_next()
@@ -64,19 +64,27 @@ def add_or_update_cron_job(
     if not validation_result:
         return False
 
-    # Adding 1 to match value with cron, 1 = monday, 2 = tuesday etc.
-    days_str: str = ",".join(str(d + 1) for d in days)
+    # Convert tuple[bool] to day_of_week string
+    day_of_week: str = ""
+    for d in range(len(days)):
+        if days[d]:
+            day_of_week += f"{str(d)},"
 
-    # Try to update cron job, if not found, add it
+    if len(day_of_week) > 1:
+        day_of_week = day_of_week[:-1]
+    # day_of_week: str = ",".join(str(d) for d in days)
+    logger.debug(day_of_week)
+
+    # Try to
     global job_scheduler
-    job = job_scheduler.get_job(id)
-
-    # Unable to "modify" the job so just remove it, and add a new one
-    if job_scheduler.get_job(id) is not None:
-        job_scheduler.remove_job(id)
-
     job_scheduler.add_job(
-        id, func, trigger="cron", hour=hr, minute=min, day_of_week=days_str
+        id,
+        func,
+        trigger="cron",
+        replace_existing=True,
+        hour=hr,
+        minute=min,
+        day_of_week=day_of_week,
     )
 
 
