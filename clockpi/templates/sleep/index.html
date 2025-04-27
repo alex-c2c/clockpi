@@ -8,10 +8,13 @@
 <div>
   {% for sch in schedules %}
   <div>
+    <div>
+      <form method="get", action="/sleep/remove/{{sch.id}}">
+        <span>Sleep Schedule:  #{{sch.id}}
+        <input type="submit" value="Delete"></span>
+      </form>
+    </div>
     <form method="post" action="/sleep/update/{{sch.id}}">
-      <div>
-        <span>Sleep Schedule:  #{{sch.id}}</span>
-      </div>
       <div>
         <span>Start Time:&nbsp;
             <select id="time" name="start_hr" onChange="this.form.submit()">

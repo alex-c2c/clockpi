@@ -57,10 +57,10 @@ def epd_clear() -> None:
 
 def process_uploaded_file(app_context: AppContext, file_name: str) -> int:
     app_context.push()
-        
+
     logger.info(f"Processing {file_name=}")
     temp_path: str = os.path.join(current_app.config["DIR_TMP_UPLOAD"], file_name)
-    
+
     # validate image
     if not image.validate_image(temp_path):
         os.remove(temp_path)
@@ -133,7 +133,7 @@ def process_uploaded_file(app_context: AppContext, file_name: str) -> int:
     return 0
 
 
-def delete_image(id: int) -> None:
+def remove_image(id: int) -> None:
     image = db.get_image(id)
     if image is None:
         return
@@ -144,5 +144,5 @@ def delete_image(id: int) -> None:
     if os.path.isfile(file_path):
         os.remove(file_path)
 
-    db.delete_image(id)
+    db.remove_image(id)
     queue.remove_id(id)

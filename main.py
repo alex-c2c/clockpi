@@ -4,7 +4,7 @@ import logging
 from logging import Logger, getLogger
 from flask import Flask
 
-from clockpi import create_app, redis_controller, logic, queue, scheduler
+from clockpi import create_app, job_scheduler, redis_controller, sleep, queue
 from clockpi.consts import *
 
 logging.basicConfig(level=logging.DEBUG)
@@ -24,8 +24,11 @@ app: Flask = create_app()
 redis_controller.init_app(app)
 redis_controller.sub_to_channel()
 
+# Sleep Schedule
+sleep.init(app)
+
 # Scheduler for jobs
-scheduler.init(app)
+job_scheduler.init(app)
 
 # Register exit callback
 atexit.register(on_app_exit)

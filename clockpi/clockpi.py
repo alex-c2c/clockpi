@@ -19,10 +19,10 @@ from flask import (
 )
 from werkzeug import Response
 from clockpi.auth import login_required
-from clockpi.db import delete_image, get_db, get_image, get_images, update_image
+from clockpi.db import remove_image, get_db, get_image, get_images, update_image
 from clockpi.queue import get_queue, move_to_first, shuffle_queue
 from clockpi.consts import *
-from clockpi.redis_controller import rset,rget
+from clockpi.redis_controller import rset, rget
 from clockpi.logic import epd_update, epd_clear, process_uploaded_file
 
 from werkzeug.utils import secure_filename
@@ -57,31 +57,42 @@ def upload_file():
         if "file" not in request.files:
             flash("No file part")
             return redirect(url_for("clockpi.test"))
-        
-        files: list[FileStorage] = request.files.getlist('file')
-        
+
+        files: list[FileStorage] = request.files.getlist("file")
+
         for file in files:
             # secure file name
             file_name = secure_filename(file.filename)
-            
+
             if file_name == "":
                 flash("No file part")
                 continue
-            
-            if "." not in file_name or file_name.rsplit(".", 1)[1].lower() not in ALLOWED_EXTENSIONS:
+
+            if (
+                "." not in file_name
+                or file_name.rsplit(".", 1)[1].lower() not in ALLOWED_EXTENSIONS
+            ):
                 flash(f"Uploaded image {file_name=} with invalid extension")
                 continue
-            
+
             # save file to temp dir
             # TODO: improve location of "uploaded" files so that it doesn't get
             # overwritten by someone else uploading the files with same file name at the same time
             if not os.path.isdir(current_app.config["DIR_TMP_UPLOAD"]):
                 os.mkdir(current_app.config["DIR_TMP_UPLOAD"])
 
-            temp_path: str = os.path.join(current_app.config["DIR_TMP_UPLOAD"], file_name)
+            temp_path: str = os.path.join(
+                current_app.config["DIR_TMP_UPLOAD"], file_name
+            )
             file.save(temp_path)
-            
-            t: Thread = Thread(target=process_uploaded_file, args=(current_app.app_context(), file_name,))
+
+            t: Thread = Thread(
+                target=process_uploaded_file,
+                args=(
+                    current_app.app_context(),
+                    file_name,
+                ),
+            )
             t.start()
 
     return redirect(url_for("clockpi.test"))
@@ -104,11 +115,10 @@ def test():
 
     # Time Modes
     mode: dict[str, int] = TIME_MODE_DICT
-    
+
     # Sleep Schedules
     now_hr: int = datetime.now().hour
     now_min: int = datetime.now().minute
-    
 
     return render_template(
         "clockpi/test.html",
@@ -163,11 +173,13 @@ def update(id: int):
         mode: int = int(request.form.get("mode", TimeMode.FULL_3))
         color: int = int(request.form.get("color", TextColor.NONE))
         shadow: int = int(request.form.get("shadow", TextColor.NONE))
-        logger.info(f"update image {id=} {mode=} {color=} {shadow=} {is_select=} {is_delete=}")
-        
+        logger.info(
+            f"update image {id=} {mode=} {color=} {shadow=} {is_select=} {is_delete=}"
+        )
+
         if is_delete:
-            logic.delete_image(id)
-            
+            logic.remove_image(id)
+
         else:
             update_image(id, mode, color, shadow)
 
@@ -192,13 +204,12 @@ def delete():
     if request.method == "POST":
         if request.form.get("id") is not None:
             image_id: int = int(request.form.get("id"))
-            logic.delete_image(id)
-
+            logic.remove_image(id)
 
             image = get_image(id)
             if image is not None:
-                db.delete_image(image_id)
-                logic.delete_image(image_id)
+                db.remove_image(image_id)
+                logic.remove_image(image_id)
                 queue.remove_id(image_id)
 
     return redirect(url_for(endpoint="clockpi.test"))

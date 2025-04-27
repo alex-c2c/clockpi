@@ -1,16 +1,12 @@
-import atexit
 import os
-from re import DEBUG
 import tempfile
 
-import logging
 from logging import Logger, getLogger
 from flask import Flask
 
 from . import db, auth, clockpi, sleep
 
 
-logging.basicConfig(level=logging.DEBUG)
 logger: Logger = getLogger(__name__)
 
 

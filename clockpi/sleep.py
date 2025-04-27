@@ -2,26 +2,19 @@ from logging import Logger, getLogger
 from typing import Any
 from flask import (
     Blueprint,
-    app,
-    current_app,
+    Flask,
     flash,
     redirect,
     render_template,
     request,
     url_for,
 )
-import flask
 
 from clockpi.consts import *
-import clockpi.db as db
+from clockpi import db, job_scheduler
 
 
-bp = Blueprint("sleep", __name__)
-logger: Logger = getLogger(__name__)
-active: bool = False
-
-
-class schedule:
+class sleep_schedule:
     days: tuple[bool, bool, bool, bool, bool, bool, bool]
     time: tuple[int, int, int, int]
 
@@ -30,7 +23,7 @@ class schedule:
         days: tuple[bool, bool, bool, bool, bool, bool, bool],
         time: tuple[int, int, int, int],
     ) -> None:
-        logger.debug(f"New schedule: {days=} {time=}")
+        logger.debug(f"New sleep_schedule: {days=} {time=}")
 
         self.days = days
         self.time = time
@@ -40,7 +33,7 @@ class schedule:
         days: tuple[bool, bool, bool, bool, bool, bool, bool] | None = None,
         time: tuple[int, int, int, int] | None = None,
     ) -> None:
-        logger.debug(f"schedule update {days=} {time=}")
+        logger.debug(f"sleep_schedule update {days=} {time=}")
         if days is not None:
             self.days = days
 
@@ -48,7 +41,10 @@ class schedule:
             self.time = time
 
 
-schedules: dict[int, schedule] = {}
+bp = Blueprint("sleep", __name__)
+logger: Logger = getLogger(__name__)
+schedules: list[sleep_schedule] = []
+active: bool = False
 
 
 def _validate(time: tuple[int, int, int, int]) -> int:
@@ -63,98 +59,167 @@ def _validate(time: tuple[int, int, int, int]) -> int:
     return 0
 
 
-def init() -> None:
-    logger.info(f"Initializing schedules")
-    data: list[Any] = db.get_sleep_schedules()
-    if data is None or len(data) == 0:
-        logger.debug(f"No sleep schedules")
-        return
+def init(app: Flask) -> None:
+    logger.info(f"Initializing sleep_schedules")
 
-    global schedules
-    schedules.clear()
+    with app.app_context():
+        # Clear existing list
+        global schedules
+        schedules.clear()
 
-    for sch in data:
-        id: int = int(sch["id"])
-        days: tuple[bool, bool, bool, bool, bool, bool, bool] = tuple(
-            True if day == "1" else False for day in sch["days"].split("^")
-        )
-        time: tuple[int, int, int, int] = tuple(int(t) for t in sch["time"].split("^"))
-        schedules[id] = schedule(days, time)
+        # Get from DB and check if empty
+        data: list[Any] = db.get_sleep_schedules()
+        if data is None or len(data) == 0:
+            logger.debug(f"No sleep schedules")
+            return
+
+        # Initializing list
+        for sch in data:
+            days: tuple[bool, bool, bool, bool, bool, bool, bool] = tuple(
+                True if day == "1" else False for day in sch["days"].split("^")
+            )
+            id: int = sch["id"]
+            time: tuple[int, int, int, int] = tuple(
+                int(t) for t in sch["time"].split("^")
+            )
+            sch_dict: dict = {"id": id, "days": days, "time": time}
+            schedules.append(sch_dict)
+
+            # Add cron jobs
+            job_scheduler.add_or_update_cron_job(
+                f"job_set_sleep_active_{id}",
+                func=set_sleep_active,
+                hr=time[0],
+                min=time[1],
+                days=days,
+            )
+            job_scheduler.add_or_update_cron_job(
+                f"job_set_sleep_inactive_{id}",
+                func=set_sleep_inactive,
+                hr=time[2],
+                min=time[3],
+                days=days,
+            )
 
 
-def add(
+def _add(
     days: tuple[bool, bool, bool, bool, bool, bool, bool],
     time: tuple[int, int, int, int],
+    add_job: bool = False,
 ) -> int:
     logger.info(f"Add {days=} {time=}")
 
+    # validate inputs
     result: int = _validate(time)
     if result != 0:
         return result
 
+    # Add to DB
     id: int = db.add_sleep_schedule(days, time)
 
+    # Add to list
     global schedules
-    schedules[id] = schedule(days, time)
+    sch_dict: dict = {"id": id, "days": days, "time": time}
+    schedules.append(sch_dict)
+
+    if add_job:
+        job_scheduler.add_or_update_cron_job(
+            f"job_set_sleep_active_{id}",
+            func=set_sleep_active,
+            hr=time[0],
+            min=time[1],
+            days=days,
+        )
+        job_scheduler.add_or_update_cron_job(
+            f"job_set_sleep_inactive_{id}",
+            func=set_sleep_inactive,
+            hr=time[2],
+            min=time[3],
+            days=days,
+        )
 
 
-def remove(id: int) -> None:
+def _remove(id: int) -> None:
     logger.info(f"Remove {id=}")
 
+    # Remove from DB
     db.delete_sleep_schedule(id)
 
+    # Remove from list
     global schedules
     for sch in schedules:
         if sch.id == id:
             schedules.remove(sch)
             return
 
+    # Remove jobs
+    job_scheduler.remove_job(f"job_make_sleep_active_{id}")
+    job_scheduler.remove_job(f"job_make_sleep_inactive{id}")
 
-def update(
+
+def _update(
     id: int,
     days: tuple[bool, bool, bool, bool, bool, bool, bool],
     time: tuple[int, int, int, int],
-) -> None:
+) -> bool:
     logger.info(f"Update {id=} {days=} {time=}")
 
+    # Validate inputs
     result: int = _validate(time)
     if result != 0:
         return result
 
+    # Update DB
     db.update_sleep_schedule(id, days, time)
 
+    # Update list
     global schedules
-    schedule = schedules.get(id)
-    schedule.update(days, time)
+    for sch in schedules:
+        if sch["id"] == id:
+            sch["days"] = days
+            sch["time"] = time
+            break
+
+    # Reschedule cron jobs
+    job_scheduler.add_or_update_cron_job(
+        f"job_set_sleep_active_{id}",
+        func=set_sleep_active,
+        hr=time[0],
+        min=time[1],
+        days=days,
+    )
+    job_scheduler.add_or_update_cron_job(
+        f"job_set_sleep_inactive_{id}",
+        func=set_sleep_inactive,
+        hr=time[2],
+        min=time[3],
+        days=days,
+    )
+
+    return True
+
+
+def set_sleep_active() -> None:
+    global active
+    active = True
+    logger.debug(f"set_sleep_active")
+
+
+def set_sleep_inactive() -> None:
+    global active
+    active = False
+    logger.debug(f"set_sleep_inactive")
 
 
 def is_active_now() -> bool:
     global active
+    logger.debug(f"is_active_now: {active=}")
     return active
-
-
-def get_list() -> list:
-    schedules = db.get_sleep_schedules()
-    sch_list: list = []
-    
-    for sch in schedules:
-        days: tuple[bool, bool, bool, bool, bool, bool, bool] = tuple(
-            True if day == "1" else False for day in sch["days"].split("^")
-        )
-        time: tuple[int, int, int, int] = tuple(int(t) for t in sch["time"].split("^"))
-        d: dict = {
-            "id": sch["id"],
-            "days": days,
-            "time": time
-        }
-        sch_list.append(d)
-        
-    return sch_list
 
 
 @bp.route("/sleep")
 def index():
-    schedules: list = get_list()
+    global schedules
     return render_template(
         ("sleep/index.html"),
         schedules=schedules,
@@ -163,12 +228,32 @@ def index():
 
 @bp.route("/sleep/add", methods=["GET"])
 def add():
-    db.add_sleep_schedule((False, False, False, False, False, False, False), (0, 0, 0, 0))
+    if request.method != "GET":
+        flash(f"Invalid method")
+        return redirect(location=url_for("sleep.index"))
+
+    _add((False, False, False, False, False, False, False), (0, 0, 0, 0))
+
+    return redirect(location=url_for("sleep.index"))
+
+
+@bp.route("/sleep/remove/<int:id>", methods=["GET"])
+def remove(id: int):
+    if request.method != "GET":
+        flash(f"Invalid method")
+        return redirect(location=url_for("sleep.index"))
+
+    _remove(id)
+
     return redirect(location=url_for("sleep.index"))
 
 
 @bp.route("/sleep/update/<int:id>", methods=["POST"])
 def update(id: int):
+    if request.method != "POST":
+        flash(f"Invalid method")
+        return redirect(location=url_for("sleep.index"))
+
     mon: bool = True if request.form.get("mon") is not None else False
     tue: bool = True if request.form.get("tue") is not None else False
     wed: bool = True if request.form.get("wed") is not None else False
@@ -176,24 +261,24 @@ def update(id: int):
     fri: bool = True if request.form.get("fri") is not None else False
     sat: bool = True if request.form.get("sat") is not None else False
     sun: bool = True if request.form.get("sun") is not None else False
-    
+
     invalid_data: bool = False
     if request.form.get("start_hr") is None:
         flash(f"Missing starting hours")
         invalid_data = True
-            
+
     if request.form.get("start_min") is None:
         flash(f"Missing starting minutes")
         invalid_data = True
-        
+
     if request.form.get("end_hr") is None:
         flash(f"Missing ending hours")
         invalid_data = True
-        
+
     if request.form.get("end_min") is None:
         flash(f"Missing ending minutes")
         invalid_data = True
-    
+
     if invalid_data:
         return redirect(location=url_for(endpoint="sleep.index"))
 
@@ -201,12 +286,10 @@ def update(id: int):
     start_min: int = int(request.form.get("start_min"))
     end_hr: int = int(request.form.get("end_hr"))
     end_min: int = int(request.form.get("end_min"))
-    
+
     days: tuple[bool, ...] = (mon, tue, wed, thu, fri, sat, sun)
     time: tuple[int, ...] = (start_hr, start_min, end_hr, end_min)
-    
-    db.update_sleep_schedule(id, days, time)
-    
+
+    _update(id, days, time)
+
     return redirect(location=url_for(endpoint="sleep.index"))
-
-
