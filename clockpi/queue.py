@@ -8,73 +8,73 @@ image_queue: list[int] = []
 
 
 def get_queue() -> tuple[int]:
-    global image_queue
-    return tuple(image_queue)
+	global image_queue
+	return tuple(image_queue)
 
 
 def generate_random_queue() -> None:
-    global image_queue
-    image_queue.clear()
+	global image_queue
+	image_queue.clear()
 
-    images = get_images()
-    for img in images:
-        image_queue.append(img["id"])
+	images = get_images()
+	for img in images:
+		image_queue.append(img["id"])
 
-    random.shuffle(image_queue)
+	random.shuffle(image_queue)
 
 
 def shift_next() -> None:
-    global image_queue
-    if len(image_queue) <= 1:
-        return
+	global image_queue
+	if len(image_queue) <= 1:
+		return
 
-    current: int = image_queue.pop(0)
-    image_queue.append(current)
+	current: int = image_queue.pop(0)
+	image_queue.append(current)
 
 
 def get_current_id() -> int:
-    global image_queue
-    if len(image_queue) > 0:
-        return image_queue[0]
+	global image_queue
+	if len(image_queue) > 0:
+		return image_queue[0]
 
-    return 0
+	return 0
 
 
 def shuffle_queue() -> None:
-    global image_queue
-    random.shuffle(image_queue)
+	global image_queue
+	random.shuffle(image_queue)
 
 
 def append_to_queue(id: int) -> None:
-    global image_queue
-    image_queue.append(id)
+	global image_queue
+	image_queue.append(id)
 
 
 def remove_id(id: int) -> None:
-    global image_queue
-    size: int = len(image_queue)
-    if size <= 0:
-        return
-    
-    for x in range(size):
-        if image_queue[x] == id:
-            image_queue.pop(x)
-            return
-            
+	global image_queue
+	size: int = len(image_queue)
+	if size <= 0:
+		return
+
+	for x in range(size):
+		if image_queue[x] == id:
+			image_queue.pop(x)
+			return
+
 
 def remove_index(index: int) -> None:
-    global image_queue
-    image_queue.pop(index)
+	global image_queue
+	image_queue.pop(index)
 
 
 def move_to_first(id: int) -> None:
-    global image_queue
-    size: int = len(image_queue)
-    if size <= 0:
-        return
+	global image_queue
+	size: int = len(image_queue)
+	if size <= 0:
+		return
 
-    for x in range(size):
-        if image_queue[x] == id:
-            image_queue.pop(x)
-            image_queue.insert(0, id)
-            return
+	for x in range(size):
+		if image_queue[x] == id:
+			image_queue.pop(x)
+			image_queue.insert(0, id)
+			return

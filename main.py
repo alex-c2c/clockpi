@@ -12,9 +12,9 @@ logger: Logger = getLogger(__name__)
 
 
 def on_app_exit() -> None:
-    logger.info(f"on_app_exit")
+	logger.info(f"on_app_exit")
 
-    redis_controller.unsub_from_channel()
+	redis_controller.unsub_from_channel()
 
 
 # MAIN
@@ -35,4 +35,4 @@ atexit.register(on_app_exit)
 
 # Generate randomized image queue
 with app.app_context():
-    queue.generate_random_queue()
+	queue.generate_random_queue()
