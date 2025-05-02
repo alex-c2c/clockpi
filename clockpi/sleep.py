@@ -116,7 +116,7 @@ class sleep_schedule:
 			self.job_ids.append(job_inactive_id)
 
 
-bp = Blueprint("sleep", __name__)
+bp = Blueprint("sleep", __name__, url_prefix="/sleep")
 logger: Logger = getLogger(__name__)
 schedules: list[sleep_schedule] = []
 active: bool = False
@@ -260,7 +260,7 @@ def is_active_now() -> bool:
 	return active
 
 
-@bp.route("/sleep")
+@bp.route("/")
 def index():
 	global schedules
 
@@ -274,7 +274,7 @@ def index():
 	)
 
 
-@bp.route("/sleep/add", methods=["GET"])
+@bp.route("/add", methods=["GET"])
 def add():
 	if request.method != "GET":
 		flash(f"Invalid method")
@@ -285,7 +285,7 @@ def add():
 	return redirect(location=url_for("sleep.index"))
 
 
-@bp.route("/sleep/remove/<int:id>", methods=["GET"])
+@bp.route("/remove/<int:id>", methods=["GET"])
 def remove(id: int):
 	if request.method != "GET":
 		flash(f"Invalid method")
@@ -296,7 +296,7 @@ def remove(id: int):
 	return redirect(location=url_for("sleep.index"))
 
 
-@bp.route("/sleep/update/<int:id>", methods=["POST"])
+@bp.route("/update/<int:id>", methods=["POST"])
 def update(id: int):
 	if request.method != "POST":
 		flash(f"Invalid method")
