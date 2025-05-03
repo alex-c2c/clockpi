@@ -9,7 +9,6 @@ from logging import Logger, getLogger
 from threading import Thread
 from flask import (
 	Blueprint,
-	app,
 	current_app,
 	flash,
 	redirect,
@@ -17,9 +16,8 @@ from flask import (
 	request,
 	url_for,
 )
-from werkzeug import Response
 from clockpi.auth import login_required
-from clockpi.db import remove_image, get_db, get_image, get_images, update_image
+from clockpi.db import get_db, get_image, get_images, update_image
 from clockpi.queue import get_queue, move_to_first, shuffle_queue
 from clockpi.consts import *
 from clockpi.redis_controller import rset, rget
@@ -104,14 +102,14 @@ def upload_file():
 @login_required
 def test():
 	# Get settings from Redis
-	draw_grids: bool = True if rget(SETTINGS_DRAW_GRIDS, "1") == "1" else False
-	epd_busy: bool = False if rget(SETTINGS_EPD_BUSY, "0") == "0" else True
+	draw_grids: bool = True if rget(R_SETTINGS_DRAW_GRIDS, "1") == "1" else False
+	epd_busy: bool = False if rget(R_SETTINGS_EPD_BUSY, "0") == "0" else True
 
 	# Get all images
 	images = get_images()
 
 	# Get Image Queue
-	image_queue: tuple[int] = get_queue()
+	image_queue: list[int] = get_queue()
 
 	# Text Color
 	text_color: dict[str, int] = TEXT_COLOR_DICT
@@ -167,7 +165,7 @@ def set_draw_grids():
 		logger.info(f"set draw grids {draw_grids=}")
 
 		# Update Redis
-		rset(SETTINGS_DRAW_GRIDS, "1" if draw_grids else "0")
+		rset(R_SETTINGS_DRAW_GRIDS, "1" if draw_grids else "0")
 
 	return redirect(url_for(endpoint="clockpi.test"))
 

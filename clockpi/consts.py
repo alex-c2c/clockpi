@@ -1,24 +1,25 @@
 from enum import Enum
 
 # Redis
-CHANNEL_CLOCKPI: str = "clockpi"
-CHANNEL_EPDPI: str = "epdpi"
-MSG_CLEAR: str = "clear"
-MSG_DRAW: str = "draw"
-MSG_BUSY: str = "busy"
-MSG_UPDATED: str = "updated"
-MSG_RESULT: str = "result"
+R_CHANNEL_CLOCKPI: str = "clockpi"
+R_CHANNEL_EPDPI: str = "epdpi"
+R_MSG_CLEAR: str = "clear"
+R_MSG_DRAW: str = "draw"
+R_MSG_BUSY: str = "busy"
+R_MSG_UPDATED: str = "updated"
+R_MSG_RESULT: str = "result"
+R_IMAGE_QUEUE: str = "img_queue"
 
+R_SETTINGS_EPD_BUSY: str = "epd_busy"
+R_SETTINGS_DRAW_GRIDS: str = "draw_grids"
+
+
+# Buttons
 MSG_BTN: str = "button"
 MSG_BTN_NEXT: str = "next"
 MSG_BTN_PREV: str = "prev"
 MSG_BTN_CHANGE: str = "change"
 MSG_BTN_ONOFF: str = "on_off"
-
-
-# Settings Key
-SETTINGS_EPD_BUSY: str = "epd_busy"
-SETTINGS_DRAW_GRIDS: str = "draw_grids"
 
 
 # E-Paper Display Width
@@ -124,6 +125,6 @@ ERR_UPLOAD_COPY = -6
 ERR_UPLOAD_SAVE = -7
 
 ERR_SCH_INVALID_DATA = -20
-#ERR_SCH_INVALID_HOUR = -21
-#ERR_SCH_INVALID_MINUTE= -22
-#ERR_SCH_INVALID_DURATION = -23
+# ERR_SCH_INVALID_HOUR = -21
+# ERR_SCH_INVALID_MINUTE= -22
+# ERR_SCH_INVALID_DURATION = -23

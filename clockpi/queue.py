@@ -1,80 +1,104 @@
 import random
-from clockpi.db import get_images
+from clockpi import db, redis_controller
+from clockpi.consts import *
 from logging import Logger, getLogger
 
 
 logger: Logger = getLogger(__name__)
-image_queue: list[int] = []
 
 
-def get_queue() -> tuple[int]:
-	global image_queue
-	return tuple(image_queue)
+def generate_initial_queue() -> None:
+	images = db.get_images()
+	queue: list[int] = []
 
-
-def generate_random_queue() -> None:
-	global image_queue
-	image_queue.clear()
-
-	images = get_images()
 	for img in images:
-		image_queue.append(img["id"])
+		queue.append(img["id"])
 
-	random.shuffle(image_queue)
+	random.shuffle(queue)
+
+	save_queue(queue)
+
+
+def get_queue() -> list[int]:
+	rqueue: str = redis_controller.rget(R_IMAGE_QUEUE, "")
+	return [int(i) for i in rqueue.split("^") if i is not ""]
+
+
+def save_queue(queue: list[int]) -> None:
+	logger.debug(f"save_queue {queue=}")
+	redis_controller.rset(R_IMAGE_QUEUE, "^".join(str(i) for i in queue))
 
 
 def shift_next() -> None:
-	global image_queue
-	if len(image_queue) <= 1:
+	queue: list[int] = get_queue()
+
+	if len(queue) <= 1:
 		return
 
-	current: int = image_queue.pop(0)
-	image_queue.append(current)
+	first: int = queue.pop()
+	queue.append(first)
+
+	save_queue(queue)
 
 
 def get_current_id() -> int:
-	global image_queue
-	if len(image_queue) > 0:
-		return image_queue[0]
+	queue: list[int] = get_queue()
+
+	if len(queue) > 0:
+		return queue[0]
 
 	return 0
 
 
 def shuffle_queue() -> None:
-	global image_queue
-	random.shuffle(image_queue)
+	queue: list[int] = get_queue()
+	random.shuffle(queue)
+	save_queue(queue)
 
 
 def append_to_queue(id: int) -> None:
-	global image_queue
-	image_queue.append(id)
-
-
-def remove_id(id: int) -> None:
-	global image_queue
-	size: int = len(image_queue)
-	if size <= 0:
-		return
-
-	for x in range(size):
-		if image_queue[x] == id:
-			image_queue.pop(x)
-			return
-
-
-def remove_index(index: int) -> None:
-	global image_queue
-	image_queue.pop(index)
+	queue: list[int] = get_queue()
+	queue.append(id)
+	save_queue(queue)
 
 
 def move_to_first(id: int) -> None:
-	global image_queue
-	size: int = len(image_queue)
+	queue: list[int] = get_queue()
+
+	size: int = len(queue)
+	if size <= 1:
+		return
+
+	for x in range(size):
+		if queue[x] == id:
+			queue.pop(x)
+			queue.insert(0, id)
+			return
+
+	save_queue(queue)
+
+
+def remove_id(id: int) -> None:
+	queue: list[int] = get_queue()
+
+	size: int = len(queue)
 	if size <= 0:
 		return
 
 	for x in range(size):
-		if image_queue[x] == id:
-			image_queue.pop(x)
-			image_queue.insert(0, id)
-			return
+		if queue[x] == id:
+			queue.pop(x)
+			break
+
+	save_queue(queue)
+
+
+def remove_index(index: int) -> None:
+	queue: int = get_queue()
+
+	size: int = len(queue)
+	if size <= 0:
+		return
+
+	queue.pop(index)
+	save_queue(queue)

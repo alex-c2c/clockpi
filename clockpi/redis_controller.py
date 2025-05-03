@@ -2,7 +2,7 @@ import os
 
 from typing import Any
 from logging import Logger, getLogger
-from flask import Flask, current_app
+from flask import Flask
 from flask_redis import FlaskRedis
 from clockpi.consts import *
 
@@ -21,7 +21,7 @@ def exception_handler(ex, pubsub, thread):
 def unsub_from_channel() -> None:
 	global redis_client
 	redis_pubsub = redis_client.pubsub()
-	redis_pubsub.unsubscribe(CHANNEL_CLOCKPI)
+	redis_pubsub.unsubscribe(R_CHANNEL_CLOCKPI)
 
 	"""
 	redis_thread.stop()
@@ -33,11 +33,11 @@ def unsub_from_channel() -> None:
 
 
 def sub_to_channel() -> None:
-	logger.info(f"Subscribing to {CHANNEL_CLOCKPI}")
+	logger.info(f"Subscribing to {R_CHANNEL_CLOCKPI}")
 
 	global redis_client
 	redis_pubsub = redis_client.pubsub(ignore_subscribe_messages=True)
-	redis_pubsub.subscribe(**{f"{CHANNEL_CLOCKPI}": event_handler})
+	redis_pubsub.subscribe(**{f"{R_CHANNEL_CLOCKPI}": event_handler})
 
 	# global redis_thread
 	global redis_thread
@@ -51,8 +51,8 @@ def init_app(app: Flask) -> None:
 	logger.info(f"Initializing redis client")
 	global redis_client
 	redis_client = FlaskRedis(app, decode_responses=True)
-	redis_client.set(SETTINGS_EPD_BUSY, "0")
-	redis_client.set(SETTINGS_DRAW_GRIDS, "0")
+	redis_client.set(R_SETTINGS_EPD_BUSY, "0")
+	redis_client.set(R_SETTINGS_DRAW_GRIDS, "0")
 
 
 def event_handler(msg) -> None:
@@ -60,19 +60,24 @@ def event_handler(msg) -> None:
 
 	if (
 		msg["type"] != "message"
-		or msg["channel"] != CHANNEL_CLOCKPI
+		or msg["channel"] != R_CHANNEL_CLOCKPI
 		or len(msg["data"]) == 0
 	):
 		return
 
 	data: list[str] = msg["data"].split("^")
-	if data[0] == MSG_BUSY:
+	if data[0] == R_MSG_BUSY:
 		# get notification from epd-pi that epd_busy has been updated
 		...
 
-	elif data[0] == MSG_RESULT:
+	elif data[0] == R_MSG_RESULT:
 		# get notification from epd-pi that changes to the display has finished
 		...
+
+
+def rdelete(key: str) -> None:
+	global redis_client
+	redis_client.delete(key)
 
 
 def rget(key: str, default: str) -> str:
@@ -93,4 +98,4 @@ def rpublish(msg: str) -> None:
 	logger.info(f"rpublish {msg=}")
 
 	global redis_client
-	redis_client.publish(CHANNEL_EPDPI, msg)
+	redis_client.publish(R_CHANNEL_EPDPI, msg)

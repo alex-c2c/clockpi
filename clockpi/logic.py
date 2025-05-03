@@ -24,7 +24,7 @@ logger: Logger = getLogger(__name__)
 def epd_update() -> None:
 	logger.debug(f"epd_update")
 
-	draw_grids: bool = True if redis.rget(SETTINGS_DRAW_GRIDS, "1") == "1" else False
+	draw_grids: bool = True if redis.rget(R_SETTINGS_DRAW_GRIDS, "1") == "1" else False
 	image_queue: tuple[int] = queue.get_queue()
 
 	if len(image_queue) == 0:
@@ -46,13 +46,13 @@ def epd_update() -> None:
 	shadow: str = image["shadow"]
 
 	redis.rpublish(
-		f"{MSG_DRAW}^{file_path}^{time}^{mode}^{color}^{shadow}^{'1' if draw_grids else '0'}"
+		f"{R_MSG_DRAW}^{file_path}^{time}^{mode}^{color}^{shadow}^{'1' if draw_grids else '0'}"
 	)
 
 
 def epd_clear() -> None:
 	logger.debug(f"epd_clear")
-	redis.rpublish(MSG_CLEAR)
+	redis.rpublish(R_MSG_CLEAR)
 
 
 def process_uploaded_file(app_context: AppContext, file_name: str) -> int:

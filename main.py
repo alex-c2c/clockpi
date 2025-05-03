@@ -35,4 +35,4 @@ atexit.register(on_app_exit)
 
 # Generate randomized image queue
 with app.app_context():
-	queue.generate_random_queue()
+	queue.generate_initial_queue()
