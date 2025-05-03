@@ -16,13 +16,13 @@ def job_test() -> None:
 	print("job_test")
 
 
-# @job_scheduler.task("cron", id="update_clock", minute="*")
+@job_scheduler.task("cron", id="update_clock", minute="*")
 def job_update_clock() -> None:
 	with job_scheduler.app.app_context():
 		logic.epd_update()
 
 
-# @job_scheduler.task("cron", id="queue_shift_next", hour="*")
+@job_scheduler.task("cron", id="queue_shift_next", hour="*")
 def job_queue_shift_next() -> None:
 	with job_scheduler.app.app_context():
 		queue.shift_next()
