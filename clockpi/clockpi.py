@@ -37,7 +37,8 @@ def allowed_file(filename) -> bool:
 	return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-@bp.route("/")
+@bp.route("/", methods=["GET"])
+@login_required
 def index():
 	db = get_db()
 	"""
@@ -52,6 +53,7 @@ def index():
 
 
 @bp.route("/upload_file", methods=["POST"])
+@login_required
 def upload_file():
 	if request.method == "POST" and "file" in request.files:
 		if "file" not in request.files:
@@ -99,6 +101,7 @@ def upload_file():
 
 
 @bp.route("/test", methods=["GET"])
+@login_required
 def test():
 	# Get settings from Redis
 	draw_grids: bool = True if rget(SETTINGS_DRAW_GRIDS, "1") == "1" else False
@@ -132,6 +135,7 @@ def test():
 
 
 @bp.route("/shuffle", methods=["GET"])
+@login_required
 def shuffle():
 	shuffle_queue()
 
@@ -139,6 +143,7 @@ def shuffle():
 
 
 @bp.route("/clear", methods=["GET"])
+@login_required
 def clear():
 	epd_clear()
 
@@ -146,6 +151,7 @@ def clear():
 
 
 @bp.route("/refresh", methods=["GET"])
+@login_required
 def refresh():
 	epd_update()
 
@@ -153,6 +159,7 @@ def refresh():
 
 
 @bp.route("/draw_grids", methods=["POST"])
+@login_required
 def set_draw_grids():
 	if request.method == "POST":
 		draw_grids: bool = request.form.get("draw_grids", "") == "true"
@@ -166,6 +173,7 @@ def set_draw_grids():
 
 
 @bp.route("/update/<int:id>", methods=["POST"])
+@login_required
 def update(id: int):
 	if request.method == "POST":
 		is_select: bool = request.form.get("select") is not None
@@ -190,6 +198,7 @@ def update(id: int):
 
 
 @bp.route("/select", methods=["POST"])
+@login_required
 def select():
 	if request.method == "POST":
 		if request.form.get("id") is not None:
@@ -200,6 +209,7 @@ def select():
 
 
 @bp.route("/delete", methods=["POST"])
+@login_required
 def delete():
 	if request.method == "POST":
 		if request.form.get("id") is not None:

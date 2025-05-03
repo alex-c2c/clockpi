@@ -11,6 +11,7 @@ from flask import (
 	url_for,
 )
 
+from clockpi.auth import login_required
 from clockpi.consts import *
 from clockpi import db, job_scheduler
 
@@ -275,6 +276,7 @@ def index():
 
 
 @bp.route("/add", methods=["GET"])
+@login_required
 def add():
 	if request.method != "GET":
 		flash(f"Invalid method")
@@ -286,6 +288,7 @@ def add():
 
 
 @bp.route("/remove/<int:id>", methods=["GET"])
+@login_required
 def remove(id: int):
 	if request.method != "GET":
 		flash(f"Invalid method")
@@ -297,6 +300,7 @@ def remove(id: int):
 
 
 @bp.route("/update/<int:id>", methods=["POST"])
+@login_required
 def update(id: int):
 	if request.method != "POST":
 		flash(f"Invalid method")
