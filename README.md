@@ -9,7 +9,7 @@
 - To run in debug mode, add options `--debug --no-reload`, note that redis-subscriber receiving message twice while in debug mode is a bug.
 
 ## Running in production server
-- Run `/path/to/gunicorn -w 2 -b 0.0.0.0:5001 main:app`
+- Run `/path/to/gunicorn -c gunicorn.py main:app` with config file `./gunicorn.py`
 
 # Setting up Systemctl
 # New service file
