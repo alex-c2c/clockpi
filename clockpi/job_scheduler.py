@@ -1,4 +1,4 @@
-from csv import Error
+import os
 from typing import Callable
 from flask_apscheduler import APScheduler
 from apscheduler.jobstores.base import JobLookupError, ConflictingIdError
@@ -29,6 +29,11 @@ def job_queue_shift_next() -> None:
 
 
 def init(app: Flask) -> None:
+	global job_scheduler
+	if job_scheduler.running or int(os.environ.get("APSC", "1")) == 0:
+		logger.warning(f"Scheduler is already running")
+		return
+	
 	job_scheduler.init_app(app)
 	job_scheduler.start()
 
