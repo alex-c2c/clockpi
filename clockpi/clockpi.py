@@ -18,7 +18,7 @@ from flask import (
 )
 from clockpi.auth import login_required
 from clockpi.db import get_db, get_image, get_images, update_image
-from clockpi.queue import get_queue, move_to_first, shuffle_queue
+from clockpi.queue import get_queue, move_to_first, shuffle_queue, shift_next
 from clockpi.consts import *
 from clockpi.redis_controller import rset, rget
 from clockpi.logic import epd_update, epd_clear, process_uploaded_file
@@ -152,6 +152,14 @@ def clear():
 @login_required
 def refresh():
 	epd_update()
+
+	return redirect(location=url_for("clockpi.test"))
+
+
+@bp.route("/next", methods=["GET"])
+@login_required
+def next():
+	shift_next()
 
 	return redirect(location=url_for("clockpi.test"))
 

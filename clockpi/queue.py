@@ -35,7 +35,7 @@ def shift_next() -> None:
 	if len(queue) <= 1:
 		return
 
-	first: int = queue.pop()
+	first: int = queue.pop(0)
 	queue.append(first)
 
 	save_queue(queue)
