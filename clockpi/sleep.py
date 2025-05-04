@@ -13,7 +13,7 @@ from flask import (
 
 from clockpi.auth import login_required
 from clockpi.consts import *
-from clockpi import db, job_scheduler
+from clockpi import db, job_scheduler, redis_controller
 
 
 class sleep_schedule:
@@ -89,7 +89,7 @@ class sleep_schedule:
 
 			# add cron job to sleep display
 			job_scheduler.add_cron_job(
-				job_active_id, set_sleep_active, day, self.hour, self.minute
+				job_active_id, set_active, day, self.hour, self.minute
 			)
 
 			# calculate day_of_week compensation if duration crosses over to next day(s)
@@ -110,7 +110,7 @@ class sleep_schedule:
 
 			# Add cron job to wake display
 			job_scheduler.add_cron_job(
-				job_inactive_id, set_sleep_inactive, day_end, hour, minute
+				job_inactive_id, set_inactive, day_end, hour, minute
 			)
 
 			self.job_ids.append(job_active_id)
@@ -120,7 +120,6 @@ class sleep_schedule:
 bp = Blueprint("sleep", __name__, url_prefix="/sleep")
 logger: Logger = getLogger(__name__)
 schedules: list[sleep_schedule] = []
-active: bool = False
 
 
 """
@@ -243,22 +242,22 @@ def _update(
 	return True
 
 
-def set_sleep_active() -> None:
-	global active
-	active = True
+def set_active() -> None:
 	logger.debug(f"set_sleep_active")
+	redis_controller.rset(R_SLEEP_ACTIVE, "1")
 
 
-def set_sleep_inactive() -> None:
-	global active
-	active = False
+def set_inactive() -> None:
 	logger.debug(f"set_sleep_inactive")
+	redis_controller.rset(R_SLEEP_ACTIVE, "0")
 
 
 def is_active_now() -> bool:
-	global active
-	logger.debug(f"is_active_now: {active=}")
-	return active
+	is_active: bool = (
+		True if redis_controller.rget(R_SLEEP_ACTIVE, "0") == "1" else False
+	)
+	logger.debug(f"is_active_now: {is_active=}")
+	return is_active
 
 
 @bp.route("/")

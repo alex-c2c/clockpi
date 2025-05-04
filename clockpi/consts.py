@@ -9,6 +9,7 @@ R_MSG_BUSY: str = "busy"
 R_MSG_UPDATED: str = "updated"
 R_MSG_RESULT: str = "result"
 R_IMAGE_QUEUE: str = "img_queue"
+R_SLEEP_ACTIVE: str = "sleep_active"
 
 R_SETTINGS_EPD_BUSY: str = "epd_busy"
 R_SETTINGS_DRAW_GRIDS: str = "draw_grids"
