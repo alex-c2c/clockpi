@@ -5,7 +5,8 @@ from apscheduler.jobstores.base import JobLookupError, ConflictingIdError
 from flask import Flask
 from logging import Logger, getLogger
 
-from clockpi import logic, queue
+from clockpi import logic, queue, redis_controller
+from clockpi.consts import R_SLEEP_STATUS, SleepStatus
 
 logger: Logger = getLogger(__name__)
 job_scheduler = APScheduler()
@@ -19,7 +20,20 @@ def job_test() -> None:
 @job_scheduler.task("cron", id="update_clock", minute="*")
 def job_update_clock() -> None:
 	with job_scheduler.app.app_context():
-		logic.epd_update()
+		sleep_status: SleepStatus = SleepStatus(
+			redis_controller.rget(R_SLEEP_STATUS, str(SleepStatus.AWAKE.value))
+		)
+		if sleep_status == SleepStatus.AWAKE:
+			logic.epd_update()
+		elif sleep_status == SleepStatus.PENDING_AWAKE:
+			logic.epd_update()
+			redis_controller.rset(R_SLEEP_STATUS, str(SleepStatus.AWAKE.value))
+		elif sleep_status == SleepStatus.PENDING_SLEEP:
+			logic.epd_clear()
+			redis_controller.rset(R_SLEEP_STATUS, str(SleepStatus.SLEEP.value))
+		elif sleep_status == SleepStatus.SLEEP:
+			# Do nothing, assume display is sleeping
+			pass
 
 
 @job_scheduler.task("cron", id="queue_shift_next", hour="*")
@@ -33,7 +47,7 @@ def init(app: Flask) -> None:
 	if job_scheduler.running or int(os.environ.get("APSC", "1")) == 0:
 		logger.warning(f"Scheduler is already running")
 		return
-	
+
 	job_scheduler.init_app(app)
 	job_scheduler.start()
 
@@ -75,6 +89,7 @@ def add_cron_job(id: str, func: Callable, day: int, hour: int, minute: int) -> b
 
 
 def remove_cron_job(id: str) -> bool:
+	global job_scheduler
 	try:
 		job_scheduler.remove_job(id)
 		return True
@@ -83,5 +98,11 @@ def remove_cron_job(id: str) -> bool:
 		return False
 
 
-def get_cron_jobs():
-	return job_scheduler.get_jobs(jobstore="sleep")
+def get_cron_jobs() -> list[str]:
+	global job_scheduler
+
+	ids: list[str] = []
+	for job in job_scheduler.get_jobs():
+		ids.append(job.id)
+
+	return ids

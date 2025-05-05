@@ -22,7 +22,6 @@ class sleep_schedule:
 	hour: int
 	minute: int
 	duration: int
-	job_ids: list[str]
 
 	def __init__(
 		self,
@@ -32,94 +31,15 @@ class sleep_schedule:
 		minute: int,
 		duration: int,
 	) -> None:
-		logger.debug(f"New sleep_schedule: {days=} {hour=} {minute=} {duration=}")
-
 		self.id = id
 		self.days = days
 		self.hour = hour
 		self.minute = minute
 		self.duration = duration
-		self.job_ids = []
-		self.add_job_schedules()
-
-	def update(
-		self,
-		days: tuple[bool, bool, bool, bool, bool, bool, bool] | None = None,
-		hour: int | None = None,
-		minute: int | None = None,
-		duration: int | None = None,
-	) -> None:
-		logger.debug(f"sleep_schedule:update {days=} {hour=} {minute=} {duration=}")
-		if days is not None:
-			self.days = days
-
-		if hour is not None:
-			self.hour = hour
-
-		if minute is not None:
-			self.minute = minute
-
-		if duration is not None:
-			self.duration = duration
-
-		self.remove_job_schedules()
-		self.add_job_schedules()
-
-	def remove_job_schedules(self) -> None:
-		logger.debug(f"sleep_schedule:remove_job_schedules")
-		for id in self.job_ids:
-			job_scheduler.remove_cron_job(id)
-
-		self.job_ids.clear()
-
-	def add_job_schedules(self) -> None:
-		logger.debug(
-			f"sleep_schedule:add_job_schedules {self.id=} {self.days=} {self.hour=} {self.minute=} {self.duration=}"
-		)
-
-		if self.duration <= 0 or True not in self.days:
-			return
-
-		for day in range(len(self.days)):
-			if not self.days[day]:
-				continue
-
-			job_active_id: str = f"job_set_sleep_active_{self.id}_{day}"
-			job_inactive_id: str = f"job_set_sleep_inactive_{self.id}_{day}"
-
-			# add cron job to sleep display
-			job_scheduler.add_cron_job(
-				job_active_id, set_active, day, self.hour, self.minute
-			)
-
-			# calculate day_of_week compensation if duration crosses over to next day(s)
-			duration_hour: int = floor(self.duration / 60)
-			duration_minute: int = self.duration % 60
-
-			minute: int = self.minute + duration_minute
-			if minute > 59:
-				minute %= 60
-				duration_hour += 1
-
-			day_end: int = day
-			hour: int = self.hour + duration_hour
-			if hour > 23:
-				day_end += floor(hour / 24)
-				day_end %= 7
-				hour %= 24
-
-			# Add cron job to wake display
-			job_scheduler.add_cron_job(
-				job_inactive_id, set_inactive, day_end, hour, minute
-			)
-
-			self.job_ids.append(job_active_id)
-			self.job_ids.append(job_inactive_id)
 
 
 bp = Blueprint("sleep", __name__, url_prefix="/sleep")
 logger: Logger = getLogger(__name__)
-schedules: list[sleep_schedule] = []
 
 
 """
@@ -150,14 +70,61 @@ def _validate(hour: int, minute: int, duration: int) -> int:
 	return 0
 
 
+def _remove_job_schedules(id: int) -> None:
+	logger.debug(f"remove_job_schedules {id=}")
+
+	job_ids: list[str] = job_scheduler.get_cron_jobs()
+	for job_id in job_ids:
+		if f"job_set_sleep_{id}" in job_id or f"job_set_awake_{id}" in job_id:
+			job_scheduler.remove_cron_job(job_id)
+
+
+def _add_job_schedules(
+	id: int,
+	days: tuple[bool, bool, bool, bool, bool, bool, bool],
+	hour: int,
+	minute: int,
+	duration: int,
+) -> None:
+	logger.debug(f"add_job_schedules {id=} {days=} {hour=} {minute=} {duration=}")
+
+	if duration <= 0 or True not in days:
+		return
+
+	for day in range(len(days)):
+		if not days[day]:
+			continue
+
+		job_sleep_id: str = f"job_set_sleep_{id}_{day}"
+		job_awake_id: str = f"job_set_awake_{id}_{day}"
+
+		# add cron job to sleep display
+		job_scheduler.add_cron_job(job_sleep_id, set_sleep, day, hour, minute)
+
+		# calculate day_of_week compensation if duration crosses over to next day(s)
+		duration_hour: int = floor(duration / 60)
+		duration_minute: int = duration % 60
+
+		minute += duration_minute
+		if minute > 59:
+			minute %= 60
+			duration_hour += 1
+
+		day_end: int = day
+		hour += duration_hour
+		if hour > 23:
+			day_end += floor(hour / 24)
+			day_end %= 7
+			hour %= 24
+
+		# Add cron job to wake display
+		job_scheduler.add_cron_job(job_awake_id, set_awake, day_end, hour, minute)
+
+
 def init(app: Flask) -> None:
 	logger.info(f"Initializing sleep_schedules")
 
 	with app.app_context():
-		# Clear existing list
-		global schedules
-		schedules.clear()
-
 		# Get from DB and check if empty
 		data: list[Any] = db.get_sleep_schedules()
 		if data is None or len(data) == 0:
@@ -174,8 +141,7 @@ def init(app: Flask) -> None:
 			minute: int = sch["minute"]
 			duration: int = sch["duration"]
 
-			sch: sleep_schedule = sleep_schedule(id, days, hour, minute, duration)
-			schedules.append(sch)
+			_add_job_schedules(id, days, hour, minute, duration)
 
 
 def _add(
@@ -194,10 +160,8 @@ def _add(
 	# Add to DB
 	id: int = db.add_sleep_schedule(days, hour, minute, duration)
 
-	# Add to list
-	global schedules
-	sch: sleep_schedule = sleep_schedule(id, days, hour, minute, duration)
-	schedules.append(sch)
+	# add new job schedules
+	_add_job_schedules(id, days, hour, minute, duration)
 
 
 def _remove(id: int) -> None:
@@ -206,13 +170,8 @@ def _remove(id: int) -> None:
 	# Remove from DB
 	db.remove_sleep_schedule(id)
 
-	# Remove from list
-	global schedules
-	for sch in schedules:
-		if sch.id == id:
-			sch.remove_job_schedules()
-			schedules.remove(sch)
-			return
+	# remove job schedules
+	_remove_job_schedules(id)
 
 
 def _update(
@@ -232,41 +191,40 @@ def _update(
 	# Update DB
 	db.update_sleep_schedule(id, days, hour, minute, duration)
 
-	# Update list
-	global schedules
-	for sch in schedules:
-		if sch.id == id:
-			sch.update(days, hour, minute, duration)
-			break
+	# update job schedules
+	_remove_job_schedules(id)
+	_add_job_schedules(id, days, hour, minute, duration)
 
 	return True
 
 
-def set_active() -> None:
+def set_awake() -> None:
 	logger.debug(f"set_sleep_active")
-	redis_controller.rset(R_SLEEP_ACTIVE, "1")
+	redis_controller.rset(R_SLEEP_STATUS, str(SleepStatus.PENDING_AWAKE))
 
 
-def set_inactive() -> None:
+def set_sleep() -> None:
 	logger.debug(f"set_sleep_inactive")
-	redis_controller.rset(R_SLEEP_ACTIVE, "0")
-
-
-def is_active_now() -> bool:
-	is_active: bool = (
-		True if redis_controller.rget(R_SLEEP_ACTIVE, "0") == "1" else False
-	)
-	logger.debug(f"is_active_now: {is_active=}")
-	return is_active
+	redis_controller.rset(R_SLEEP_STATUS, str(SleepStatus.PENDING_SLEEP))
 
 
 @bp.route("/")
 def index():
-	global schedules
+	schedules: list[sleep_schedule] = []
+	data: list[Any] = db.get_sleep_schedules()
 
-	jobs = job_scheduler.get_cron_jobs()
-	for j in jobs:
-		logger.info(f"{j.id}")
+	# Initializing list
+	for sch in data:
+		days: tuple[bool, bool, bool, bool, bool, bool, bool] = tuple(
+			True if day == "1" else False for day in sch["days"].split("^")
+		)
+		id: int = sch["id"]
+		hour: int = sch["hour"]
+		minute: int = sch["minute"]
+		duration: int = sch["duration"]
+
+		sch: sleep_schedule = sleep_schedule(id, days, hour, minute, duration)
+		schedules.append(sch)
 
 	return render_template(
 		("sleep/index.html"),

@@ -3,24 +3,23 @@ from enum import Enum
 # Redis
 R_CHANNEL_CLOCKPI: str = "clockpi"
 R_CHANNEL_EPDPI: str = "epdpi"
+
 R_MSG_CLEAR: str = "clear"
 R_MSG_DRAW: str = "draw"
 R_MSG_BUSY: str = "busy"
 R_MSG_UPDATED: str = "updated"
 R_MSG_RESULT: str = "result"
+R_MSG_BTN: str = "button"
+R_MSG_BTN_NEXT: str = "next"
+R_MSG_BTN_PREV: str = "prev"
+R_MSG_BTN_CHANGE: str = "change"
+R_MSG_BTN_ONOFF: str = "on_off"
+
 R_IMAGE_QUEUE: str = "img_queue"
-R_SLEEP_ACTIVE: str = "sleep_active"
+R_SLEEP_STATUS: str = "sleep_status"
 
 R_SETTINGS_EPD_BUSY: str = "epd_busy"
 R_SETTINGS_DRAW_GRIDS: str = "draw_grids"
-
-
-# Buttons
-MSG_BTN: str = "button"
-MSG_BTN_NEXT: str = "next"
-MSG_BTN_PREV: str = "prev"
-MSG_BTN_CHANGE: str = "change"
-MSG_BTN_ONOFF: str = "on_off"
 
 
 # E-Paper Display Width
@@ -37,6 +36,14 @@ EPD_NC: int = 2
 
 # Allowed upload file extensions
 ALLOWED_EXTENSIONS: set[str] = ("png", "jpg", "jpeg", "bmp")
+
+
+# Sleep Status
+class SleepStatus(Enum):
+    AWAKE = 0
+    PENDING_SLEEP = 1
+    SLEEP = 2
+    PENDING_AWAKE = 3
 
 
 # Time Mode

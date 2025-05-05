@@ -14,9 +14,6 @@ from flask.ctx import AppContext
 
 from logging import Logger, getLogger
 
-from werkzeug.utils import secure_filename
-from werkzeug.datastructures import FileStorage
-
 
 logger: Logger = getLogger(__name__)
 
