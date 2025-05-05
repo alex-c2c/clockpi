@@ -6,7 +6,7 @@ from flask import Flask
 from logging import Logger, getLogger
 
 from clockpi import logic, queue, redis_controller
-from clockpi.consts import R_SLEEP_STATUS, SleepStatus
+from clockpi.consts import *
 
 logger: Logger = getLogger(__name__)
 job_scheduler = APScheduler()
@@ -21,7 +21,7 @@ def job_test() -> None:
 def job_update_clock() -> None:
 	with job_scheduler.app.app_context():
 		sleep_status: SleepStatus = SleepStatus(
-			redis_controller.rget(R_SLEEP_STATUS, str(SleepStatus.AWAKE.value))
+			int(redis_controller.rget(R_SLEEP_STATUS, str(SleepStatus.AWAKE.value)))
 		)
 		if sleep_status == SleepStatus.AWAKE:
 			logic.epd_update()

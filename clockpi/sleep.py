@@ -142,6 +142,8 @@ def init(app: Flask) -> None:
 			duration: int = sch["duration"]
 
 			_add_job_schedules(id, days, hour, minute, duration)
+   
+		redis_controller.rset(R_SLEEP_STATUS, str(SleepStatus.AWAKE.value))
 
 
 def _add(
@@ -200,12 +202,12 @@ def _update(
 
 def set_awake() -> None:
 	logger.debug(f"set_sleep_active")
-	redis_controller.rset(R_SLEEP_STATUS, str(SleepStatus.PENDING_AWAKE))
+	redis_controller.rset(R_SLEEP_STATUS, str(SleepStatus.PENDING_AWAKE.value))
 
 
 def set_sleep() -> None:
 	logger.debug(f"set_sleep_inactive")
-	redis_controller.rset(R_SLEEP_STATUS, str(SleepStatus.PENDING_SLEEP))
+	redis_controller.rset(R_SLEEP_STATUS, str(SleepStatus.PENDING_SLEEP.value))
 
 
 @bp.route("/")
