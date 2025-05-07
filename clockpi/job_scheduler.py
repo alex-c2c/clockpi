@@ -36,7 +36,7 @@ def job_update_clock() -> None:
 			pass
 
 
-@job_scheduler.task("cron", id="queue_shift_next", hour="*", second="1")
+@job_scheduler.task("cron", id="queue_shift_next", hour="*", minute="0", second="1")
 def job_queue_shift_next() -> None:
 	with job_scheduler.app.app_context():
 		queue.shift_next()
