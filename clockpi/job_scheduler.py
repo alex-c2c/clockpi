@@ -17,7 +17,7 @@ def job_test() -> None:
 	print("job_test")
 
 
-@job_scheduler.task("cron", id="update_clock", minute="*")
+@job_scheduler.task("cron", id="update_clock", minute="*", second="10")
 def job_update_clock() -> None:
 	with job_scheduler.app.app_context():
 		sleep_status: SleepStatus = SleepStatus(
@@ -36,7 +36,7 @@ def job_update_clock() -> None:
 			pass
 
 
-@job_scheduler.task("cron", id="queue_shift_next", hour="*")
+@job_scheduler.task("cron", id="queue_shift_next", hour="*", second="1")
 def job_queue_shift_next() -> None:
 	with job_scheduler.app.app_context():
 		queue.shift_next()
@@ -84,6 +84,7 @@ def add_cron_job(id: str, func: Callable, day: int, hour: int, minute: int) -> b
 		replace_existing=True,
 		hour=hour,
 		minute=minute,
+		second="5",
 		day_of_week=f"{day}",
 	)
 
