@@ -97,28 +97,31 @@ def _add_job_schedules(
 
 		job_sleep_id: str = f"job_set_sleep_{id}_{day}"
 		job_awake_id: str = f"job_set_awake_{id}_{day}"
+  		
+		sch_hour: int = hour
+		sch_min: int = minute
 
 		# add cron job to sleep display
-		job_scheduler.add_cron_job(job_sleep_id, set_sleep, day, hour, minute)
+		job_scheduler.add_cron_job(job_sleep_id, set_sleep, day, sch_hour, sch_min)
 
 		# calculate day_of_week compensation if duration crosses over to next day(s)
 		duration_hour: int = floor(duration / 60)
 		duration_minute: int = duration % 60
 
-		minute += duration_minute
-		if minute > 59:
-			minute %= 60
+		sch_min += duration_minute
+		if sch_min > 59:
+			sch_min %= 60
 			duration_hour += 1
 
 		day_end: int = day
-		hour += duration_hour
-		if hour > 23:
-			day_end += floor(hour / 24)
+		sch_hour += duration_hour
+		if sch_hour > 23:
+			day_end += floor(sch_hour / 24)
 			day_end %= 7
-			hour %= 24
+			sch_hour %= 24
 
 		# Add cron job to wake display
-		job_scheduler.add_cron_job(job_awake_id, set_awake, day_end, hour, minute)
+		job_scheduler.add_cron_job(job_awake_id, set_awake, day_end, sch_hour, sch_min)
 
 
 def init(app: Flask) -> None:
@@ -201,12 +204,12 @@ def _update(
 
 
 def set_awake() -> None:
-	logger.debug(f"set_sleep_active")
+	logger.debug(f"set_awake")
 	redis_controller.rset(R_SLEEP_STATUS, str(SleepStatus.PENDING_AWAKE.value))
 
 
 def set_sleep() -> None:
-	logger.debug(f"set_sleep_inactive")
+	logger.debug(f"set_sleep")
 	redis_controller.rset(R_SLEEP_STATUS, str(SleepStatus.PENDING_SLEEP.value))
 
 
