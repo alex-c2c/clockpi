@@ -5,8 +5,8 @@ from typing import Any
 from logging import Logger, getLogger
 from flask import Flask
 from flask_redis import FlaskRedis
-from clockpi.consts import *
-from clockpi import logic, queue
+from app.consts import *
+from app import logic, queue
 
 redis_client = None
 redis_thread = None

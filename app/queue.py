@@ -1,6 +1,6 @@
 import random
-from clockpi import db, redis_controller
-from clockpi.consts import *
+from app import db, redis_controller
+from app.consts import *
 from logging import Logger, getLogger
 
 

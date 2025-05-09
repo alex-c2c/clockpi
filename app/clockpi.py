@@ -1,10 +1,7 @@
 import queue
 import os
 
-from clockpi import redis_controller
-import clockpi.db as db
-import clockpi.logic as logic
-import clockpi.queue as queue
+from app import redis_controller, db, logic, queue
 from datetime import datetime
 from logging import Logger, getLogger
 from threading import Thread
@@ -17,12 +14,8 @@ from flask import (
 	request,
 	url_for,
 )
-from clockpi.auth import login_required
-from clockpi.db import get_db, get_image, get_images, update_image
-from clockpi.queue import get_queue, move_to_first, shuffle_queue, shift_next
-from clockpi.consts import *
-from clockpi.redis_controller import rset, rget
-from clockpi.logic import epd_update, epd_clear, process_uploaded_file
+from app.auth import login_required
+from app.consts import *
 
 from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
@@ -39,7 +32,7 @@ def allowed_file(filename) -> bool:
 @bp.route("/", methods=["GET"])
 @login_required
 def index():
-	db = get_db()
+	#db = db.get_db()
 	"""
 	posts = db.execute(
 		'SELECT p.id, title, body, created, author_id, username'
@@ -88,7 +81,7 @@ def upload_file():
 			file.save(temp_path)
 
 			t: Thread = Thread(
-				target=process_uploaded_file,
+				target = logic.process_uploaded_file,
 				args=(
 					current_app.app_context(),
 					file_name,
@@ -107,10 +100,10 @@ def test():
 	epd_busy: bool = redis_controller.get_epd_busy()
 
 	# Get all images
-	images = get_images()
+	images = db.get_images()
 
 	# Get Image Queue
-	image_queue: list[int] = get_queue()
+	image_queue: list[int] = queue.get_queue()
 
 	# Text Color
 	text_color: dict[str, int] = TEXT_COLOR_DICT
@@ -136,7 +129,7 @@ def test():
 @bp.route("/shuffle", methods=["GET"])
 @login_required
 def shuffle():
-	shuffle_queue()
+	queue.shuffle_queue()
 
 	return redirect(location=url_for("clockpi.test"))
 
@@ -144,7 +137,7 @@ def shuffle():
 @bp.route("/clear", methods=["GET"])
 @login_required
 def clear():
-	epd_clear()
+	logic.epd_clear()
 
 	return redirect(location=url_for("clockpi.test"))
 
@@ -152,7 +145,7 @@ def clear():
 @bp.route("/refresh", methods=["GET"])
 @login_required
 def refresh():
-	epd_update()
+	logic.epd_update()
 
 	return redirect(location=url_for("clockpi.test"))
 
@@ -160,7 +153,7 @@ def refresh():
 @bp.route("/next", methods=["GET"])
 @login_required
 def next():
-	shift_next()
+	queue.shift_next()
 
 	return redirect(location=url_for("clockpi.test"))
 
@@ -174,7 +167,7 @@ def set_draw_grids():
 		logger.info(f"set draw grids {draw_grids=}")
 
 		# Update Redis
-		rset(R_SETTINGS_DRAW_GRIDS, "1" if draw_grids else "0")
+		redis_controller.rset(R_SETTINGS_DRAW_GRIDS, "1" if draw_grids else "0")
 
 	return redirect(url_for(endpoint="clockpi.test"))
 
@@ -196,10 +189,10 @@ def update(id: int):
 			logic.remove_image(id)
 
 		else:
-			update_image(id, mode, color, shadow)
+			db.update_image(id, mode, color, shadow)
 
 			if is_select:
-				move_to_first(id)
+				queue.move_to_first(id)
 
 	return redirect(url_for(endpoint="clockpi.test"))
 
@@ -210,7 +203,7 @@ def select():
 	if request.method == "POST":
 		if request.form.get("id") is not None:
 			image_id: int = int(request.form.get("id"))
-			move_to_first(image_id)
+			queue.move_to_first(image_id)
 
 	return redirect(url_for(endpoint="clockpi.test"))
 
@@ -223,7 +216,7 @@ def delete():
 			image_id: int = int(request.form.get("id"))
 			logic.remove_image(id)
 
-			image = get_image(id)
+			image = db.get_image(id)
 			if image is not None:
 				db.remove_image(image_id)
 				logic.remove_image(image_id)

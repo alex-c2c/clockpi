@@ -11,9 +11,9 @@ from flask import (
 	url_for,
 )
 
-from clockpi.auth import login_required
-from clockpi.consts import *
-from clockpi import db, job_scheduler, redis_controller
+from app.auth import login_required
+from app.consts import *
+from app import db, job_scheduler, redis_controller
 
 
 class sleep_schedule:

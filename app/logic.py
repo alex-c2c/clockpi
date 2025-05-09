@@ -2,8 +2,8 @@ import hashlib
 import os
 import shutil
 
-from clockpi.consts import *
-from clockpi import db, image, queue, redis_controller
+from app.consts import *
+from app import db, image, queue, redis_controller
 
 from datetime import datetime
 from flask import current_app

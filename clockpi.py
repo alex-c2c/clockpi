@@ -1,11 +1,12 @@
 import atexit
 import logging
+import os
 
 from logging import Logger, getLogger
 from flask import Flask
 
-from clockpi import create_app, job_scheduler, redis_controller, sleep, queue
-from clockpi.consts import *
+from app import auth, clockpi, db, job_scheduler, redis_controller, sleep, queue
+from app.consts import *
 
 logging.basicConfig(level=logging.DEBUG)
 logger: Logger = getLogger(__name__)
@@ -18,7 +19,19 @@ def on_app_exit() -> None:
 
 
 # MAIN
-app: Flask = create_app()
+app: Flask = Flask(__name__)
+app.config.from_object(os.environ["APP_SETTING"])
+
+# DB
+db.init_app(app)
+
+# Blueprints
+app.register_blueprint(auth.bp)
+app.register_blueprint(clockpi.bp)
+app.register_blueprint(sleep.bp)
+
+# add url
+app.add_url_rule("/", endpoint="index")
 
 # Redis
 redis_controller.init_app(app)

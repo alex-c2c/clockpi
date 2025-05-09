@@ -5,8 +5,8 @@ from apscheduler.jobstores.base import JobLookupError, ConflictingIdError
 from flask import Flask
 from logging import Logger, getLogger
 
-from clockpi import logic, queue, redis_controller
-from clockpi.consts import *
+from app import logic, queue, redis_controller
+from app.consts import *
 
 logger: Logger = getLogger(__name__)
 job_scheduler = APScheduler()
