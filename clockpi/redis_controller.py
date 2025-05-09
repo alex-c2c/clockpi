@@ -91,7 +91,7 @@ def event_handler(msg: dict) -> None:
 				or sleep_status == SleepStatus.PENDING_AWAKE
 			):
 				rset(R_SLEEP_STATUS, str(object=SleepStatus.SLEEP.value))
-				logic.clear()
+				logic.epd_clear()
 			elif (
 				sleep_status == SleepStatus.SLEEP
 				or sleep_status == SleepStatus.PENDING_SLEEP
