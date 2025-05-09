@@ -3,7 +3,7 @@ import os
 import queue
 from typing import Any
 from logging import Logger, getLogger
-from flask import Flask
+from flask import Flask, app
 from flask_redis import FlaskRedis
 from clockpi.consts import *
 from clockpi import logic, queue
@@ -59,51 +59,52 @@ def init_app(app: Flask) -> None:
 def event_handler(msg: dict) -> None:
 	logger.info(msg=f"event_handler {msg=}")
 
-	if (
-		msg["type"] != "message"
-		or msg["channel"] != R_CHANNEL_CLOCKPI
-		or len(msg["data"]) == 0
-	):
-		return
-
-	data: list[str] = msg["data"].split("^")
-	if data[0] == R_MSG_BUSY:
-		# get notification from epd-pi that epd_busy has been updated
-		...
-
-	elif data[0] == R_MSG_RESULT:
-		# get notification from epd-pi that changes to the display has finished
-		...
-
-	elif data[0] == R_MSG_BTN:
-		# get notification from epd-pi that a button has been pressed
-
-		if get_epd_busy():
-			logger.info(f"epdpi is busy, unable process event")
+	with app.app_context():
+		if (
+			msg["type"] != "message"
+			or msg["channel"] != R_CHANNEL_CLOCKPI
+			or len(msg["data"]) == 0
+		):
 			return
 
-		sleep_status: SleepStatus = get_sleep_status()
+		data: list[str] = msg["data"].split("^")
+		if data[0] == R_MSG_BUSY:
+			# get notification from epd-pi that epd_busy has been updated
+			...
 
-		if data[1] == R_MSG_BTN_ONOFF:
-			# ON/OFF button has been pressed
-			if (
-				sleep_status == SleepStatus.AWAKE
-				or sleep_status == SleepStatus.PENDING_AWAKE
-			):
-				rset(R_SLEEP_STATUS, str(object=SleepStatus.SLEEP.value))
-				logic.epd_clear()
-			elif (
-				sleep_status == SleepStatus.SLEEP
-				or sleep_status == SleepStatus.PENDING_SLEEP
-			):
-				rset(R_SLEEP_STATUS, str(SleepStatus.AWAKE.value))
+		elif data[0] == R_MSG_RESULT:
+			# get notification from epd-pi that changes to the display has finished
+			...
+
+		elif data[0] == R_MSG_BTN:
+			# get notification from epd-pi that a button has been pressed
+
+			if get_epd_busy():
+				logger.info(f"epdpi is busy, unable process event")
+				return
+
+			sleep_status: SleepStatus = get_sleep_status()
+
+			if data[1] == R_MSG_BTN_ONOFF:
+				# ON/OFF button has been pressed
+				if (
+					sleep_status == SleepStatus.AWAKE
+					or sleep_status == SleepStatus.PENDING_AWAKE
+				):
+					rset(R_SLEEP_STATUS, str(object=SleepStatus.SLEEP.value))
+					logic.epd_clear()
+				elif (
+					sleep_status == SleepStatus.SLEEP
+					or sleep_status == SleepStatus.PENDING_SLEEP
+				):
+					rset(R_SLEEP_STATUS, str(SleepStatus.AWAKE.value))
+					logic.epd_update()
+
+			elif data[1] == R_MSG_BTN_NEXT:
+				# NEXT button has been pressed
+				queue.shift_next()
 				logic.epd_update()
-
-		elif data[1] == R_MSG_BTN_NEXT:
-			# NEXT button has been pressed
-			queue.shift_next()
-			logic.epd_update()
-			rset(R_SLEEP_STATUS, str(SleepStatus.AWAKE.value))
+				rset(R_SLEEP_STATUS, str(SleepStatus.AWAKE.value))
 
 
 def rdelete(key: str) -> None:
