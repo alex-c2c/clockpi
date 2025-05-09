@@ -1,6 +1,7 @@
 import queue
 import os
 
+from clockpi import redis_controller
 import clockpi.db as db
 import clockpi.logic as logic
 import clockpi.queue as queue
@@ -102,8 +103,8 @@ def upload_file():
 @login_required
 def test():
 	# Get settings from Redis
-	draw_grids: bool = True if rget(R_SETTINGS_DRAW_GRIDS, "1") == "1" else False
-	epd_busy: bool = False if rget(R_SETTINGS_EPD_BUSY, "0") == "0" else True
+	draw_grids: bool = redis_controller.get_draw_grids()
+	epd_busy: bool = redis_controller.get_epd_busy()
 
 	# Get all images
 	images = get_images()

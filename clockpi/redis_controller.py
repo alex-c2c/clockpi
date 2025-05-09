@@ -1,10 +1,12 @@
 import os
 
+import queue
 from typing import Any
 from logging import Logger, getLogger
 from flask import Flask
 from flask_redis import FlaskRedis
 from clockpi.consts import *
+from clockpi import logic, queue
 
 redis_client = None
 redis_thread = None
@@ -51,11 +53,10 @@ def init_app(app: Flask) -> None:
 	logger.info(f"Initializing redis client")
 	global redis_client
 	redis_client = FlaskRedis(app, decode_responses=True)
-	redis_client.set(R_SETTINGS_EPD_BUSY, "0")
 	redis_client.set(R_SETTINGS_DRAW_GRIDS, "0")
 
 
-def event_handler(msg) -> None:
+def event_handler(msg: dict) -> None:
 	logger.info(msg=f"event_handler {msg=}")
 
 	if (
@@ -73,6 +74,36 @@ def event_handler(msg) -> None:
 	elif data[0] == R_MSG_RESULT:
 		# get notification from epd-pi that changes to the display has finished
 		...
+
+	elif data[0] == R_MSG_BTN:
+		# get notification from epd-pi that a button has been pressed
+
+		if get_epd_busy():
+			logger.info(f"epdpi is busy, unable process event")
+			return
+
+		sleep_status: SleepStatus = get_sleep_status()
+
+		if data[1] == R_MSG_BTN_ONOFF:
+			# ON/OFF button has been pressed
+			if (
+				sleep_status == SleepStatus.AWAKE
+				or sleep_status == SleepStatus.PENDING_AWAKE
+			):
+				rset(R_SLEEP_STATUS, str(object=SleepStatus.SLEEP.value))
+				logic.clear()
+			elif (
+				sleep_status == SleepStatus.SLEEP
+				or sleep_status == SleepStatus.PENDING_SLEEP
+			):
+				rset(R_SLEEP_STATUS, str(SleepStatus.AWAKE.value))
+				logic.epd_update()
+
+		elif data[1] == R_MSG_BTN_NEXT:
+			# NEXT button has been pressed
+			queue.shift_next()
+			logic.epd_update()
+			rset(R_SLEEP_STATUS, str(SleepStatus.AWAKE.value))
 
 
 def rdelete(key: str) -> None:
@@ -99,3 +130,15 @@ def rpublish(msg: str) -> None:
 
 	global redis_client
 	redis_client.publish(R_CHANNEL_EPDPI, msg)
+
+
+def get_epd_busy() -> bool:
+	return True if rget(R_SETTINGS_EPD_BUSY, "0") == "1" else False
+
+
+def get_draw_grids() -> bool:
+	return True if rget(R_SETTINGS_DRAW_GRIDS, "0") == "1" else False
+
+
+def get_sleep_status() -> SleepStatus:
+	return SleepStatus(int(rget(R_SLEEP_STATUS, str(SleepStatus.AWAKE.value))))

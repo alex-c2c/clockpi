@@ -20,9 +20,8 @@ def job_test() -> None:
 @job_scheduler.task("cron", id="update_clock", minute="*", second="10")
 def job_update_clock() -> None:
 	with job_scheduler.app.app_context():
-		sleep_status: SleepStatus = SleepStatus(
-			int(redis_controller.rget(R_SLEEP_STATUS, str(SleepStatus.AWAKE.value)))
-		)
+		sleep_status: SleepStatus = redis_controller.get_sleep_status()
+
 		if sleep_status == SleepStatus.AWAKE:
 			logic.epd_update()
 		elif sleep_status == SleepStatus.PENDING_AWAKE:

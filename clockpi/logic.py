@@ -3,10 +3,7 @@ import os
 import shutil
 
 from clockpi.consts import *
-import clockpi.db as db
-import clockpi.image as image
-import clockpi.queue as queue
-import clockpi.redis_controller as redis
+from clockpi import db, image, queue, redis_controller
 
 from datetime import datetime
 from flask import current_app
@@ -21,7 +18,7 @@ logger: Logger = getLogger(__name__)
 def epd_update() -> None:
 	logger.debug(f"epd_update")
 
-	draw_grids: bool = True if redis.rget(R_SETTINGS_DRAW_GRIDS, "1") == "1" else False
+	draw_grids: bool = redis_controller.get_draw_grids()
 	image_queue: tuple[int] = queue.get_queue()
 
 	if len(image_queue) == 0:
@@ -42,14 +39,14 @@ def epd_update() -> None:
 	color: str = image["color"]
 	shadow: str = image["shadow"]
 
-	redis.rpublish(
+	redis_controller.rpublish(
 		f"{R_MSG_DRAW}^{file_path}^{time}^{mode}^{color}^{shadow}^{'1' if draw_grids else '0'}"
 	)
 
 
 def epd_clear() -> None:
 	logger.debug(f"epd_clear")
-	redis.rpublish(R_MSG_CLEAR)
+	redis_controller.rpublish(R_MSG_CLEAR)
 
 
 def process_uploaded_file(app_context: AppContext, file_name: str) -> int:

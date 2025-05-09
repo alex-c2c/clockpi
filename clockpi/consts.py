@@ -11,8 +11,6 @@ R_MSG_UPDATED: str = "updated"
 R_MSG_RESULT: str = "result"
 R_MSG_BTN: str = "button"
 R_MSG_BTN_NEXT: str = "next"
-R_MSG_BTN_PREV: str = "prev"
-R_MSG_BTN_CHANGE: str = "change"
 R_MSG_BTN_ONOFF: str = "on_off"
 
 R_IMAGE_QUEUE: str = "img_queue"
@@ -40,10 +38,10 @@ ALLOWED_EXTENSIONS: set[str] = ("png", "jpg", "jpeg", "bmp")
 
 # Sleep Status
 class SleepStatus(Enum):
-    AWAKE = 0
-    PENDING_SLEEP = 1
-    SLEEP = 2
-    PENDING_AWAKE = 3
+	AWAKE = 0
+	PENDING_SLEEP = 1
+	SLEEP = 2
+	PENDING_AWAKE = 3
 
 
 # Time Mode
