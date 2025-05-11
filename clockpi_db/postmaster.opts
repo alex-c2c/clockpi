@@ -1,0 +1,1 @@
+/opt/homebrew/Cellar/postgresql@17/17.5/bin/postgres "-D" "clockpi_db"

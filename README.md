@@ -1,31 +1,29 @@
-# Initial Setup
-- Run `pip install -r requirements.txt` to install all required packages
-- Run `flask --app clockpi init-db` to initialize the database.
-- Run `flask --app auth createsuperuser` to create a admin account.
+# Create seprate postgresql database cluster
+`initdb <cluster_name>`
 
-# Starting Application
-## Running in development server
-- Run `flask --app main run --host 0.0.0.0 --port 5001`
-- To run in debug mode, add options `--debug --no-reload`, note that redis-subscriber receiving message twice while in debug mode is a bug.
+# Start cluster
+`pg_ctl -D <cluster_name> -l ./logfile start`
 
-## Running in production server
-- Run `/path/to/gunicorn -c gunicorn.py main:app` with config file `./gunicorn.py`
+# Connect to cluster
+`psql -h <address> -p <port_number> -d <database_name> -U <username>`
+On first connect, use `postgres` as <database_name> since it is one of the default database name created with a new cluster
 
-# Setting up Systemctl
-# New service file
-Create a new service file with the following content and modify the values accordingly
-[Unit]
-Description=Useful description
-After=network.target
+# Create database
+`CREATE DATABASE <DATABASE_NAME>;`
 
-[Service]
-WorkingDirectory=/path/to/app
-Environment=/path/to/venv/bin
-ExecStart=/path/to/venv/bin/gunicorn --workers 2 --bind 0.0.0.0:5001 main:app
-ExecReload=/bin/kill -s HUP $MAINPID
-KillMode=mixed
-TimeoutStopSec=5
-PrivateTmp=true
+# Create Migration
+`flask db init`
 
-[Install]
-WantedBy=multi-user.target
+# Migrate database model
+`flask db migrate`
+
+# Commit migration
+`flask db upgrade`
+
+# Start development server
+`flask --app app run --host 0.0.0.0 --port 5001`
+`--debug`: Optional
+`--no-reload`: Optional
+
+# Start production server
+`gunicorn  -c gunicorn.py "run:app"`

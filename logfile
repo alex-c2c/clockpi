@@ -1,0 +1,18 @@
+2025-05-11 12:59:18.237 +08 [57615] LOG:  starting PostgreSQL 17.5 (Homebrew) on aarch64-apple-darwin24.4.0, compiled by Apple clang version 17.0.0 (clang-1700.0.13.3), 64-bit
+2025-05-11 12:59:18.239 +08 [57615] LOG:  listening on IPv6 address "::1", port 5432
+2025-05-11 12:59:18.239 +08 [57615] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2025-05-11 12:59:18.239 +08 [57615] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2025-05-11 12:59:18.241 +08 [57618] LOG:  database system was shut down at 2025-05-11 12:59:14 +08
+2025-05-11 12:59:18.242 +08 [57615] LOG:  database system is ready to accept connections
+2025-05-11 12:59:20.762 +08 [57632] FATAL:  database "clockpi" does not exist
+2025-05-11 12:59:31.847 +08 [57661] FATAL:  database "alexlim" does not exist
+2025-05-11 12:59:36.213 +08 [57675] FATAL:  database "alexlim" does not exist
+2025-05-11 12:59:40.760 +08 [57691] FATAL:  database "clockpi" does not exist
+2025-05-11 12:59:57.630 +08 [57730] FATAL:  database "alexlim" does not exist
+2025-05-11 13:00:14.552 +08 [57783] FATAL:  database "alexlim" does not exist
+2025-05-11 13:00:24.120 +08 [57808] FATAL:  database "alexlim" does not exist
+2025-05-11 13:00:36.292 +08 [57847] FATAL:  role "clockpi" does not exist
+2025-05-11 13:00:49.901 +08 [57886] FATAL:  role "postgres" does not exist
+2025-05-11 13:03:42.296 +08 [58032] FATAL:  database "alexlim" does not exist
+2025-05-11 13:04:18.243 +08 [57616] LOG:  checkpoint starting: time
+2025-05-11 13:05:58.146 +08 [57616] LOG:  checkpoint complete: wrote 991 buffers (6.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=99.886 s, sync=0.015 s, total=99.904 s; sync files=328, longest=0.001 s, average=0.001 s; distance=4637 kB, estimate=4637 kB; lsn=0/19DBDA0, redo lsn=0/199BDE8
