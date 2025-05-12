@@ -7,6 +7,7 @@ from flask import (
 )
 
 #from app.auth import login_required
+from app.auth import login_required
 from app.consts import *
 
 #from werkzeug.utils import secure_filename
@@ -24,10 +25,9 @@ def allowed_file(filename) -> bool:
 
 
 @bp.route("/", methods=["GET"])
-#@login_required
+@login_required
 def index():
-
-	return {"message": "index"}
+	return render_template(("clockpi/index.html"))
 
 
 @bp.route("/add_acct", methods=["POST"])

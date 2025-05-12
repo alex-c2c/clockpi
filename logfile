@@ -107,3 +107,9 @@
 2025-05-12 15:38:44.423 +08 [76731] LOG:  checkpoint complete: wrote 8 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.708 s, sync=0.002 s, total=0.714 s; sync files=6, longest=0.001 s, average=0.001 s; distance=1 kB, estimate=3786 kB; lsn=0/1E18680, redo lsn=0/1E18628
 2025-05-12 15:43:43.424 +08 [76731] LOG:  checkpoint starting: time
 2025-05-12 15:43:44.245 +08 [76731] LOG:  checkpoint complete: wrote 9 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.815 s, sync=0.003 s, total=0.821 s; sync files=12, longest=0.001 s, average=0.001 s; distance=34 kB, estimate=3411 kB; lsn=0/1E20E88, redo lsn=0/1E20E30
+2025-05-12 16:28:43.254 +08 [76731] LOG:  checkpoint starting: time
+2025-05-12 16:28:43.861 +08 [76731] LOG:  checkpoint complete: wrote 7 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.606 s, sync=0.001 s, total=0.608 s; sync files=5, longest=0.001 s, average=0.001 s; distance=0 kB, estimate=3070 kB; lsn=0/1E21228, redo lsn=0/1E211D0
+2025-05-12 16:29:49.639 +08 [79453] ERROR:  relation "account" does not exist at character 15
+2025-05-12 16:29:49.639 +08 [79453] STATEMENT:  select * from account;
+2025-05-12 16:33:43.863 +08 [76731] LOG:  checkpoint starting: time
+2025-05-12 16:33:44.273 +08 [76731] LOG:  checkpoint complete: wrote 5 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.406 s, sync=0.002 s, total=0.410 s; sync files=5, longest=0.001 s, average=0.001 s; distance=1 kB, estimate=2763 kB; lsn=0/1E216E8, redo lsn=0/1E21690
