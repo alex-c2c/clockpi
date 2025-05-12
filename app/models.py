@@ -1,7 +1,9 @@
 from . import db
 
-class User(db.Model):
-	__tablename__ = "user"
+
+class AccountModel(db.Model):
+	__tablename__: str = "account"
+ 
 	id = db.Column(db.Integer, primary_key=True)
 	username = db.Column(db.String(), unique=True, nullable=False)
 	password = db.Column(db.String(), nullable=False)
@@ -11,11 +13,11 @@ class User(db.Model):
 		self.password = password
 
 	def __repr__(self):
-		return f"<User {self.username}>"
+		return f"<Account username:{self.username}>"
 
 
-class SleepSchedule(db.Model):
-	__tablename__ = "sleep_schedule"
+class SleepScheduleModel(db.Model):
+	__tablename__: str = "sleep_schedule"
 	
 	id = db.Column(db.Integer, primary_key=True)
 	days = db.Column(db.String(), nullable=False)
@@ -33,8 +35,8 @@ class SleepSchedule(db.Model):
 		return f"<SleepSchedule days:{self.days} hour:{self.hour} minute:{self.minute} duration:{self.duration}>"
 	
 
-class Wallpaper(db.Model):
-	__tablename__ = "wallpaper"
+class WallpaperModel(db.Model):
+	__tablename__: str = "wallpaper"
 	
 	id = db.Column(db.Integer, primary_key=True)
 	name = db.Column(db.String(), nullable=False)

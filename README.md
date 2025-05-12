@@ -21,9 +21,11 @@ On first connect, use `postgres` as <database_name> since it is one of the defau
 `flask db upgrade`
 
 # Start development server
+# "app" is from run.py
 `flask --app app run --host 0.0.0.0 --port 5001`
 `--debug`: Optional
 `--no-reload`: Optional
 
 # Start production server
+# equivalent to 'from run(.py) import app' and app.run()
 `gunicorn  -c gunicorn.py "run:app"`

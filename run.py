@@ -1,10 +1,10 @@
-from flask_migrate import Migrate
-from flask_sqlalchemy import SQLAlchemy
 from app import create_app
-
+from app import clockpi
 
 app = create_app()
 
+# Blueprints
+app.register_blueprint(clockpi.bp)
 
-if __name__ == '__main__':
-	app.run()
+# Add URL
+app.add_url_rule("/", endpoint="index")

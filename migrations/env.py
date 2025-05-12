@@ -5,6 +5,11 @@ from flask import current_app
 
 from alembic import context
 
+# https://stackoverflow.com/questions/26564784/flask-migrate-doesnt-detect-models
+# flask --app app db migrate wasn't detecting models
+# so forcefully import them here for detection
+from app.models import *
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config

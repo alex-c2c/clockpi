@@ -18,3 +18,5 @@ build/
 *.code-workspace
 
 dump.rdb
+
+clockpi_db/
