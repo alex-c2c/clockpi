@@ -94,7 +94,7 @@ def login():
 		password = request.form["password"]
 		error = None
 		acct = AccountModel.query.filter_by(username=username).first()
-  
+
 		if acct is None:
 			error = "Incorrect username."
 		elif not check_password_hash(acct.password, password):
@@ -117,9 +117,7 @@ def load_logged_in_user():
 	if acct_id is None:
 		g.user = None
 	else:
-		g.user = (
-			AccountModel.query.get(acct_id)
-		)
+		g.user = AccountModel.query.get(acct_id)
 
 
 @bp.route("/logout")

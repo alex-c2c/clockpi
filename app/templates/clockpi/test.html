@@ -7,7 +7,7 @@
 {% block content %}
 <div>
   <span>epd_busy: {{epd_busy}}</span><br>
-  <span>image_queue: {{image_queue}}</span>
+  <span>image_queue: {{wallpaper_queue}}</span>
 </div>
 
 <div>
@@ -50,7 +50,7 @@
           <div>
             <span>Select ID:
               <select name="id">
-                {% for image_id in image_queue %}
+                {% for image_id in wallpaper_queue %}
                 <option value={{image_id}}>{{image_id}}</option>
                 {% endfor %}
               </select>
@@ -78,7 +78,7 @@
     <label>Images</label>
     <div class="section_outline">
       <div style="padding: 10px 0px 0px 20px">
-        {% for img in images%}
+        {% for img in wallpapers %}
         <form method="post" action="/update/{{img.id}}">
           <div>
               <span>ID: {{img.id}} - {{img.name}} | </span>

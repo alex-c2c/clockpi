@@ -3,7 +3,7 @@ import os
 bind = "0.0.0.0:5001"
 workers = 2
 threads = 2
-preload_app = (True)
+preload_app = True
 
 
 APSC_WORKER = None
