@@ -1,10 +1,17 @@
-# Create seprate postgresql database cluster
-`initdb <cluster_name>`
+# Postgresql on Linux (Raspberry Pi)
+## Authentication mode
+By default, after installation, a new user `postgres` is created, this will be the default username, with no password required for login, as `peer` mode is the default.
+To turn on password authentication, follow https://stackoverflow.com/questions/18664074/getting-error-peer-authentication-failed-for-user-postgres-when-trying-to-ge and change `peer` -> `md5`
 
-# Start cluster
+# New Postgresql Cluster on Mac
+## Create seprate postgresql database cluster
+`initdb <cluster_name>`
+Uses system current username as the default username for postgresql
+
+## Start cluster
 `pg_ctl -D <cluster_name> -l ./logfile start`
 
-# Connect to cluster
+## Connect to cluster
 `psql -h <address> -p <port_number> -d <database_name> -U <username>`
 On first connect, use `postgres` as <database_name> since it is one of the default database name created with a new cluster
 

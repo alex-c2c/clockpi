@@ -21,4 +21,6 @@ dump.rdb
 
 clockpi_db/
 
+.env
+.flaskenv
 logfile
