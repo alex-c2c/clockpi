@@ -74,7 +74,7 @@ def upload_file():
 			file.save(temp_path)
 
 			t: Thread = Thread(
-				target=logic.process_uploaded_file,
+				target=wallpaper.add,
 				args=(
 					current_app.app_context(),
 					file_name,
@@ -171,23 +171,18 @@ def update(id: int):
 	if request.method == "POST":
 		is_select: bool = request.form.get("select") is not None
 		is_delete: bool = request.form.get("delete") is not None
-		mode: int = int(request.form.get("mode", TimeMode.FULL_3))
-		color: int = int(request.form.get("color", TextColor.NONE))
-		shadow: int = int(request.form.get("shadow", TextColor.NONE))
+		mode: int = int(request.form.get("mode", str(TimeMode.FULL_3.value)))
+		color: int = int(request.form.get("color", str(TextColor.WHITE.value)))
+		shadow: int = int(request.form.get("shadow", str(TextColor.BLACK.value)))
 		logger.info(
 			f"update image {id=} {mode=} {color=} {shadow=} {is_select=} {is_delete=}"
 		)
 
 		if is_delete:
-			logic.remove_image(id)
+			wallpaper.remove(id)
 
 		else:
-			model: WallpaperModel = WallpaperModel.query.get(id)
-			if model is not None:
-				model.mode = mode
-				model.color = color
-				model.shadow = shadow
-				db.session.commit()
+			wallpaper.update(id, mode, color, shadow)
 
 			if is_select:
 				queue.move_to_first(id)

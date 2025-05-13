@@ -1,5 +1,14 @@
+import hashlib
 import os
+import shutil
 import numpy as np
+
+from app import db, queue
+from app.consts import *
+from app.models import WallpaperModel
+
+from flask import current_app
+from flask.ctx import AppContext
 from PIL import Image as Image
 from logging import Logger, getLogger
 
@@ -57,7 +66,7 @@ def _palette_reduce(img: Image, nc: int) -> Image:
 	return Image.fromarray(carr)
 
 
-def validate_image(file_path: str) -> bool:
+def _validate_image(file_path: str) -> bool:
 	try:
 		img: Image = Image.open(file_path)
 		img.verify()
@@ -66,7 +75,7 @@ def validate_image(file_path: str) -> bool:
 		return False
 
 
-def procsess_image(
+def _process_image(
 	file_path: str,
 	dest_path: str,
 	to_width: int,
@@ -103,3 +112,110 @@ def procsess_image(
 	except IOError as error:
 		logger.error(error)
 		return False
+
+
+def add(app_context: AppContext, file_name: str) -> int:
+	app_context.push()
+
+	logger.info(f"Processing {file_name=}")
+	temp_path: str = os.path.join(current_app.config["DIR_TMP_UPLOAD"], file_name)
+
+	# validate image
+	if not _validate_image(temp_path):
+		os.remove(temp_path)
+		return ERR_UPLOAD_INVALID_IMAGE
+
+	# process image
+	if not os.path.isdir(current_app.config["DIR_TMP_PROCESSED"]):
+		os.mkdir(current_app.config["DIR_TMP_PROCESSED"])
+
+	processed_path: str = os.path.join(
+		current_app.config["DIR_TMP_PROCESSED"], file_name
+	)
+	process_result: bool = _process_image(
+		temp_path, processed_path, EPD_WIDTH, EPD_HEIGHT, EPD_NC
+	)
+
+	if not process_result:
+		if os.path.isfile(temp_path):
+			os.remove(temp_path)
+		if os.path.isfile(processed_path):
+			os.remove(processed_path)
+		return ERR_UPLOAD_POST_PROC
+
+	# get hash of processed image
+	try:
+		h = hashlib.sha256()
+		with open(processed_path, "rb") as f:
+			while True:
+				chunk = f.read(h.block_size)
+				if not chunk:
+					break
+				h.update(chunk)
+		hash: str = h.hexdigest()
+
+	except OSError as error:
+		if os.path.isfile(temp_path):
+			os.remove(temp_path)
+		if os.path.isfile(processed_path):
+			os.remove(processed_path)
+		return ERR_UPLOAD_HASH
+
+	# copy processed image to upload dir
+	try:
+		hashname: str = f"{hash}.bmp"
+		dest_path: str = os.path.join(current_app.config["DIR_APP_UPLOAD"], hashname)
+		shutil.copy2(processed_path, dest_path)
+		os.remove(processed_path)
+
+	except OSError as error:
+		if os.path.isfile(temp_path):
+			os.remove(temp_path)
+		if os.path.isfile(processed_path):
+			os.remove(processed_path)
+		return ERR_UPLOAD_COPY
+
+	# Save upload entry to DB
+	try:
+		filename_no_ext: str = file_name.rsplit(".", 1)[0]
+		filesize: int = os.path.getsize(dest_path)
+
+		# Insert to DB
+		new_model: WallpaperModel = WallpaperModel(filename_no_ext, hash, filesize)
+		db.session.add(new_model)
+		db.session.commit()
+
+		# Append to image queue
+		queue.append_to_queue(new_model.id)
+
+	except OSError as error:
+		return ERR_UPLOAD_SAVE
+
+	return 0
+
+
+def remove(id: int) -> None:
+	model: WallpaperModel = WallpaperModel.query.get(id)
+
+	if model is None:
+		return
+
+	hash: str = model.hash
+	file_path: str = os.path.join(current_app.config["DIR_APP_UPLOAD"], f"{hash}.bmp")
+	logger.info(msg=f"Deleting {file_path=}")
+	if os.path.isfile(file_path):
+		os.remove(file_path)
+
+	db.session.delete(model)
+	db.session.commit()
+
+	queue.remove_id(id)
+
+
+def update(id: int, mode: int, color: int, shadow: int) -> None:
+	model: WallpaperModel = WallpaperModel.query.get(id)
+	if model is not None:
+		model.mode = mode
+		model.color = color
+		model.shadow = shadow
+		db.session.commit()
