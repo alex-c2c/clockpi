@@ -1,12 +1,10 @@
-import os
-
 import queue
 from typing import Any
 from logging import Logger, getLogger
 from flask import Flask
 from flask_redis import FlaskRedis
 from app.consts import *
-from app import logic, queue
+from app import epd, queue, sleep
 
 
 logger: Logger = getLogger(__name__)
@@ -88,11 +86,11 @@ def event_handler(msg: dict) -> None:
 	elif data[0] == R_MSG_BTN:
 		# get notification from epd-pi that a button has been pressed
 
-		if get_epd_busy():
+		if epd.get_busy():
 			logger.info(f"epdpi is busy, unable process event")
 			return
 
-		sleep_status: SleepStatus = get_sleep_status()
+		sleep_status: SleepStatus = sleep.get_status()
 
 		if data[1] == R_MSG_BTN_ONOFF:
 			# ON/OFF button has been pressed
@@ -101,18 +99,18 @@ def event_handler(msg: dict) -> None:
 				or sleep_status == SleepStatus.PENDING_AWAKE
 			):
 				rset(R_SLEEP_STATUS, str(object=SleepStatus.SLEEP.value))
-				logic.epd_clear()
+				epd.clear()
 			elif (
 				sleep_status == SleepStatus.SLEEP
 				or sleep_status == SleepStatus.PENDING_SLEEP
 			):
 				rset(R_SLEEP_STATUS, str(SleepStatus.AWAKE.value))
-				logic.epd_update()
+				epd.update()
 
 		elif data[1] == R_MSG_BTN_NEXT:
 			# NEXT button has been pressed
 			queue.shift_next()
-			logic.epd_update()
+			epd.update()
 			rset(R_SLEEP_STATUS, str(SleepStatus.AWAKE.value))
 
 
@@ -142,13 +140,5 @@ def rpublish(msg: str) -> None:
 	redis_client.publish(R_CHANNEL_EPDPI, msg)
 
 
-def get_epd_busy() -> bool:
-	return True if rget(R_SETTINGS_EPD_BUSY, "0") == "1" else False
-
-
 def get_draw_grids() -> bool:
 	return True if rget(R_SETTINGS_DRAW_GRIDS, "0") == "1" else False
-
-
-def get_sleep_status() -> SleepStatus:
-	return SleepStatus(int(rget(R_SLEEP_STATUS, str(SleepStatus.AWAKE.value))))

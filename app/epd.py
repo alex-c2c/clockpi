@@ -1,13 +1,10 @@
-import hashlib
 import os
-import shutil
 
 from app.consts import *
-from app import db, queue, redis_controller, wallpaper
+from app import queue, redis_controller
 
 from datetime import datetime
 from flask import current_app
-from flask.ctx import AppContext
 
 from logging import Logger, getLogger
 
@@ -17,8 +14,12 @@ from app.models import WallpaperModel
 logger: Logger = getLogger(__name__)
 
 
-def epd_update() -> None:
-	logger.debug(f"epd_update")
+def get_busy() -> bool:
+    return True if redis_controller.rget(R_SETTINGS_EPD_BUSY, "0") == "1" else False
+
+
+def update() -> None:
+	logger.debug(f"update")
 
 	draw_grids: bool = redis_controller.get_draw_grids()
 	image_queue: tuple[int] = queue.get_queue()
@@ -46,9 +47,6 @@ def epd_update() -> None:
 	)
 
 
-def epd_clear() -> None:
-	logger.debug(f"epd_clear")
+def clear() -> None:
+	logger.debug(f"clear")
 	redis_controller.rpublish(R_MSG_CLEAR)
-
-
-

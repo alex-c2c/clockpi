@@ -1,7 +1,7 @@
 import queue
 import os
 
-from app import redis_controller, db, logic, queue, wallpaper
+from app import epd, redis_controller, queue, wallpaper
 from datetime import datetime
 from logging import Logger, getLogger
 from threading import Thread
@@ -90,7 +90,7 @@ def upload_file():
 def test():
 	# Get settings from Redis
 	draw_grids: bool = redis_controller.get_draw_grids()
-	epd_busy: bool = redis_controller.get_epd_busy()
+	epd_busy: bool = epd.get_busy()
 
 	# Get all wallpapers
 	wallpapers: list = WallpaperModel.query.order_by(WallpaperModel.id).all()
@@ -130,7 +130,7 @@ def shuffle():
 @bp.route("/clear", methods=["GET"])
 @login_required
 def clear():
-	logic.epd_clear()
+	epd.clear()
 
 	return redirect(location=url_for("clockpi.test"))
 
@@ -138,7 +138,7 @@ def clear():
 @bp.route("/refresh", methods=["GET"])
 @login_required
 def refresh():
-	logic.epd_update()
+	epd.update()
 
 	return redirect(location=url_for("clockpi.test"))
 
@@ -197,16 +197,5 @@ def select():
 		if request.form.get("id") is not None:
 			image_id: int = int(request.form.get("id"))
 			queue.move_to_first(image_id)
-
-	return redirect(url_for(endpoint="clockpi.test"))
-
-
-@bp.route("/delete", methods=["POST"])
-@login_required
-def delete():
-	if request.method == "POST":
-		if request.form.get("id") is not None:
-			image_id: int = int(request.form.get("id"))
-			logic.remove_image(image_id)
 
 	return redirect(url_for(endpoint="clockpi.test"))

@@ -1,5 +1,5 @@
 import random
-from app import db, redis_controller
+from app import redis_controller
 from app.consts import *
 from logging import Logger, getLogger
 

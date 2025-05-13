@@ -103,7 +103,7 @@ def _add_job_schedules(
 		sch_min: int = minute
 
 		# add cron job to sleep display
-		job_scheduler.add_cron_job(job_sleep_id, set_sleep, day, sch_hour, sch_min)
+		job_scheduler.add_cron_job(job_sleep_id, set_status_sleep, day, sch_hour, sch_min)
 
 		# calculate day_of_week compensation if duration crosses over to next day(s)
 		duration_hour: int = floor(duration / 60)
@@ -122,7 +122,7 @@ def _add_job_schedules(
 			sch_hour %= 24
 
 		# Add cron job to wake display
-		job_scheduler.add_cron_job(job_awake_id, set_awake, day_end, sch_hour, sch_min)
+		job_scheduler.add_cron_job(job_awake_id, set_status_awake, day_end, sch_hour, sch_min)
 
 
 def init(app: Flask) -> None:
@@ -216,14 +216,21 @@ def _update(
 	return True
 
 
-def set_awake() -> None:
-	logger.debug(f"set_awake")
-	redis_controller.rset(R_SLEEP_STATUS, str(SleepStatus.PENDING_AWAKE.value))
+def get_status() -> SleepStatus:
+    return SleepStatus(int(redis_controller.rget(R_SLEEP_STATUS, str(SleepStatus.AWAKE.value))))
 
 
-def set_sleep() -> None:
-	logger.debug(f"set_sleep")
-	redis_controller.rset(R_SLEEP_STATUS, str(SleepStatus.PENDING_SLEEP.value))
+def set_status(status: SleepStatus) -> None:
+	logger.debug(f"set_status:{SleepStatus=}")
+	redis_controller.rset(R_SLEEP_STATUS, value=str(status.value))
+
+
+def set_status_awake() -> None:
+    set_status(SleepStatus.PENDING_AWAKE)
+
+
+def set_status_sleep() -> None:
+    set_status(SleepStatus.PENDING_SLEEP)
 
 
 @bp.route("/")

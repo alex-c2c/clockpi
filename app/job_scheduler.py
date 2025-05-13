@@ -5,8 +5,9 @@ from apscheduler.jobstores.base import JobLookupError
 from flask import Flask
 from logging import Logger, getLogger
 
-from app import logic, queue, redis_controller
+from app import epd, queue, sleep
 from app.consts import *
+
 
 logger: Logger = getLogger(__name__)
 job_scheduler = APScheduler()
@@ -20,16 +21,16 @@ def job_test() -> None:
 @job_scheduler.task("cron", id="update_clock", minute="*", second="10")
 def job_update_clock() -> None:
 	with job_scheduler.app.app_context():
-		sleep_status: SleepStatus = redis_controller.get_sleep_status()
+		sleep_status: SleepStatus = sleep.get_status()
 
 		if sleep_status == SleepStatus.AWAKE:
-			logic.epd_update()
+			epd.update()
 		elif sleep_status == SleepStatus.PENDING_AWAKE:
-			logic.epd_update()
-			redis_controller.rset(R_SLEEP_STATUS, str(SleepStatus.AWAKE.value))
+			epd.update()
+			sleep.set_status(SleepStatus.AWAKE)
 		elif sleep_status == SleepStatus.PENDING_SLEEP:
-			logic.epd_clear()
-			redis_controller.rset(R_SLEEP_STATUS, str(SleepStatus.SLEEP.value))
+			epd.clear()
+			sleep.set_status(SleepStatus.SLEEP)
 		elif sleep_status == SleepStatus.SLEEP:
 			# Do nothing, assume display is sleeping
 			pass
