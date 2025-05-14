@@ -60,9 +60,9 @@ class WallpaperModel(db.Model):
 		self.hash = hash
 		self.size = size
 		self.mode = int(TimeMode.FULL_3.value) if mode is None else int(mode.value)
-		self.color = int(TextColor.BLACK.value) if color is None else int(color.value)
+		self.color = int(TextColor.WHITE.value) if color is None else int(color.value)
 		self.shadow = (
-			int(TextColor.WHITE.value) if shadow is None else int(shadow.value)
+			int(TextColor.BLACK.value) if shadow is None else int(shadow.value)
 		)
 
 	def __repr__(self):
