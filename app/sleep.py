@@ -221,7 +221,7 @@ def get_status() -> SleepStatus:
 
 
 def set_status(status: SleepStatus) -> None:
-	logger.debug(f"set_status:{SleepStatus=}")
+	logger.debug(f"set_status:{status=}")
 	redis_controller.rset(R_SLEEP_STATUS, value=str(status.value))
 
 

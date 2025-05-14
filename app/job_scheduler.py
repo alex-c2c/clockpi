@@ -22,6 +22,7 @@ def job_test() -> None:
 def job_update_clock() -> None:
 	with job_scheduler.app.app_context():
 		sleep_status: SleepStatus = sleep.get_status()
+		logger.debug(msg=f"current sleep_status: {sleep_status=}")
 
 		if sleep_status == SleepStatus.AWAKE:
 			epd.update()
