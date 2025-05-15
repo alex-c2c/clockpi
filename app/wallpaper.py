@@ -1,18 +1,23 @@
 import hashlib
 import os
 import shutil
+from threading import Thread
 import numpy as np
 
 from app import db, queue
+from app.auth import login_required
 from app.consts import *
 from app.models import WallpaperModel
 
-from flask import current_app
+from flask import Blueprint, current_app, flash, redirect, request, url_for
 from flask.ctx import AppContext
 from PIL import Image as Image
 from logging import Logger, getLogger
+from werkzeug.utils import secure_filename
+from werkzeug.datastructures import FileStorage
 
 
+bp: Blueprint = Blueprint("wallpaper", __name__, url_prefix="/wallpaper")
 logger: Logger = getLogger(__name__)
 
 
@@ -114,7 +119,7 @@ def _process_image(
 		return False
 
 
-def add(app_context: AppContext, file_name: str) -> int:
+def _add(app_context: AppContext, file_name: str) -> int:
 	app_context.push()
 
 	logger.info(f"Processing {file_name=}")
@@ -194,7 +199,7 @@ def add(app_context: AppContext, file_name: str) -> int:
 	return 0
 
 
-def remove(id: int) -> None:
+def _remove(id: int) -> None:
 	model: WallpaperModel = WallpaperModel.query.get(id)
 
 	if model is None:
@@ -212,10 +217,85 @@ def remove(id: int) -> None:
 	queue.remove_id(id)
 
 
-def update(id: int, mode: int, color: int, shadow: int) -> None:
+def _update(id: int, mode: int, color: int, shadow: int) -> None:
 	model: WallpaperModel = WallpaperModel.query.get(id)
 	if model is not None:
 		model.mode = mode
 		model.color = color
 		model.shadow = shadow
 		db.session.commit()
+
+
+@bp.route("/upload", methods=["POST"])
+@login_required
+def upload():
+	if request.method == "POST" and "file" in request.files:
+		if "file" not in request.files:
+			flash("No file part")
+			return redirect(url_for("clock.test"))
+
+		files: list[FileStorage] = request.files.getlist("file")
+  
+		logger.info(f"upload {len(files)=}")
+
+		for file in files:
+			# secure file name
+			file_name = secure_filename(file.filename)
+
+			if file_name == "":
+				flash("No file part")
+				continue
+
+			if (
+				"." not in file_name
+				or file_name.rsplit(".", 1)[1].lower() not in ALLOWED_EXTENSIONS
+			):
+				flash(f"Uploaded image {file_name=} with invalid extension")
+				continue
+
+			# save file to temp dir
+			# TODO: improve location of "uploaded" files so that it doesn't get
+			# overwritten by someone else uploading the files with same file name at the same time
+			if not os.path.isdir(current_app.config["DIR_TMP_UPLOAD"]):
+				os.mkdir(current_app.config["DIR_TMP_UPLOAD"])
+
+			temp_path: str = os.path.join(
+				current_app.config["DIR_TMP_UPLOAD"], file_name
+			)
+			file.save(temp_path)
+
+			t: Thread = Thread(
+				target=_add,
+				args=(
+					current_app.app_context(),
+					file_name,
+				),
+			)
+			t.start()
+
+	return redirect(url_for("clock.test"))
+
+
+@bp.route("/update/<int:id>", methods=["POST"])
+@login_required
+def update(id: int):
+	if request.method == "POST":
+		is_select: bool = request.form.get("select") is not None
+		is_delete: bool = request.form.get("delete") is not None
+		mode: int = int(request.form.get("mode", str(TimeMode.FULL_3.value)))
+		color: int = int(request.form.get("color", str(TextColor.WHITE.value)))
+		shadow: int = int(request.form.get("shadow", str(TextColor.BLACK.value)))
+		logger.info(
+			f"update {id=} {mode=} {color=} {shadow=} {is_select=} {is_delete=}"
+		)
+
+		if is_delete:
+			_remove(id)
+
+		else:
+			_update(id, mode, color, shadow)
+
+			if is_select:
+				queue.move_to_first(id)
+
+	return redirect(url_for(endpoint="clock.test"))

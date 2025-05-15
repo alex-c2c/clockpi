@@ -3,8 +3,8 @@ import logging
 
 from flask import Flask
 
-from app import create_app
-from app import auth, clockpi, sleep, redis_controller, job_scheduler, queue
+from app import clock, create_app, wallpaper
+from app import auth, sleep, redis_controller, job_scheduler, queue
 from logging import Logger, getLogger
 
 
@@ -20,9 +20,11 @@ def on_app_exit() -> None:
 app: Flask = create_app()
 
 # Blueprints
-app.register_blueprint(clockpi.bp)
 app.register_blueprint(auth.bp)
+app.register_blueprint(clock.bp)
+app.register_blueprint(queue.bp)
 app.register_blueprint(sleep.bp)
+app.register_blueprint(wallpaper.bp)
 
 
 # Add URL

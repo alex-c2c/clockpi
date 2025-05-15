@@ -145,7 +145,7 @@ def init(app: Flask) -> None:
 			minute: int = model.minute
 			duration: int = model.duration
 
-			_add_job_schedules(id, days, hour, minute, duration)
+			#_add_job_schedules(id, days, hour, minute, duration)
 
 		redis_controller.rset(R_SLEEP_STATUS, str(SleepStatus.AWAKE.value))
 
@@ -171,7 +171,7 @@ def _add(
 	db.session.commit()
 
 	# add new job schedules
-	_add_job_schedules(new_model.id, days, hour, minute, duration)
+	#_add_job_schedules(new_model.id, days, hour, minute, duration)
 
 
 def _remove(id: int) -> None:
@@ -183,7 +183,7 @@ def _remove(id: int) -> None:
 	db.session.commit()
 
 	# remove job schedules
-	_remove_job_schedules(id)
+	#_remove_job_schedules(id)
 
 
 def _update(
@@ -210,8 +210,8 @@ def _update(
 		db.session.commit()
 
 	# update job schedules
-	_remove_job_schedules(id)
-	_add_job_schedules(id, days, hour, minute, duration)
+	#_remove_job_schedules(id)
+	#_add_job_schedules(id, days, hour, minute, duration)
 
 	return True
 

@@ -16,7 +16,7 @@
     <label>Upload File</label>
     <div class="section_outline">
       <div style="padding: 10px 0px 0px 20px">
-        <form method="post" enctype="multipart/form-data" action="/upload_file">
+        <form method="post" enctype="multipart/form-data" action="/wallpaper/upload">
           <input type=file name=file multiple>
           <input type=submit value=Upload>
         </form>
@@ -29,24 +29,24 @@
     <label>Actions</label>
     <div class="section_outline">
       <div style="padding: 10px 0px 0px 20px">
-        <form method="post" action="/draw_grids">
+        <form method="post" action="/clock/draw_grids">
           <span>Draw grids? 
             <input name="draw_grids" type="checkbox" value="true" {% if draw_grids == 1 %} checked=true {% endif %} onChange="this.form.submit()">
           </span>
         </form>
-        <form method="get" action="/refresh">
+        <form method="get" action="/clock/refresh">
           <input type="submit" value="Refresh">
         </form>
-        <form method="get" action="/clear">
+        <form method="get" action="/clock/clear">
           <input type="submit" value="Clear">
         </form>
-        <form method="get" action="/shuffle">
+        <form method="get" action="/queue/shuffle">
           <input type="submit" value="Shuffle">
         </form>
-        <form method="get" action="/next">
+        <form method="get" action="/queue/next">
           <input type="submit" value="Next">
         </form>
-        <form method="post" action="/select">
+        <form method="post" action="/queue/select">
           <div>
             <span>Select ID:
               <select name="id">
@@ -79,7 +79,7 @@
     <div class="section_outline">
       <div style="padding: 10px 0px 0px 20px">
         {% for img in wallpapers %}
-        <form method="post" action="/update/{{img.id}}">
+        <form method="post" action="/wallpaper/update/{{img.id}}">
           <div>
               <span>ID: {{img.id}} - {{img.name}} | </span>
               <span>M: 
