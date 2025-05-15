@@ -36,10 +36,6 @@ redis_controller.init_app(app)
 redis_controller.sub_to_channel()
 
 
-# Sleep Schedule
-sleep.init(app)
-
-
 # Scheduler for jobs
 job_scheduler.init(app)
 

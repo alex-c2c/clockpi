@@ -39,9 +39,7 @@ ALLOWED_EXTENSIONS: set[str] = ("png", "jpg", "jpeg", "bmp")
 # Sleep Status
 class SleepStatus(Enum):
 	AWAKE = 0
-	PENDING_SLEEP = 1
-	SLEEP = 2
-	PENDING_AWAKE = 3
+	SLEEP = 1
 
 
 # Time Mode
