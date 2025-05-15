@@ -35,7 +35,7 @@ def allowed_file(filename) -> bool:
 @login_required
 def index():
 	return redirect(location=url_for("clock.test"))
-	#return render_template(("clock/index.html"))
+	# return render_template(("clock/index.html"))
 
 
 @bp.route("/test", methods=["GET"])

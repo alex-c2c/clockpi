@@ -1,5 +1,6 @@
 import os
 from typing import Callable
+from warnings import deprecated
 from flask_apscheduler import APScheduler
 from apscheduler.jobstores.base import JobLookupError
 from flask import Flask
@@ -19,7 +20,7 @@ def job_update_clock() -> None:
 		sleep_status: SleepStatus = sleep.get_status()
 		should_sleep_now: bool = sleep.should_sleep_now()
 		logger.debug(f"job_update_clock {sleep_status=} {should_sleep_now=}")
-  
+
 		if should_sleep_now:
 			if sleep_status == SleepStatus.AWAKE:
 				epd.clear()
@@ -28,7 +29,7 @@ def job_update_clock() -> None:
 			epd.update()
 			if sleep_status == SleepStatus.SLEEP:
 				sleep.set_status(SleepStatus.AWAKE)
-  
+
 
 @job_scheduler.task("cron", id="queue_shift_next", hour="*", minute="0", second="1")
 def job_queue_shift_next() -> None:
@@ -46,6 +47,7 @@ def init(app: Flask) -> None:
 	job_scheduler.start()
 
 
+@deprecated(f"No longer using job scheduler to handle sleep")
 def validate_cron_time(day: int, hour: int, minute: int) -> bool:
 	if hour < 0 or hour > 23:
 		logger.error(f"Invalid hour, {hour=}")
@@ -62,6 +64,7 @@ def validate_cron_time(day: int, hour: int, minute: int) -> bool:
 	return True
 
 
+@deprecated(f"No longer using job scheduler to handle sleep")
 def add_cron_job(id: str, func: Callable, day: int, hour: int, minute: int) -> bool:
 	logger.info(f"add_cron_job, {id=} {day=} {hour=} {minute=}")
 
@@ -83,6 +86,7 @@ def add_cron_job(id: str, func: Callable, day: int, hour: int, minute: int) -> b
 	)
 
 
+@deprecated(f"No longer using job scheduler to handle sleep")
 def remove_cron_job(id: str) -> bool:
 	global job_scheduler
 	try:
@@ -93,6 +97,7 @@ def remove_cron_job(id: str) -> bool:
 		return False
 
 
+@deprecated(f"No longer using job scheduler to handle sleep")
 def get_cron_jobs() -> list[str]:
 	global job_scheduler
 

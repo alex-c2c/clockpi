@@ -235,7 +235,7 @@ def upload():
 			return redirect(url_for("clock.test"))
 
 		files: list[FileStorage] = request.files.getlist("file")
-  
+
 		logger.info(f"upload {len(files)=}")
 
 		for file in files:

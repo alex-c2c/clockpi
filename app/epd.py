@@ -15,7 +15,7 @@ logger: Logger = getLogger(__name__)
 
 
 def get_busy() -> bool:
-    return True if redis_controller.rget(R_SETTINGS_EPD_BUSY, "0") == "1" else False
+	return True if redis_controller.rget(R_SETTINGS_EPD_BUSY, "0") == "1" else False
 
 
 def update() -> None:

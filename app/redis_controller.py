@@ -36,20 +36,20 @@ def sub_to_channel() -> None:
 
 	global redis_client
 	redis_pubsub = redis_client.pubsub(ignore_subscribe_messages=True)
- 
-	'''
+
+	"""
 	Note:
  	Running Flask in development mode means "auto-reload" is turned on, thus this will cause
 	the application to spawn 2 instances, 1 for code execution, 1 for comparison to do hot-reload,
 	which in turn causes 2 redis-subscriber to be spawn, leading to 2 event_handler method to be called whenever there is a message.
 	To bypass this during development, run flask with --no-reload option.
- 	'''
+ 	"""
 	redis_pubsub.subscribe(**{f"{R_CHANNEL_CLOCKPI}": event_handler})
 
-	'''
+	"""
 	Running redis subscribe in a seperate thread because otherwise, need to implement it
 	in a while loop which will block the main code from running.
- 	'''
+ 	"""
 	global redis_thread
 	redis_thread = redis_pubsub.run_in_thread(
 		sleep_time=0.1, exception_handler=exception_handler
