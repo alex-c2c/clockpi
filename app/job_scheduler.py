@@ -20,10 +20,10 @@ def job_update_clock() -> None:
 
 		if should_sleep_now:
 			if sleep_status == SleepStatus.AWAKE:
-				epd.clear()
+				epd.clear_display()
 				sleep.set_status(SleepStatus.SLEEP)
 		else:
-			epd.update()
+			epd.update_display()
 			if sleep_status == SleepStatus.SLEEP:
 				sleep.set_status(SleepStatus.AWAKE)
 

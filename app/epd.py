@@ -19,7 +19,7 @@ def get_busy() -> bool:
 	return True if redis_controller.rget(R_SETTINGS_EPD_BUSY, "0") == "1" else False
 
 
-def _update() -> None:
+def update_display() -> None:
 	logger.debug(f"update")
 
 	draw_grids: bool = redis_controller.get_draw_grids()
@@ -48,7 +48,7 @@ def _update() -> None:
 	)
 
 
-def _clear() -> None:
+def clear_display() -> None:
 	logger.debug(f"clear")
 	redis_controller.rpublish(R_MSG_CLEAR)
 
@@ -56,7 +56,7 @@ def _clear() -> None:
 @bp.route("/clear", methods=["GET"])
 @login_required
 def clear():
-	_clear()
+	clear_display()
 
 	return redirect(location=url_for("clock.test"))
 
@@ -64,6 +64,6 @@ def clear():
 @bp.route("/refresh", methods=["GET"])
 @login_required
 def refresh():
-	_update()
+	update_display()
 
 	return redirect(location=url_for("clock.test"))

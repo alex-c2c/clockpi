@@ -34,10 +34,10 @@
             <input name="draw_grids" type="checkbox" value="true" {% if draw_grids == 1 %} checked=true {% endif %} onChange="this.form.submit()">
           </span>
         </form>
-        <form method="get" action="/clock/refresh">
+        <form method="get" action="/epd/refresh">
           <input type="submit" value="Refresh">
         </form>
-        <form method="get" action="/clock/clear">
+        <form method="get" action="/epd/clear">
           <input type="submit" value="Clear">
         </form>
         <form method="get" action="/queue/shuffle">
