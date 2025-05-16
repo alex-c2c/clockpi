@@ -11,7 +11,7 @@ logger: Logger = getLogger(__name__)
 
 
 @bp.route("/")
-def index():
+def view_index():
 	schedules: list[SleepSchedule] = logic.get_schedules()
 
 	return render_template(
@@ -22,31 +22,31 @@ def index():
 
 @bp.route("/add", methods=["GET"])
 @login_required
-def add():
+def view_add():
 	if request.method != "GET":
 		flash(f"Invalid method")
-		return redirect(location=url_for("sleep.index"))
+		return redirect(location=url_for("sleep.view_index"))
 
 	logic.add((False, False, False, False, False, False, False), 0, 0, 0)
 
-	return redirect(location=url_for("sleep.index"))
+	return redirect(location=url_for("sleep.view_index"))
 
 
 @bp.route("/remove/<int:id>", methods=["GET"])
 @login_required
-def remove(id: int):
+def view_remove(id: int):
 	if request.method != "GET":
 		flash(f"Invalid method")
-		return redirect(location=url_for("sleep.index"))
+		return redirect(location=url_for("sleep.view_index"))
 
 	logic.remove(id)
 
-	return redirect(location=url_for("sleep.index"))
+	return redirect(location=url_for("sleep.view_index"))
 
 
 @bp.route("/update/<int:id>", methods=["POST"])
 @login_required
-def update(id: int):
+def view_update(id: int):
 	if request.method != "POST":
 		flash(f"Invalid method")
 		return redirect(location=url_for("sleep.index"))
@@ -73,7 +73,7 @@ def update(id: int):
 		invalid_data = True
 
 	if invalid_data:
-		return redirect(location=url_for(endpoint="sleep.index"))
+		return redirect(location=url_for(endpoint="sleep.view_index"))
 
 	def tryget(key: str, default: str):
 		if request.form.get(key) is None:
@@ -97,4 +97,4 @@ def update(id: int):
 
 	logic.update(id, days, hour, minute, duration)
 
-	return redirect(location=url_for(endpoint="sleep.index"))
+	return redirect(location=url_for(endpoint="sleep.view_index"))

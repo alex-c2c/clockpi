@@ -22,14 +22,14 @@ logger: Logger = getLogger(__name__)
 
 @bp.route("/", methods=["GET"])
 @login_required
-def index():
-	return redirect(location=url_for("main.test"))
+def view_index():
+	return redirect(location=url_for("main.view_test"))
 	# return render_template(("clock/index.html"))
 
 
 @bp.route("/test", methods=["GET"])
 @login_required
-def test():
+def view_test():
 	# Get settings from Redis
 	draw_grids: bool = redis_controller.get_draw_grids()
 	epd_busy: bool = epd.logic.get_busy()
@@ -59,7 +59,7 @@ def test():
 
 @bp.route("/draw_grids", methods=["POST"])
 @login_required
-def set_draw_grids():
+def view_set_draw_grids():
 	if request.method == "POST":
 		draw_grids: bool = request.form.get("draw_grids", "") == "true"
 
@@ -68,4 +68,4 @@ def set_draw_grids():
 		# Update Redis
 		redis_controller.rset(R_SETTINGS_DRAW_GRIDS, "1" if draw_grids else "0")
 
-	return redirect(url_for(endpoint="main.test"))
+	return redirect(url_for(endpoint="main.view_test"))

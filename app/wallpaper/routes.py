@@ -23,7 +23,7 @@ def view_upload():
 	if request.method == "POST" and "file" in request.files:
 		if "file" not in request.files:
 			flash("No file part")
-			return redirect(url_for("main.test"))
+			return redirect(url_for("main.view_test"))
 
 		files: list[FileStorage] = request.files.getlist("file")
 
@@ -64,7 +64,7 @@ def view_upload():
 			)
 			t.start()
 
-	return redirect(url_for("main.test"))
+	return redirect(url_for("main.view_test"))
 
 
 @bp.route("/update/<int:id>", methods=["POST"])
@@ -89,4 +89,4 @@ def view_update(id: int):
 			if is_select:
 				move_to_first(id)
 
-	return redirect(url_for(endpoint="main.test"))
+	return redirect(url_for(endpoint="main.view_test"))

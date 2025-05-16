@@ -22,7 +22,7 @@ logger: Logger = getLogger(__name__)
 
 
 @bp.cli.command("createsuperuser")
-def createsuperuser() -> None:
+def cli_createsuperuser() -> None:
 	username: str = str(input(f"Username: "))
 	if not is_username_valid(username):
 		print(f"[ERROR] Unable to create super user")
@@ -41,7 +41,7 @@ def createsuperuser() -> None:
 
 
 @bp.route("/login", methods=("GET", "POST"))
-def login():
+def view_login():
 	if request.method == "POST":
 		username = request.form["username"]
 		password = request.form["password"]
@@ -56,7 +56,7 @@ def login():
 		if error is None:
 			session.clear()
 			session["acct_id"] = acct.id
-			return redirect(url_for("index"))
+			return redirect(url_for("main.view_index"))
 
 		flash(error)
 
@@ -75,6 +75,6 @@ def load_logged_in_user():
 
 
 @bp.route("/logout")
-def logout():
+def view_logout():
 	session.clear()
-	return redirect(url_for("index"))
+	return redirect(url_for("main.view_index"))

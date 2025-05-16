@@ -11,15 +11,15 @@ logger: Logger = getLogger(__name__)
 
 @bp.route("/clear", methods=["GET"])
 @login_required
-def clear():
+def view_clear():
 	clear_display()
 
-	return redirect(location=url_for("main.test"))
+	return redirect(location=url_for("main.view_test"))
 
 
 @bp.route("/refresh", methods=["GET"])
 @login_required
-def refresh():
+def view_refresh():
 	update_display()
 
-	return redirect(location=url_for("main.test"))
+	return redirect(location=url_for("main.view_test"))
