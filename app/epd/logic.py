@@ -6,7 +6,8 @@ from logging import Logger, getLogger
 
 from app.consts import *
 from app.models import WallpaperModel
-from app import queue, redis_controller
+from app import redis_controller
+from app.queue import logic
 
 
 logger: Logger = getLogger(__name__)
@@ -20,7 +21,7 @@ def update_display() -> None:
 	logger.debug(f"update")
 
 	draw_grids: bool = redis_controller.get_draw_grids()
-	image_queue: tuple[int] = queue.get_queue()
+	image_queue: tuple[int] = logic.get_queue()
 
 	if len(image_queue) == 0:
 		return

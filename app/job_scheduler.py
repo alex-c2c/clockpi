@@ -6,6 +6,7 @@ from logging import Logger, getLogger
 from app import epd, queue, sleep
 from app.consts import *
 
+
 logger: Logger = getLogger(__name__)
 job_scheduler = APScheduler()
 
@@ -13,24 +14,24 @@ job_scheduler = APScheduler()
 @job_scheduler.task("cron", id="update_clock", minute="*", second="2")
 def job_update_clock() -> None:
 	with job_scheduler.app.app_context():
-		sleep_status: SleepStatus = sleep.get_status()
-		should_sleep_now: bool = sleep.should_sleep_now()
+		sleep_status: SleepStatus = sleep.logic.get_status()
+		should_sleep_now: bool = sleep.logic.should_sleep_now()
 		logger.debug(f"job_update_clock {sleep_status=} {should_sleep_now=}")
 
 		if should_sleep_now:
 			if sleep_status == SleepStatus.AWAKE:
 				epd.logic.clear_display()
-				sleep.set_status(SleepStatus.SLEEP)
+				sleep.logic.set_status(SleepStatus.SLEEP)
 		else:
 			epd.logic.update_display()
 			if sleep_status == SleepStatus.SLEEP:
-				sleep.set_status(SleepStatus.AWAKE)
+				sleep.logic.set_status(SleepStatus.AWAKE)
 
 
 @job_scheduler.task("cron", id="queue_shift_next", hour="*", minute="0", second="1")
 def job_queue_shift_next() -> None:
 	with job_scheduler.app.app_context():
-		queue.shift_next()
+		queue.logic.shift_next()
 
 
 def init(app: Flask) -> None:
