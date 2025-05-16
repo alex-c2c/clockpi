@@ -1,14 +1,10 @@
 import queue
-import os
 
-from app import epd, redis_controller, queue, wallpaper
+from app import epd, redis_controller, queue
 from datetime import datetime
 from logging import Logger, getLogger
-from threading import Thread
 from flask import (
 	Blueprint,
-	current_app,
-	flash,
 	redirect,
 	render_template,
 	request,
@@ -16,9 +12,6 @@ from flask import (
 )
 from app.auth import login_required
 from app.consts import *
-
-from werkzeug.utils import secure_filename
-from werkzeug.datastructures import FileStorage
 
 from app.models import WallpaperModel
 
@@ -70,22 +63,6 @@ def test():
 		text_color=text_color,
 		mode=mode,
 	)
-
-
-@bp.route("/clock/clear", methods=["GET"])
-@login_required
-def clear():
-	epd.clear()
-
-	return redirect(location=url_for("clock.test"))
-
-
-@bp.route("/clock/refresh", methods=["GET"])
-@login_required
-def refresh():
-	epd.update()
-
-	return redirect(location=url_for("clock.test"))
 
 
 @bp.route("/clock/draw_grids", methods=["POST"])
