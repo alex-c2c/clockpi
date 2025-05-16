@@ -1,17 +1,14 @@
 import os
 
-from app.auth import login_required
+from datetime import datetime
+from flask import current_app
+from logging import Logger, getLogger
+
 from app.consts import *
 from app.models import WallpaperModel
 from app import queue, redis_controller
 
-from datetime import datetime
-from flask import Blueprint, current_app, redirect, url_for
 
-from logging import Logger, getLogger
-
-
-bp: Blueprint = Blueprint("epd", __name__, url_prefix="/epd")
 logger: Logger = getLogger(__name__)
 
 
@@ -51,19 +48,3 @@ def update_display() -> None:
 def clear_display() -> None:
 	logger.debug(f"clear")
 	redis_controller.rpublish(R_MSG_CLEAR)
-
-
-@bp.route("/clear", methods=["GET"])
-@login_required
-def clear():
-	clear_display()
-
-	return redirect(location=url_for("clock.test"))
-
-
-@bp.route("/refresh", methods=["GET"])
-@login_required
-def refresh():
-	update_display()
-
-	return redirect(location=url_for("clock.test"))

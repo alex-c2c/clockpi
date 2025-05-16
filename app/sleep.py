@@ -10,7 +10,7 @@ from flask import (
 	url_for,
 )
 
-from app.auth import login_required
+from app.auth.logic import login_required
 from app.consts import *
 from app import db, redis_controller
 from app.models import SleepScheduleModel

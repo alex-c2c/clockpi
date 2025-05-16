@@ -6,7 +6,6 @@ from logging import Logger, getLogger
 from app import epd, queue, sleep
 from app.consts import *
 
-
 logger: Logger = getLogger(__name__)
 job_scheduler = APScheduler()
 
@@ -20,10 +19,10 @@ def job_update_clock() -> None:
 
 		if should_sleep_now:
 			if sleep_status == SleepStatus.AWAKE:
-				epd.clear_display()
+				epd.logic.clear_display()
 				sleep.set_status(SleepStatus.SLEEP)
 		else:
-			epd.update_display()
+			epd.logic.update_display()
 			if sleep_status == SleepStatus.SLEEP:
 				sleep.set_status(SleepStatus.AWAKE)
 

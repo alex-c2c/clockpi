@@ -1,6 +1,6 @@
 import queue
 
-from app import epd, redis_controller, queue
+from app import redis_controller, queue
 from datetime import datetime
 from logging import Logger, getLogger
 from flask import (
@@ -10,9 +10,10 @@ from flask import (
 	request,
 	url_for,
 )
-from app.auth import login_required
+from app.auth.logic import login_required
 from app.consts import *
 
+from app import epd
 from app.models import WallpaperModel
 
 
@@ -32,7 +33,7 @@ def index():
 def test():
 	# Get settings from Redis
 	draw_grids: bool = redis_controller.get_draw_grids()
-	epd_busy: bool = epd.get_busy()
+	epd_busy: bool = epd.logic.get_busy()
 
 	# Get all wallpapers
 	wallpapers: list = WallpaperModel.query.order_by(WallpaperModel.id).all()

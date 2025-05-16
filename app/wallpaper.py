@@ -5,7 +5,7 @@ from threading import Thread
 import numpy as np
 
 from app import db, queue
-from app.auth import login_required
+from app.auth.logic import login_required
 from app.consts import *
 from app.models import WallpaperModel
 

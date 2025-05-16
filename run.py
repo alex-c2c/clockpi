@@ -3,10 +3,12 @@ import logging
 
 from flask import Flask
 
-from app import clock, create_app, epd, wallpaper
-from app import auth, sleep, redis_controller, job_scheduler, queue
+from app import clock, create_app, wallpaper
+from app import sleep, redis_controller, job_scheduler, queue
 from logging import Logger, getLogger
 
+from app.auth.views import bp as auth_bp
+from app.epd.views import bp as epd_bp
 
 logging.basicConfig(level=logging.DEBUG)
 logger: Logger = getLogger(__name__)
@@ -20,9 +22,9 @@ def on_app_exit() -> None:
 app: Flask = create_app()
 
 # Blueprints
-app.register_blueprint(auth.bp)
+app.register_blueprint(auth_bp)
 app.register_blueprint(clock.bp)
-app.register_blueprint(epd.bp)
+app.register_blueprint(epd_bp)
 app.register_blueprint(queue.bp)
 app.register_blueprint(sleep.bp)
 app.register_blueprint(wallpaper.bp)

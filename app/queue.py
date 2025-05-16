@@ -2,7 +2,7 @@ import random
 
 from flask import Blueprint, redirect, request, url_for
 from app import redis_controller
-from app.auth import login_required
+from app.auth.logic import login_required
 from app.consts import *
 from logging import Logger, getLogger
 

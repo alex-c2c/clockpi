@@ -4,7 +4,8 @@ from logging import Logger, getLogger
 from flask import Flask
 from flask_redis import FlaskRedis
 from app.consts import *
-from app import epd, queue, sleep
+from app import queue, sleep
+from app import epd
 
 
 logger: Logger = getLogger(__name__)
@@ -86,7 +87,7 @@ def event_handler(msg: dict) -> None:
 	elif data[0] == R_MSG_BTN:
 		# get notification from epd-pi that a button has been pressed
 
-		if epd.get_busy():
+		if epd.logic.get_busy():
 			logger.info(f"epdpi is busy, unable process event")
 			return
 
@@ -99,18 +100,18 @@ def event_handler(msg: dict) -> None:
 				or sleep_status == SleepStatus.PENDING_AWAKE
 			):
 				rset(R_SLEEP_STATUS, str(object=SleepStatus.SLEEP.value))
-				epd.clear()
+				epd.logic.clear()
 			elif (
 				sleep_status == SleepStatus.SLEEP
 				or sleep_status == SleepStatus.PENDING_SLEEP
 			):
 				rset(R_SLEEP_STATUS, str(SleepStatus.AWAKE.value))
-				epd.update()
+				epd.logic.update()
 
 		elif data[1] == R_MSG_BTN_NEXT:
 			# NEXT button has been pressed
 			queue.shift_next()
-			epd.update()
+			epd.logic.update()
 			rset(R_SLEEP_STATUS, str(SleepStatus.AWAKE.value))
 
 
