@@ -12,7 +12,7 @@ migrate = Migrate()
 
 def create_app():
 	app = Flask(__name__)
-	app.config.from_object(os.getenv("APP_SETTING", "config.DevConfig"))
+	app.config.from_object(os.getenv("APP_SETTING"))
 
 	db.init_app(app)
 	migrate.init_app(app, db)
