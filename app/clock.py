@@ -20,10 +20,6 @@ bp: Blueprint = Blueprint("clock", __name__)
 logger: Logger = getLogger(__name__)
 
 
-def allowed_file(filename) -> bool:
-	return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
-
-
 @bp.route("/", methods=["GET"])
 @login_required
 def index():
@@ -49,10 +45,6 @@ def test():
 
 	# Time Modes
 	mode: dict[str, int] = TIME_MODE_DICT
-
-	# Sleep Schedules
-	now_hr: int = datetime.now().hour
-	now_min: int = datetime.now().minute
 
 	return render_template(
 		"clock/test.html",
