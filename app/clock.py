@@ -1,6 +1,6 @@
 import queue
 
-from app import redis_controller, queue
+from app import redis_controller
 from datetime import datetime
 from logging import Logger, getLogger
 from flask import (
@@ -13,7 +13,7 @@ from flask import (
 from app.auth.logic import login_required
 from app.consts import *
 
-from app import epd
+from app import epd, queue
 from app.models import WallpaperModel
 
 
@@ -39,7 +39,7 @@ def test():
 	wallpapers: list = WallpaperModel.query.order_by(WallpaperModel.id).all()
 
 	# Get wallpaper queue
-	wallpaper_queue: list[int] = queue.get_queue()
+	wallpaper_queue: list[int] = queue.logic.get_queue()
 
 	# Text Color
 	text_color: dict[str, int] = TEXT_COLOR_DICT

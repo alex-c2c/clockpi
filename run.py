@@ -9,7 +9,9 @@ from logging import Logger, getLogger
 
 from app.auth.routes import bp as auth_bp
 from app.epd.routes import bp as epd_bp
+from app.queue.routes import bp as queue_bp
 from app import queue
+
 
 logging.basicConfig(level=logging.DEBUG)
 logger: Logger = getLogger(__name__)
@@ -26,7 +28,7 @@ app: Flask = create_app()
 app.register_blueprint(auth_bp)
 app.register_blueprint(clock.bp)
 app.register_blueprint(epd_bp)
-app.register_blueprint(queue.bp)
+app.register_blueprint(queue_bp)
 app.register_blueprint(sleep.bp)
 app.register_blueprint(wallpaper.bp)
 
@@ -50,7 +52,7 @@ atexit.register(on_app_exit)
 
 # Generate randomized image queue
 with app.app_context():
-	queue.generate_initial_queue()
+	queue.logic.generate_initial_queue()
 
 
 if __name__ == "__main__":
