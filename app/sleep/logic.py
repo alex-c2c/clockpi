@@ -1,22 +1,13 @@
 from dataclasses import dataclass
 from datetime import datetime
 from logging import Logger, getLogger
-from flask import (
-	Blueprint,
-	flash,
-	redirect,
-	render_template,
-	request,
-	url_for,
-)
 
-from app.auth.logic import login_required
+
 from app.consts import *
 from app import db, redis_controller
 from app.models import SleepScheduleModel
 
 
-bp = Blueprint("sleep", __name__, url_prefix="/sleep")
 logger: Logger = getLogger(__name__)
 
 
@@ -36,7 +27,7 @@ class SleepSchedule:
 		self.duration = 0
 
 
-def _validate(hour: int, minute: int, duration: int) -> int:
+def validate(hour: int, minute: int, duration: int) -> int:
 	invalid: bool = False
 
 	if hour < 0 or hour > 23:
@@ -57,7 +48,7 @@ def _validate(hour: int, minute: int, duration: int) -> int:
 	return 0
 
 
-def _get_schedules() -> list[SleepSchedule]:
+def get_schedules() -> list[SleepSchedule]:
 	schedules: list[SleepSchedule] = []
 	data: list = SleepScheduleModel.query.order_by(SleepScheduleModel.id).all()
 
@@ -74,7 +65,7 @@ def _get_schedules() -> list[SleepSchedule]:
 	return schedules
 
 
-def _add(
+def add(
 	days: tuple[bool, bool, bool, bool, bool, bool, bool],
 	hour: int,
 	minute: int,
@@ -83,7 +74,7 @@ def _add(
 	logger.info(f"Add {days=} {hour=} {minute=} {duration=}")
 
 	# validate inputs
-	result: int = _validate(hour, minute, duration)
+	result: int = validate(hour, minute, duration)
 	if result != 0:
 		return result
 
@@ -95,7 +86,7 @@ def _add(
 	db.session.commit()
 
 
-def _remove(id: int) -> None:
+def remove(id: int) -> None:
 	logger.info(f"Remove {id=}")
 
 	# Remove from DB
@@ -104,7 +95,7 @@ def _remove(id: int) -> None:
 	db.session.commit()
 
 
-def _update(
+def update(
 	id: int,
 	days: tuple[bool, bool, bool, bool, bool, bool, bool],
 	hour: int,
@@ -114,7 +105,7 @@ def _update(
 	logger.info(f"Update {id=} {days=} {hour=} {minute=} {duration=}")
 
 	# Validate inputs
-	result: int = _validate(hour, minute, duration)
+	result: int = validate(hour, minute, duration)
 	if result != 0:
 		return result
 
@@ -143,7 +134,7 @@ def set_status(status: SleepStatus) -> None:
 
 def should_sleep_now() -> bool:
 	minute_ranges: list = []
-	schedules: list[SleepSchedule] = _get_schedules()
+	schedules: list[SleepSchedule] = get_schedules()
 
 	for sch in schedules:
 		for x in range(len(sch.days)):
@@ -171,93 +162,3 @@ def should_sleep_now() -> bool:
 			pass
 
 	return False
-
-
-@bp.route("/")
-def index():
-	schedules: list[SleepSchedule] = _get_schedules()
-
-	return render_template(
-		("sleep/index.html"),
-		schedules=schedules,
-	)
-
-
-@bp.route("/add", methods=["GET"])
-@login_required
-def add():
-	if request.method != "GET":
-		flash(f"Invalid method")
-		return redirect(location=url_for("sleep.index"))
-
-	_add((False, False, False, False, False, False, False), 0, 0, 0)
-
-	return redirect(location=url_for("sleep.index"))
-
-
-@bp.route("/remove/<int:id>", methods=["GET"])
-@login_required
-def remove(id: int):
-	if request.method != "GET":
-		flash(f"Invalid method")
-		return redirect(location=url_for("sleep.index"))
-
-	_remove(id)
-
-	return redirect(location=url_for("sleep.index"))
-
-
-@bp.route("/update/<int:id>", methods=["POST"])
-@login_required
-def update(id: int):
-	if request.method != "POST":
-		flash(f"Invalid method")
-		return redirect(location=url_for("sleep.index"))
-
-	mon: bool = True if request.form.get("mon") is not None else False
-	tue: bool = True if request.form.get("tue") is not None else False
-	wed: bool = True if request.form.get("wed") is not None else False
-	thu: bool = True if request.form.get("thu") is not None else False
-	fri: bool = True if request.form.get("fri") is not None else False
-	sat: bool = True if request.form.get("sat") is not None else False
-	sun: bool = True if request.form.get("sun") is not None else False
-
-	invalid_data: bool = False
-	if request.form.get("hour") is None:
-		flash(f"Missing starting hours")
-		invalid_data = True
-
-	if request.form.get("minute") is None:
-		flash(f"Missing starting minutes")
-		invalid_data = True
-
-	if request.form.get("duration") is None:
-		flash(f"Missing duration")
-		invalid_data = True
-
-	if invalid_data:
-		return redirect(location=url_for(endpoint="sleep.index"))
-
-	def tryget(key: str, default: str):
-		if request.form.get(key) is None:
-			return default
-
-		return request.form.get(key)
-
-	hour: int = int(tryget("hour", "0"))
-	minute: int = int(tryget("minute", "0"))
-	duration: int = int(tryget("duration", "0"))
-
-	days: tuple[bool, bool, bool, bool, bool, bool, bool] = (
-		mon,
-		tue,
-		wed,
-		thu,
-		fri,
-		sat,
-		sun,
-	)
-
-	_update(id, days, hour, minute, duration)
-
-	return redirect(location=url_for(endpoint="sleep.index"))

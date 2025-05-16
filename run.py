@@ -4,12 +4,13 @@ import logging
 from flask import Flask
 
 from app import clock, create_app, wallpaper
-from app import sleep, redis_controller, job_scheduler
+from app import redis_controller, job_scheduler
 from logging import Logger, getLogger
 
 from app.auth.routes import bp as auth_bp
 from app.epd.routes import bp as epd_bp
 from app.queue.routes import bp as queue_bp
+from app.sleep.routes import bp as sleep_bp
 from app import queue
 
 
@@ -29,7 +30,7 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(clock.bp)
 app.register_blueprint(epd_bp)
 app.register_blueprint(queue_bp)
-app.register_blueprint(sleep.bp)
+app.register_blueprint(sleep_bp)
 app.register_blueprint(wallpaper.bp)
 
 

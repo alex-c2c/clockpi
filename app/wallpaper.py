@@ -4,7 +4,7 @@ import shutil
 from threading import Thread
 import numpy as np
 
-from app import db, queue
+from app import db
 from app.auth.logic import login_required
 from app.consts import *
 from app.models import WallpaperModel
@@ -15,6 +15,8 @@ from PIL import Image as Image
 from logging import Logger, getLogger
 from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
+
+from app.queue import logic
 
 
 bp: Blueprint = Blueprint("wallpaper", __name__, url_prefix="/wallpaper")
@@ -119,7 +121,7 @@ def _process_image(
 		return False
 
 
-def _add(app_context: AppContext, file_name: str) -> int:
+def add(app_context: AppContext, file_name: str) -> int:
 	app_context.push()
 
 	logger.info(f"Processing {file_name=}")
@@ -191,7 +193,7 @@ def _add(app_context: AppContext, file_name: str) -> int:
 		db.session.commit()
 
 		# Append to image queue
-		queue.append_to_queue(new_model.id)
+		logic.append_to_queue(new_model.id)
 
 	except OSError as error:
 		return ERR_UPLOAD_SAVE
@@ -214,7 +216,7 @@ def _remove(id: int) -> None:
 	db.session.delete(model)
 	db.session.commit()
 
-	queue.remove_id(id)
+	logic.remove_id(id)
 
 
 def _update(id: int, mode: int, color: int, shadow: int) -> None:
@@ -265,7 +267,7 @@ def upload():
 			file.save(temp_path)
 
 			t: Thread = Thread(
-				target=_add,
+				target=add,
 				args=(
 					current_app.app_context(),
 					file_name,
@@ -296,6 +298,6 @@ def update(id: int):
 			_update(id, mode, color, shadow)
 
 			if is_select:
-				queue.move_to_first(id)
+				logic.move_to_first(id)
 
 	return redirect(url_for(endpoint="clock.test"))
