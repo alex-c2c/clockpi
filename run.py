@@ -4,11 +4,12 @@ import logging
 from flask import Flask
 
 from app import clock, create_app, wallpaper
-from app import sleep, redis_controller, job_scheduler, queue
+from app import sleep, redis_controller, job_scheduler
 from logging import Logger, getLogger
 
-from app.auth.views import bp as auth_bp
-from app.epd.views import bp as epd_bp
+from app.auth.routes import bp as auth_bp
+from app.epd.routes import bp as epd_bp
+from app import queue
 
 logging.basicConfig(level=logging.DEBUG)
 logger: Logger = getLogger(__name__)

@@ -4,8 +4,9 @@ from logging import Logger, getLogger
 from flask import Flask
 from flask_redis import FlaskRedis
 from app.consts import *
-from app import queue, sleep
+from app import sleep
 from app import epd
+from app import queue
 
 
 logger: Logger = getLogger(__name__)
@@ -110,7 +111,7 @@ def event_handler(msg: dict) -> None:
 
 		elif data[1] == R_MSG_BTN_NEXT:
 			# NEXT button has been pressed
-			queue.shift_next()
+			app.queue.queue.shift_next()
 			epd.logic.update()
 			rset(R_SLEEP_STATUS, str(SleepStatus.AWAKE.value))
 
