@@ -4,7 +4,7 @@ import re
 from flask import g, redirect, url_for
 from logging import Logger, getLogger
 
-from app.auth.consts import *
+from app.consts import *
 
 
 logger: Logger = getLogger(__name__)

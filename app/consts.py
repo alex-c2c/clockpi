@@ -1,5 +1,12 @@
 from enum import Enum
 
+# Auth
+USERNAME_MIN_LEN: int = 4
+USERNAME_MAX_LEN: int = 32
+USERNAME_REGEX: str = r"^[A-Za-z][A-Za-z0-9_]*$"
+PASSWORD_MIN_LEN: int = 16
+
+
 # Redis
 R_CHANNEL_CLOCKPI: str = "clockpi"
 R_CHANNEL_EPDPI: str = "epdpi"
