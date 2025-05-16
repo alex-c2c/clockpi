@@ -15,7 +15,7 @@ def shuffle():
 	if request.method == "GET":
 		shuffle_queue()
 
-	return redirect(location=url_for("clock.test"))
+	return redirect(location=url_for("main.test"))
 
 
 @bp.route("/next", methods=["GET"])
@@ -24,7 +24,7 @@ def next():
 	if request.method == "GET":
 		shift_next()
 
-	return redirect(location=url_for("clock.test"))
+	return redirect(location=url_for("main.test"))
 
 
 @bp.route("/select", methods=["POST"])
@@ -36,4 +36,4 @@ def select():
 			image_id: int = int(request.form.get("id"))
 			move_to_first(image_id)
 
-	return redirect(url_for(endpoint="clock.test"))
+	return redirect(url_for(endpoint="main.test"))

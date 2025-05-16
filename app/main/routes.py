@@ -1,7 +1,6 @@
 import queue
 
 from app import redis_controller
-from datetime import datetime
 from logging import Logger, getLogger
 from flask import (
 	Blueprint,
@@ -17,14 +16,14 @@ from app import epd, queue
 from app.models import WallpaperModel
 
 
-bp: Blueprint = Blueprint("clock", __name__)
+bp: Blueprint = Blueprint("main", __name__)
 logger: Logger = getLogger(__name__)
 
 
 @bp.route("/", methods=["GET"])
 @login_required
 def index():
-	return redirect(location=url_for("clock.test"))
+	return redirect(location=url_for("main.test"))
 	# return render_template(("clock/index.html"))
 
 
@@ -48,7 +47,7 @@ def test():
 	mode: dict[str, int] = TIME_MODE_DICT
 
 	return render_template(
-		"clock/test.html",
+		"main/test.html",
 		draw_grids=draw_grids,
 		epd_busy=epd_busy,
 		wallpapers=wallpapers,
@@ -58,7 +57,7 @@ def test():
 	)
 
 
-@bp.route("/clock/draw_grids", methods=["POST"])
+@bp.route("/draw_grids", methods=["POST"])
 @login_required
 def set_draw_grids():
 	if request.method == "POST":
@@ -69,4 +68,4 @@ def set_draw_grids():
 		# Update Redis
 		redis_controller.rset(R_SETTINGS_DRAW_GRIDS, "1" if draw_grids else "0")
 
-	return redirect(url_for(endpoint="clock.test"))
+	return redirect(url_for(endpoint="main.test"))

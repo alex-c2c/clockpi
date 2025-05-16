@@ -14,7 +14,7 @@ logger: Logger = getLogger(__name__)
 def clear():
 	clear_display()
 
-	return redirect(location=url_for("clock.test"))
+	return redirect(location=url_for("main.test"))
 
 
 @bp.route("/refresh", methods=["GET"])
@@ -22,4 +22,4 @@ def clear():
 def refresh():
 	update_display()
 
-	return redirect(location=url_for("clock.test"))
+	return redirect(location=url_for("main.test"))

@@ -9,7 +9,8 @@ from werkzeug.datastructures import FileStorage
 
 from app.auth.logic import login_required
 from app.consts import *
-from app import queue, wallpaper
+from app.queue.logic import move_to_first
+from app.wallpaper.logic import add, remove, update
 
 
 bp: Blueprint = Blueprint("wallpaper", __name__, url_prefix="/wallpaper")
@@ -18,11 +19,11 @@ logger: Logger = getLogger(__name__)
 
 @bp.route("/upload", methods=["POST"])
 @login_required
-def upload():
+def view_upload():
 	if request.method == "POST" and "file" in request.files:
 		if "file" not in request.files:
 			flash("No file part")
-			return redirect(url_for("clock.test"))
+			return redirect(url_for("main.test"))
 
 		files: list[FileStorage] = request.files.getlist("file")
 
@@ -55,7 +56,7 @@ def upload():
 			file.save(temp_path)
 
 			t: Thread = Thread(
-				target=wallpaper.logic.add,
+				target=add,
 				args=(
 					current_app.app_context(),
 					file_name,
@@ -63,12 +64,12 @@ def upload():
 			)
 			t.start()
 
-	return redirect(url_for("clock.test"))
+	return redirect(url_for("main.test"))
 
 
 @bp.route("/update/<int:id>", methods=["POST"])
 @login_required
-def update(id: int):
+def view_update(id: int):
 	if request.method == "POST":
 		is_select: bool = request.form.get("select") is not None
 		is_delete: bool = request.form.get("delete") is not None
@@ -80,12 +81,12 @@ def update(id: int):
 		)
 
 		if is_delete:
-			wallpaper.logic.remove(id)
+			remove(id)
 
 		else:
-			wallpaper.logic.update(id, mode, color, shadow)
+			update(id, mode, color, shadow)
 
 			if is_select:
-				queue.logic.move_to_first(id)
+				move_to_first(id)
 
-	return redirect(url_for(endpoint="clock.test"))
+	return redirect(url_for(endpoint="main.test"))
