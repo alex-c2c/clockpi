@@ -1,4 +1,3 @@
-import getpass
 from flask import (
 	flash,
 	Blueprint,
@@ -9,34 +8,13 @@ from flask import (
 	session,
 	url_for,
 )
-from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.security import check_password_hash
 
-from app import db
 from . import logger
-from .logic import is_password_valid, is_username_valid
 from app.models import AccountModel
 
 
 bp: Blueprint = Blueprint("auth", __name__, url_prefix="/auth")
-
-
-@bp.cli.command("createsuperuser")
-def cli_createsuperuser() -> None:
-	username: str = str(input(f"Username: "))
-	if not is_username_valid(username):
-		print(f"[ERROR] Unable to create super user")
-		return
-
-	password: str = getpass(f"Password: ")
-	if not is_password_valid(password):
-		print(f"[ERROR] Unable to create super user")
-		return
-
-	new_acct: AccountModel = AccountModel(username, generate_password_hash(password))
-	db.session.add(new_acct)
-	db.session.commit()
-
-	print(f"Created super user {username=}")
 
 
 @bp.route("/login", methods=("GET", "POST"))

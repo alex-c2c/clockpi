@@ -19,13 +19,19 @@ On first connect, use `postgres` as <database_name> since it is one of the defau
 `CREATE DATABASE <DATABASE_NAME>;`
 
 # Create Migration
-`flask db init`
+`flask --app app db init`
 
 # Migrate database model
-`flask db migrate`
+`flask --app app db migrate`
 
 # Commit migration
-`flask db upgrade`
+`flask --app app db upgrade`
+
+# Create super user
+`flask --app cli create_super_user`
+
+# Create API key for user manually
+`flask --app cli create_api_key`
 
 # Start development server
 # "run" is from run.py
