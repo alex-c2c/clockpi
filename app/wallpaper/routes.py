@@ -1,6 +1,5 @@
 import os
 
-from logging import Logger, getLogger
 from flask import Blueprint, current_app, flash, redirect, request, url_for
 from threading import Thread
 
@@ -10,11 +9,12 @@ from werkzeug.datastructures import FileStorage
 from app.auth.logic import login_required
 from app.consts import *
 from app.queue.logic import move_to_first
-from app.wallpaper.logic import add, remove, update
+
+from . import logger
+from .logic import add, remove, update
 
 
 bp: Blueprint = Blueprint("wallpaper", __name__, url_prefix="/wallpaper")
-logger: Logger = getLogger(__name__)
 
 
 @bp.route("/upload", methods=["POST"])

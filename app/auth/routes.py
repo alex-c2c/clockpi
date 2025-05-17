@@ -9,16 +9,15 @@ from flask import (
 	session,
 	url_for,
 )
-from logging import Logger, getLogger
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from app import db
-from app.auth.logic import is_password_valid, is_username_valid
+from . import logger
+from .logic import is_password_valid, is_username_valid
 from app.models import AccountModel
 
 
 bp: Blueprint = Blueprint("auth", __name__, url_prefix="/auth")
-logger: Logger = getLogger(__name__)
 
 
 @bp.cli.command("createsuperuser")

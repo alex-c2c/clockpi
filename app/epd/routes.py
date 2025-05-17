@@ -1,12 +1,11 @@
 from flask import Blueprint, redirect, url_for
-from logging import Logger, getLogger
 
 from app.auth.logic import login_required
-from app.epd.logic import clear_display, update_display
+from . import logger
+from .logic import clear_display, update_display
 
 
 bp: Blueprint = Blueprint("epd", __name__, url_prefix="/epd")
-logger: Logger = getLogger(__name__)
 
 
 @bp.route("/clear", methods=["GET"])

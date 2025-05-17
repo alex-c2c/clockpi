@@ -1,18 +1,16 @@
-from logging import Logger, getLogger
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from app.auth.logic import login_required
 
-from app.sleep import logic
-from app.sleep.logic import SleepSchedule
+from . import logger
+from .logic import SleepSchedule, add, get_schedules, remove, update
 
 
 bp = Blueprint("sleep", __name__, url_prefix="/sleep")
-logger: Logger = getLogger(__name__)
 
 
 @bp.route("/")
 def view_index():
-	schedules: list[SleepSchedule] = logic.get_schedules()
+	schedules: list[SleepSchedule] = get_schedules()
 
 	return render_template(
 		("sleep/index.html"),
@@ -27,7 +25,7 @@ def view_add():
 		flash(f"Invalid method")
 		return redirect(location=url_for("sleep.view_index"))
 
-	logic.add((False, False, False, False, False, False, False), 0, 0, 0)
+	add((False, False, False, False, False, False, False), 0, 0, 0)
 
 	return redirect(location=url_for("sleep.view_index"))
 
@@ -39,7 +37,7 @@ def view_remove(id: int):
 		flash(f"Invalid method")
 		return redirect(location=url_for("sleep.view_index"))
 
-	logic.remove(id)
+	remove(id)
 
 	return redirect(location=url_for("sleep.view_index"))
 
@@ -95,6 +93,6 @@ def view_update(id: int):
 		sun,
 	)
 
-	logic.update(id, days, hour, minute, duration)
+	update(id, days, hour, minute, duration)
 
 	return redirect(location=url_for(endpoint="sleep.view_index"))

@@ -1,7 +1,4 @@
-import queue
-
 from app import redis_controller
-from logging import Logger, getLogger
 from flask import (
 	Blueprint,
 	redirect,
@@ -13,11 +10,11 @@ from app.auth.logic import login_required
 from app.consts import *
 
 from app import epd, queue
+from . import logger
 from app.models import WallpaperModel
 
 
 bp: Blueprint = Blueprint("main", __name__)
-logger: Logger = getLogger(__name__)
 
 
 @bp.route("/", methods=["GET"])

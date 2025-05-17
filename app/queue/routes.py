@@ -1,12 +1,11 @@
-from logging import Logger, getLogger
 from flask import Blueprint, redirect, request, url_for
 
 from app.auth.logic import login_required
-from app.queue.logic import shuffle_queue, move_to_first, shift_next
+from . import logger
+from .logic import shuffle_queue, move_to_first, shift_next
 
 
 bp: Blueprint = Blueprint("queue", __name__, url_prefix="/queue")
-logger: Logger = getLogger(__name__)
 
 
 @bp.route("/shuffle", methods=["GET"])
