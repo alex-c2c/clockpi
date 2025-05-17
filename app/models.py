@@ -1,3 +1,4 @@
+from sqlalchemy import ForeignKey
 from app.consts import TextColor, TimeMode
 from . import db
 
@@ -9,12 +10,29 @@ class AccountModel(db.Model):
 	username = db.Column(db.String(), unique=True, nullable=False)
 	password = db.Column(db.String(), nullable=False)
 
-	def __init__(self, username, password):
+	def __init__(self, username, password) -> None:
 		self.username = username
 		self.password = password
 
-	def __repr__(self):
+	def __repr__(self) -> str:
 		return f"<Account username:{self.username}>"
+
+
+class ApiKeyModel(db.Model):
+	__tablename__: str = "apikey"
+	
+	id = db.Column(db.Integer, primary_key=True)
+	acct_id = db.Column(db.Integer, ForeignKey("account.id"), nullable=False)
+	key = db.Column(db.String(), nullable=False)
+	comment = db.Column(db.String(), nullable=True)
+	
+	def __init__(self, acct_id: int, key: str, comment: str) -> None:
+		self.acct_id = acct_id
+		self.key = key
+		self.comment = comment
+  
+	def __repr__(self) -> str:
+		return f"<ApiKey key:{self.key}>"
 
 
 class SleepScheduleModel(db.Model):
@@ -61,9 +79,7 @@ class WallpaperModel(db.Model):
 		self.size = size
 		self.mode = int(TimeMode.FULL_3.value) if mode is None else int(mode.value)
 		self.color = int(TextColor.WHITE.value) if color is None else int(color.value)
-		self.shadow = (
-			int(TextColor.BLACK.value) if shadow is None else int(shadow.value)
-		)
+		self.shadow = int(TextColor.BLACK.value) if shadow is None else int(shadow.value)
 
 	def __repr__(self):
 		return f"<Wallpaper name:{self.name} hash:{self.hash} size:{self.size} mode:{self.mode} color:{self.color} shadow:{self.shadow}>"
