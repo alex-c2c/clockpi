@@ -1,5 +1,6 @@
 import os
-from flask import Flask
+from flask import Blueprint, Flask
+from flask_restx import Api
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from dotenv import load_dotenv
@@ -8,6 +9,11 @@ load_dotenv()
 
 db = SQLAlchemy()
 migrate = Migrate()
+
+api_v1_bp = Blueprint("api", __name__, url_prefix="/api/1")
+api_v1 = Api(
+	api_v1_bp, version="1.0", title="Clockpi API", description="Clockpi controls"
+)
 
 
 def create_app():

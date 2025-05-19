@@ -23,7 +23,7 @@ class ApiKeyModel(db.Model):
 	
 	id = db.Column(db.Integer, primary_key=True)
 	acct_id = db.Column(db.Integer, ForeignKey("account.id"), nullable=False)
-	key = db.Column(db.String(), nullable=False)
+	key = db.Column(db.String(), unique=True, nullable=False)
 	comment = db.Column(db.String(), nullable=True)
 	
 	def __init__(self, acct_id: int, key: str, comment: str) -> None:
@@ -80,6 +80,17 @@ class WallpaperModel(db.Model):
 		self.mode = int(TimeMode.FULL_3.value) if mode is None else int(mode.value)
 		self.color = int(TextColor.WHITE.value) if color is None else int(color.value)
 		self.shadow = int(TextColor.BLACK.value) if shadow is None else int(shadow.value)
+  
+	def to_dict(self) -> dict:
+		d: dict = {}
+		d["id"] = self.id
+		d["name"] = self.name
+		d["hash"] = self.hash
+		d["size"] = self.size
+		d["mode"] = self.mode
+		d["color"] = self.color
+		d["shadow"] = self.shadow
+		return d
 
 	def __repr__(self):
 		return f"<Wallpaper name:{self.name} hash:{self.hash} size:{self.size} mode:{self.mode} color:{self.color} shadow:{self.shadow}>"

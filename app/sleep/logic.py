@@ -26,26 +26,26 @@ class SleepSchedule:
 		self.minute = 0
 		self.duration = 0
 
+	def to_dict(self) -> dict:
+		d: dict = {}
+		d["id"] = self.id
+		d["days"] = self.days
+		d["hour"] = self.hour
+		d["minute"] = self.minute
+		d["duration"] = self.duration
+		return d
 
-def validate(hour: int, minute: int, duration: int) -> int:
-	invalid: bool = False
 
-	if hour < 0 or hour > 23:
-		logger.error(f"Invalid hour, {hour=}")
-		invalid = True
+def validate_hour(hour: int) -> bool:
+	return hour >= 0 and hour < 24
 
-	if minute < 0 or minute > 59:
-		logger.error(f"Invalid minute, {minute=}")
-		invalid = True
 
-	if duration < 0:
-		logger.error(f"Invalid duration, {duration=}")
-		invalid = True
+def validate_minute(minute: int) -> int:
+	return minute >= 0 and minute < 60
 
-	if invalid:
-		return ERR_SCH_INVALID_DATA
 
-	return 0
+def validate_duration(duration: int) -> int:
+	return duration >= 0 and duration <= 1440
 
 
 def get_schedules() -> list[SleepSchedule]:
@@ -66,59 +66,118 @@ def get_schedules() -> list[SleepSchedule]:
 
 
 def add(
-	days: tuple[bool, bool, bool, bool, bool, bool, bool],
+	mon: bool,
+	tue: bool,
+	wed: bool,
+	thu: bool,
+	fri: bool,
+	sat: bool,
+	sun: bool,
 	hour: int,
 	minute: int,
 	duration: int,
 ) -> int:
-	logger.info(f"Add {days=} {hour=} {minute=} {duration=}")
+	logger.info(
+		f"Add {mon=} {tue=} {wed=} {thu=} {fri=} {sat=} {sun=} {hour=} {minute=} {duration=}"
+	)
 
 	# validate inputs
-	result: int = validate(hour, minute, duration)
-	if result != 0:
-		return result
+	if (
+		not validate_hour(hour)
+		or not validate_minute(minute)
+		or not validate_duration(duration)
+	):
+		return ERR_SLEEP_INVALID_DATA
 
 	# Add to DB
+	days: tuple = (mon, tue, wed, thu, fri, sat, sun)
 	new_model: SleepScheduleModel = SleepScheduleModel(
-		days=days, hour=hour, minute=minute, duration=duration
+		days="^".join("1" if d else "0" for d in days),
+		hour=hour,
+		minute=minute,
+		duration=duration,
 	)
 	db.session.add(new_model)
 	db.session.commit()
 
+	return 0
 
-def remove(id: int) -> None:
+
+def remove(id: int) -> int:
 	logger.info(f"Remove {id=}")
 
 	# Remove from DB
-	model: SleepScheduleModel = SleepScheduleModel.query.get(id)
+	model: SleepScheduleModel | None = SleepScheduleModel.query.get(id)
+	if model is None:
+		return ERR_SLEEP_INVALID_ID
+
 	db.session.delete(model)
 	db.session.commit()
+
+	return 0
 
 
 def update(
 	id: int,
-	days: tuple[bool, bool, bool, bool, bool, bool, bool],
-	hour: int,
-	minute: int,
-	duration: int,
-) -> bool:
-	logger.info(f"Update {id=} {days=} {hour=} {minute=} {duration=}")
-
-	# Validate inputs
-	result: int = validate(hour, minute, duration)
-	if result != 0:
-		return result
+	mon: bool | None,
+	tue: bool | None,
+	wed: bool | None,
+	thu: bool | None,
+	fri: bool | None,
+	sat: bool | None,
+	sun: bool | None,
+	hour: int | None,
+	minute: int | None,
+	duration: int | None,
+) -> int:
+	logger.info(
+		f"Update {id=} {mon=} {tue=} {wed=} {thu=} {fri=} {sat=} {sun=} {hour=} {minute=} {duration=}"
+	)
 
 	# Update DB
 	model: SleepScheduleModel = SleepScheduleModel.query.get(id)
-	if model is not None:
-		model.days = "^".join("1" if d else "0" for d in days)
-		model.hour = hour
-		model.minute = minute
-		model.duration = duration
-		db.session.commit()
+	if model is None:
+		return ERR_SLEEP_INVALID_ID
 
-	return True
+	days: list = [True if d == "1" else False for d in model.days.split("^")]
+	if mon is not None:
+		days[0] = mon
+	if tue is not None:
+		days[1] = tue
+	if wed is not None:
+		days[2] = wed
+	if thu is not None:
+		days[3] = thu
+	if fri is not None:
+		days[4] = fri
+	if sat is not None:
+		days[5] = sat
+	if sun is not None:
+		days[6] = sun
+
+	model.days = "^".join("1" if d else "0" for d in days)
+
+	if hour is not None:
+		if validate_hour(hour):
+			model.hour = hour
+		else:
+			return ERR_SLEEP_INVALID_DATA
+
+	if minute is not None:
+		if validate_minute(minute):
+			model.minute = minute
+		else:
+			return ERR_SLEEP_INVALID_DATA
+
+	if duration is not None:
+		if validate_duration(duration):
+			model.duration = duration
+		else:
+			return ERR_SLEEP_INVALID_DATA
+
+	db.session.commit()
+
+	return 0
 
 
 def get_status() -> SleepStatus:

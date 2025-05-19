@@ -3,7 +3,7 @@ import logging
 
 from flask import Flask
 
-from app import auth, epd, main, queue, sleep, wallpaper
+from app import api_v1_bp, auth, epd, main, queue, sleep, wallpaper
 from app import create_app, redis_controller, job_scheduler
 from logging import Logger, getLogger
 
@@ -21,6 +21,7 @@ app: Flask = create_app()
 
 
 # Blueprints
+app.register_blueprint(api_v1_bp)
 auth.register_blueprint(app)
 main.register_blueprint(app)
 epd.register_blueprint(app)

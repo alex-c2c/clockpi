@@ -17,6 +17,11 @@ from app.models import AccountModel
 bp: Blueprint = Blueprint("auth", __name__, url_prefix="/auth")
 
 
+"""
+Blueprints
+"""
+
+
 @bp.route("/login", methods=("GET", "POST"))
 def view_login():
 	if request.method == "POST":
@@ -42,7 +47,6 @@ def view_login():
 
 @bp.before_app_request
 def load_logged_in_user():
-	logger.debug(f"load_logged_in_user")
 	acct_id = session.get("acct_id")
 
 	if acct_id is None:

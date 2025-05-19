@@ -194,14 +194,15 @@ def add(app_context: AppContext, file_name: str) -> int:
 	return 0
 
 
-def remove(id: int) -> None:
+def remove(id: int) -> int:
 	model: WallpaperModel = WallpaperModel.query.get(id)
 
 	if model is None:
-		return
+		return ERR_WALLPAPER_INVALID_ID
 
 	hash: str = model.hash
 	file_path: str = os.path.join(current_app.config["DIR_APP_UPLOAD"], f"{hash}.bmp")
+
 	logger.info(msg=f"Deleting {file_path=}")
 	if os.path.isfile(file_path):
 		os.remove(file_path)
@@ -211,13 +212,33 @@ def remove(id: int) -> None:
 
 	queue.logic.remove_id(id)
 
+	return 0
 
-def update(id: int, mode: int, color: int, shadow: int) -> None:
+
+def update(id: int, mode: int | None, color: int | None, shadow: int | None) -> int:
 	model: WallpaperModel = WallpaperModel.query.get(id)
-	if model is not None:
-		model.mode = mode
-		model.color = color
-		model.shadow = shadow
-		db.session.commit()
 
+	if model is None:
+		return ERR_WALLPAPER_INVALID_ID
 
+	if mode is not None:
+		if TimeMode.OFF.value <= mode <= TimeMode.FULL_3.value:
+			model.mode = mode
+		else:
+			return ERR_WALLPAPER_INVALID_DATA
+
+	if color is not None:
+		if TextColor.NONE.value <= color <= TextColor.GREEN.value:
+			model.color = color
+		else:
+			return ERR_WALLPAPER_INVALID_DATA
+
+	if shadow is not None:
+		if TextColor.NONE.value <= color <= TextColor.GREEN.value:
+			model.shadow = shadow
+		else:
+			return ERR_WALLPAPER_INVALID_DATA
+
+	db.session.commit()
+
+	return 0
