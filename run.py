@@ -4,7 +4,7 @@ import logging
 from flask import Flask
 
 from app import api_v1_bp, auth, epd, main, queue, sleep, wallpaper
-from app import create_app, redis_controller, job_scheduler
+from app import create_app, redis_controller
 from logging import Logger, getLogger
 
 
@@ -37,10 +37,6 @@ app.add_url_rule("/", endpoint="index")
 # Redis
 redis_controller.init_app(app)
 redis_controller.sub_to_channel()
-
-
-# Scheduler for jobs
-job_scheduler.init(app)
 
 
 # Register exit callback
