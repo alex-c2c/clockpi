@@ -24,6 +24,9 @@ On first connect, use `postgres` as <database_name> since it is one of the defau
 # Migrate database model
 `flask --app app db migrate`
 
+Run this first if migration failed due to "database not up to date" from migrations being off-synced
+`flask --app app db stamp head`
+
 # Commit migration
 `flask --app app db upgrade`
 
