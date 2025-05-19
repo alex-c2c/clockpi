@@ -29,14 +29,11 @@ API
 class WallpaperListRes(Resource):
 	@apikey_required
 	def post(self) -> dict:
-		# Upload new wallpaper(s)
+		# Check for file in request.files
 		if "file" not in request.files:
 			api_v1.abort(400, "Missing file(s)")
 
 		files: list[FileStorage] = request.files.getlist("file")
-
-		logger.info(f"upload {len(files)=}")
-		logger.info(f"{current_app.config["MAX_CONTENT_LENGTH"]}")
 
 		# Validate files first
 		for file in files:
