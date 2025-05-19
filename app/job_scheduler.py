@@ -11,7 +11,7 @@ logger: Logger = getLogger(__name__)
 job_scheduler = APScheduler()
 
 
-@job_scheduler.task("cron", id="update_clock", minute="*", second="2")
+#@job_scheduler.task("cron", id="update_clock", minute="*", second="2")
 def job_update_clock() -> None:
 	with job_scheduler.app.app_context():
 		sleep_status: SleepStatus = sleep.logic.get_status()
@@ -28,7 +28,7 @@ def job_update_clock() -> None:
 				sleep.logic.set_status(SleepStatus.AWAKE)
 
 
-@job_scheduler.task("cron", id="queue_shift_next", hour="*", minute="0", second="1")
+#@job_scheduler.task("cron", id="queue_shift_next", hour="*", minute="0", second="1")
 def job_queue_shift_next() -> None:
 	with job_scheduler.app.app_context():
 		queue.logic.shift_next()
