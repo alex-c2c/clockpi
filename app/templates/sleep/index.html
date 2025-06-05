@@ -16,6 +16,10 @@
 		</div>
 		<form method="post" action="/sleep/update/{{sch.id}}">
 			<div>
+				<span>Enabled: </span>
+				<input type="checkbox" id="enabled" name="enabled" {% if sch.enabled %}checked{% endif %} onChange="this.form.submit()">
+			</div>
+			<div>
 				<span>Start Time:&nbsp;
 						<select id="time" name="hour" onChange="this.form.submit()">
 							{% for h in range(24) %}
@@ -35,7 +39,7 @@
 					<input type="number" id="time" name="duration" min="0" max="1439" value="{{sch.duration}}" onChange="this.form.submit()">
 				</span>
 				<br/>
-				<span>End Time:&nbsp;
+				<span>Repeat:&nbsp;
 				</span>
 			</div>
 			<div>

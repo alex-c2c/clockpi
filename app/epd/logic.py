@@ -18,7 +18,7 @@ def get_busy() -> bool:
 
 
 def update_display() -> None:
-	logger.debug(f"update")
+	logger.debug(f"update_display")
 
 	draw_grids: bool = redis_controller.get_draw_grids()
 	image_queue: tuple[int] = logic.get_queue()
@@ -44,6 +44,10 @@ def update_display() -> None:
 	redis_controller.rpublish(
 		f"{R_MSG_DRAW}^{file_path}^{time}^{mode}^{color}^{shadow}^{'1' if draw_grids else '0'}"
 	)
+
+
+def update_display_with_buffer():
+     ...
 
 
 def clear_display() -> None:

@@ -18,6 +18,7 @@ class SleepSchedule:
 	hour: int
 	minute: int
 	duration: int
+	enabled: bool
 
 	def __init__(self):
 		self.id = 0
@@ -25,6 +26,7 @@ class SleepSchedule:
 		self.hour = 0
 		self.minute = 0
 		self.duration = 0
+		self.enabled = True
 
 	def to_dict(self) -> dict:
 		d: dict = {}
@@ -33,6 +35,7 @@ class SleepSchedule:
 		d["hour"] = self.hour
 		d["minute"] = self.minute
 		d["duration"] = self.duration
+		d["enabled"] = self.enabled
 		return d
 
 
@@ -59,6 +62,7 @@ def get_schedules() -> list[SleepSchedule]:
 		sch.hour = model.hour
 		sch.minute = model.minute
 		sch.duration = model.duration
+		sch.enabled = model.enabled
 
 		schedules.append(sch)
 
@@ -76,9 +80,10 @@ def add(
 	hour: int,
 	minute: int,
 	duration: int,
+	enabled: bool,
 ) -> int:
 	logger.info(
-		f"Add {mon=} {tue=} {wed=} {thu=} {fri=} {sat=} {sun=} {hour=} {minute=} {duration=}"
+		f"Add {mon=} {tue=} {wed=} {thu=} {fri=} {sat=} {sun=} {hour=} {minute=} {duration=} {enabled=}"
 	)
 
 	# validate inputs
@@ -129,9 +134,10 @@ def update(
 	hour: int | None,
 	minute: int | None,
 	duration: int | None,
+	enabled: bool | None,
 ) -> int:
 	logger.info(
-		f"Update {id=} {mon=} {tue=} {wed=} {thu=} {fri=} {sat=} {sun=} {hour=} {minute=} {duration=}"
+		f"Update {id=} {mon=} {tue=} {wed=} {thu=} {fri=} {sat=} {sun=} {hour=} {minute=} {duration=} {enabled=}"
 	)
 
 	# Update DB
@@ -175,6 +181,9 @@ def update(
 		else:
 			return ERR_SLEEP_INVALID_DATA
 
+	if enabled is not None:
+		model.enabled = enabled
+
 	db.session.commit()
 
 	return 0
@@ -196,6 +205,9 @@ def should_sleep_now() -> bool:
 	schedules: list[SleepSchedule] = get_schedules()
 
 	for sch in schedules:
+		if not sch.enabled:
+			continue
+
 		for x in range(len(sch.days)):
 			if sch.days[x]:
 				s: int = (x * 1440) + (sch.hour * 60) + sch.minute

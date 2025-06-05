@@ -43,15 +43,17 @@ class SleepScheduleModel(db.Model):
 	hour = db.Column(db.Integer, nullable=False)
 	minute = db.Column(db.Integer, nullable=False)
 	duration = db.Column(db.Integer, nullable=False)
+	enabled = db.Column(db.Boolean, default=True)
 
-	def __init__(self, days, hour, minute, duration):
+	def __init__(self, days: int, hour: int, minute: int, duration: int, enabled: bool = True):
 		self.days = days
 		self.hour = hour
 		self.minute = minute
 		self.duration = duration
+		self.enabled = enabled
 
 	def __repr__(self):
-		return f"<SleepSchedule days:{self.days} hour:{self.hour} minute:{self.minute} duration:{self.duration}>"
+		return f"<SleepSchedule days:{self.days} hour:{self.hour} minute:{self.minute} duration:{self.duration} enabled:{self.enabled}>"
 
 
 class WallpaperModel(db.Model):

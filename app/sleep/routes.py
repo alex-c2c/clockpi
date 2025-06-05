@@ -73,10 +73,10 @@ class SleepRes(Resource):
 		d: dict = request.get_json()
 		logger.info(f"{d=}")
 
-		def try_get_bool(day: str) -> bool | None:
+		def try_get_bool(key: str) -> bool | None:
 			return (
-				d.get(day)
-				if d.get(day) is not None and type(d.get(day)) is bool
+				d.get(key)
+				if d.get(key) is not None and type(d.get(key)) is bool
 				else None
 			)
 
@@ -99,8 +99,10 @@ class SleepRes(Resource):
 		minute: int | None = try_get_int("minute")
 		duration: int | None = try_get_int("duration")
 
+		enabled: bool | None = try_get_bool("enabled")
+
 		result: int = update(
-			id, mon, tue, wed, thu, fri, sat, sun, hour, minute, duration
+			id, mon, tue, wed, thu, fri, sat, sun, hour, minute, duration, enabled
 		)
 
 		if result == 0:
@@ -195,7 +197,9 @@ def view_update(id: int):
 	hour: int = int(tryget("hour", "0"))
 	minute: int = int(tryget("minute", "0"))
 	duration: int = int(tryget("duration", "0"))
+ 
+	enabled: bool = True if request.form.get("enabled") == "on" else False
 
-	update(id, mon, tue, wed, thu, fri, sat, sun, hour, minute, duration)
+	update(id, mon, tue, wed, thu, fri, sat, sun, hour, minute, duration, enabled)
 
 	return redirect(location=url_for(endpoint="sleep.view_index"))
