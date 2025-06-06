@@ -44,13 +44,9 @@ R_CHANNEL_EPDPI: str = "epdpi"
 
 R_MSG_CLEAR: str = "clear"
 R_MSG_DRAW: str = "draw"
-R_MSG_DRAW_BUFFER: str = "draw_buffer"
 R_MSG_BUSY: str = "busy"
 R_MSG_UPDATED: str = "updated"
 R_MSG_RESULT: str = "result"
-R_MSG_BTN: str = "button"
-R_MSG_BTN_NEXT: str = "next"
-R_MSG_BTN_ONOFF: str = "on_off"
 
 R_IMAGE_QUEUE: str = "img_queue"
 R_SLEEP_STATUS: str = "sleep_status"

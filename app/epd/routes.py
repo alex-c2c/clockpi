@@ -4,7 +4,7 @@ from flask_restx import Namespace, Resource
 from app import api_v1
 from app.auth.logic import apikey_required, login_required
 from . import logger
-from .logic import clear_display, update_display, update_display_with_buffer
+from .logic import clear_display, update_display
 
 
 bp: Blueprint = Blueprint("epd", __name__, url_prefix="/epd")
@@ -28,8 +28,7 @@ class ClearRes(Resource):
 class RefreshRes(Resource):
 	@apikey_required
 	def get(self) -> dict:
-		#update_display()
-		update_display_with_buffer()
+		update_display()
 		return "", 204
 
 
@@ -49,7 +48,6 @@ def view_clear():
 @bp.route("/refresh", methods=["GET"])
 @login_required
 def view_refresh():
-	#update_display()
-	update_display_with_buffer()
+	update_display()
 
 	return redirect(location=url_for("main.view_test"))
