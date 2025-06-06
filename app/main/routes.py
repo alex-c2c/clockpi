@@ -32,7 +32,7 @@ class TickRes(Resource):
 	def get(self) -> dict:
 		sleep_status: int = sleep.logic.get_status()
 		should_sleep_now: bool = sleep.logic.should_sleep_now()
-		logger.debug(f"job_update_clock {sleep_status=} {should_sleep_now=}")
+		logger.debug(f"tick {sleep_status=} {should_sleep_now=}")
 
 		if should_sleep_now:
 			if sleep_status == SLEEP_STATUS_AWAKE:
