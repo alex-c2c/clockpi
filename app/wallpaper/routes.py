@@ -9,7 +9,7 @@ from werkzeug.datastructures import FileStorage
 
 from app import api_v1
 from app.consts import *
-from app.enums import TimeMode, TextColor
+from app.epd.consts import *
 from app.auth.logic import apikey_required, login_required
 from app.queue.logic import move_to_first
 
@@ -196,12 +196,11 @@ def view_update(id: int):
 	if request.method == "POST":
 		is_select: bool = request.form.get("select") is not None
 		is_delete: bool = request.form.get("delete") is not None
-		mode: int = int(request.form.get("mode", str(TimeMode.FULL_3.value)))
-		color: int = int(request.form.get("color", str(TextColor.WHITE.value)))
-		shadow: int = int(request.form.get("shadow", str(TextColor.BLACK.value)))
-		logger.info(
-			f"update {id=} {mode=} {color=} {shadow=} {is_select=} {is_delete=}"
-		)
+		mode: int = TIMEMODE_FULL_3 if request.form.get("mode") is None else int(request.form.get("mode"))
+		color: int = COLOR_EPD_WHITE if request.form.get("color") is None else int(request.form.get("color"))
+		shadow: int = COLOR_EPD_BLACK if request.form.get("shadow") is None else int(request.form.get("shadow"))
+		
+		logger.info(f"update {id=} {mode=} {color=} {shadow=} {is_select=} {is_delete=}")
 
 		if is_delete:
 			remove(id)

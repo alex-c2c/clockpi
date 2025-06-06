@@ -11,7 +11,7 @@ from flask import (
 from app import api_v1, epd, queue
 from app.auth.logic import apikey_required, login_required
 from app.consts import *
-from app.enums import TimeMode, TextColor, SleepStatus
+from app.epd.consts import *
 from app.models import WallpaperModel
 
 from . import logger
@@ -30,18 +30,19 @@ API
 class TickRes(Resource):
 	@apikey_required
 	def get(self) -> dict:
-		sleep_status: SleepStatus = sleep.logic.get_status()
+		sleep_status: int = sleep.logic.get_status()
 		should_sleep_now: bool = sleep.logic.should_sleep_now()
 		logger.debug(f"job_update_clock {sleep_status=} {should_sleep_now=}")
 
 		if should_sleep_now:
-			if sleep_status == SleepStatus.AWAKE:
+			if sleep_status == SLEEP_STATUS_AWAKE:
 				epd.logic.clear_display()
-				sleep.logic.set_status(SleepStatus.SLEEP)
+				sleep.logic.set_status(SLEEP_STATUS_SLEEP)
 		else:
-			epd.logic.update_display()
-			if sleep_status == SleepStatus.SLEEP:
-				sleep.logic.set_status(SleepStatus.AWAKE)
+			#epd.logic.update_display()
+			epd.logic.update_display_with_buffer()
+			if sleep_status == SLEEP_STATUS_SLEEP:
+				sleep.logic.set_status(SLEEP_STATUS_AWAKE)
 
 		return "", 204
 
@@ -118,40 +119,39 @@ def view_test():
 
 	# Text Color
 	text_color: dict[str, int] = {
-		"none": int(TextColor.NONE.value),
-		"black": int(TextColor.BLACK.value),
-		"white": int(TextColor.WHITE.value),
-		"yellow": int(TextColor.YELLOW.value),
-		"red": int(TextColor.RED.value),
-		"blue": int(TextColor.BLUE.value),
-		"green": int(TextColor.GREEN.value),
+		"black": COLOR_EPD_BLACK,
+		"white": COLOR_EPD_WHITE,
+		"yellow": COLOR_EPD_YELLOW,
+		"red": COLOR_EPD_RED,
+		"blue": COLOR_EPD_BLUE,
+		"green": COLOR_EPD_GREEN,
 	}
-
+ 
 	# Time Modes
 	mode: dict[str, int] = {
-		"off": int(TimeMode.OFF.value),
-		"sect_9_top_left": int(TimeMode.SECT_9_TOP_LEFT.value),
-		"sect_9_top_center": int(TimeMode.SECT_9_TOP_CENTER.value),
-		"sect_9_top_right": int(TimeMode.SECT_9_TOP_RIGHT.value),
-		"sect_9_middle_left": int(TimeMode.SECT_9_MIDDLE_LEFT.value),
-		"sect_9_middle_center": int(TimeMode.SECT_9_MIDDLE_CENTER.value),
-		"sect_9_middle_right": int(TimeMode.SECT_9_MIDDLE_RIGHT.value),
-		"sect_9_bottom_left": int(TimeMode.SECT_9_BOTTOM_LEFT.value),
-		"sect_9_bottom_center": int(TimeMode.SECT_9_BOTTOM_CENTER.value),
-		"sect_9_bottom_right": int(TimeMode.SECT_9_BOTTOM_RIGHT.value),
-		"sect_6_top_left": int(TimeMode.SECT_6_TOP_LEFT.value),
-		"sect_6_top_right": int(TimeMode.SECT_6_TOP_RIGHT.value),
-		"sect_6_middle_left": int(TimeMode.SECT_6_MIDDLE_LEFT.value),
-		"sect_6_middle_right": int(TimeMode.SECT_6_MIDDLE_RIGHT.value),
-		"sect_6_bottom_left": int(TimeMode.SECT_6_BOTTOM_LEFT.value),
-		"sect_6_bottom_right": int(TimeMode.SECT_6_BOTTOM_RIGHT.value),
-		"sect_4_top_left": int(TimeMode.SECT_4_TOP_LEFT.value),
-		"sect_4_top_right": int(TimeMode.SECT_4_TOP_RIGHT.value),
-		"sect_4_bottom_left": int(TimeMode.SECT_4_BOTTOM_LEFT.value),
-		"sect_4_bottom_right": int(TimeMode.SECT_4_BOTTOM_RIGHT.value),
-		"full_1": int(TimeMode.FULL_1.value),
-		"full_2": int(TimeMode.FULL_2.value),
-		"full_3": int(TimeMode.FULL_3.value),
+		"off": TIMEMODE_OFF,
+		"sect_9_top_left": TIMEMODE_SECT_9_TOP_LEFT,
+		"sect_9_top_center": TIMEMODE_SECT_9_TOP_CENTER,
+		"sect_9_top_right": TIMEMODE_SECT_9_TOP_RIGHT,
+		"sect_9_middle_left": TIMEMODE_SECT_9_MIDDLE_LEFT,
+		"sect_9_middle_center": TIMEMODE_SECT_9_MIDDLE_CENTER,
+		"sect_9_middle_right": TIMEMODE_SECT_9_MIDDLE_RIGHT,
+		"sect_9_bottom_left": TIMEMODE_SECT_9_BOTTOM_LEFT,
+		"sect_9_bottom_center": TIMEMODE_SECT_9_BOTTOM_CENTER,
+		"sect_9_bottom_right": TIMEMODE_SECT_9_BOTTOM_RIGHT,
+		"sect_6_top_left": TIMEMODE_SECT_6_TOP_LEFT,
+		"sect_6_top_right": TIMEMODE_SECT_6_TOP_RIGHT,
+		"sect_6_middle_left": TIMEMODE_SECT_6_MIDDLE_LEFT,
+		"sect_6_middle_right": TIMEMODE_SECT_6_MIDDLE_RIGHT,
+		"sect_6_bottom_left": TIMEMODE_SECT_6_BOTTOM_LEFT,
+		"sect_6_bottom_right": TIMEMODE_SECT_6_BOTTOM_RIGHT,
+		"sect_4_top_left": TIMEMODE_SECT_4_TOP_LEFT,
+		"sect_4_top_right": TIMEMODE_SECT_4_TOP_RIGHT,
+		"sect_4_bottom_left": TIMEMODE_SECT_4_BOTTOM_LEFT,
+		"sect_4_bottom_right": TIMEMODE_SECT_4_BOTTOM_RIGHT,
+		"full_1": TIMEMODE_FULL_1,
+		"full_2": TIMEMODE_FULL_2,
+		"full_3": TIMEMODE_FULL_3,
 	}
 
 	return render_template(

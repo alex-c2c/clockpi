@@ -1,5 +1,7 @@
 from sqlalchemy import ForeignKey
-from app.enums import TextColor, TimeMode
+
+from app.consts import *
+from app.epd.consts import *
 from . import db
 
 
@@ -72,16 +74,16 @@ class WallpaperModel(db.Model):
 		name: str,
 		hash: str,
 		size: int,
-		mode: TimeMode | None = None,
-		color: TextColor | None = None,
-		shadow: TextColor | None = None,
+		mode: int | None = None,
+		color: int | None = None,
+		shadow: int | None = None,
 	):
 		self.name = name
 		self.hash = hash
 		self.size = size
-		self.mode = int(TimeMode.FULL_3.value) if mode is None else int(mode.value)
-		self.color = int(TextColor.WHITE.value) if color is None else int(color.value)
-		self.shadow = int(TextColor.BLACK.value) if shadow is None else int(shadow.value)
+		self.mode = TIMEMODE_FULL_3 if mode is None else mode
+		self.color = COLOR_EPD_WHITE if color is None else color
+		self.shadow = COLOR_EPD_BLACK if shadow is None else shadow
   
 	def to_dict(self) -> dict:
 		d: dict = {}

@@ -4,7 +4,6 @@ from logging import Logger, getLogger
 
 
 from app.consts import *
-from app.enums import SleepStatus
 from app import db, redis_controller
 from app.models import SleepScheduleModel
 
@@ -81,7 +80,7 @@ def add(
 	hour: int,
 	minute: int,
 	duration: int,
-	enabled: bool,
+	enabled: bool = True,
 ) -> int:
 	logger.info(
 		f"Add {mon=} {tue=} {wed=} {thu=} {fri=} {sat=} {sun=} {hour=} {minute=} {duration=} {enabled=}"
@@ -190,15 +189,13 @@ def update(
 	return 0
 
 
-def get_status() -> SleepStatus:
-	return SleepStatus(
-		int(redis_controller.rget(R_SLEEP_STATUS, str(SleepStatus.AWAKE.value)))
-	)
+def get_status() -> int:
+	return int(redis_controller.rget(R_SLEEP_STATUS, str(SLEEP_STATUS_AWAKE)))
 
 
-def set_status(status: SleepStatus) -> None:
+def set_status(status: int) -> None:
 	logger.debug(f"set_status:{status=}")
-	redis_controller.rset(R_SLEEP_STATUS, value=str(status.value))
+	redis_controller.rset(R_SLEEP_STATUS, value=str(status))
 
 
 def should_sleep_now() -> bool:

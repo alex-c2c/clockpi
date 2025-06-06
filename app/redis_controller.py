@@ -5,7 +5,6 @@ from flask import Flask
 from flask_redis import FlaskRedis
 
 from app.consts import *
-from app.enums import SleepStatus
 from app import epd, queue, sleep
 
 
@@ -92,28 +91,22 @@ def event_handler(msg: dict) -> None:
 			logger.info(f"epdpi is busy, unable process event")
 			return
 
-		sleep_status: SleepStatus = sleep.logic.get_status()
+		sleep_status: int = sleep.logic.get_status()
 
 		if data[1] == R_MSG_BTN_ONOFF:
 			# ON/OFF button has been pressed
-			if (
-				sleep_status == SleepStatus.AWAKE
-				or sleep_status == SleepStatus.PENDING_AWAKE
-			):
-				rset(R_SLEEP_STATUS, str(object=SleepStatus.SLEEP.value))
+			if (sleep_status == SLEEP_STATUS_AWAKE):
+				rset(R_SLEEP_STATUS, str(object=SLEEP_STATUS_SLEEP))
 				epd.logic.clear()
-			elif (
-				sleep_status == SleepStatus.SLEEP
-				or sleep_status == SleepStatus.PENDING_SLEEP
-			):
-				rset(R_SLEEP_STATUS, str(SleepStatus.AWAKE.value))
+			elif (sleep_status == SLEEP_STATUS_SLEEP):
+				rset(R_SLEEP_STATUS, str(SLEEP_STATUS_AWAKE))
 				epd.logic.update()
 
 		elif data[1] == R_MSG_BTN_NEXT:
 			# NEXT button has been pressed
 			queue.logic.shift_next()
 			epd.logic.update()
-			rset(R_SLEEP_STATUS, str(SleepStatus.AWAKE.value))
+			rset(R_SLEEP_STATUS, str(SLEEP_STATUS_AWAKE))
 
 
 def rdelete(key: str) -> None:

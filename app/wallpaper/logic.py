@@ -5,10 +5,9 @@ import numpy as np
 
 from app import db, queue
 from app.consts import *
-from app.enums import TimeMode, TextColor
 from app.models import WallpaperModel
 
-from app.epd.consts import EPD_WIDTH, EPD_HEIGHT, EPD_NC
+from app.epd.consts import *
 
 from flask.ctx import AppContext
 from logging import Logger, getLogger
@@ -16,6 +15,9 @@ from PIL import Image as Image
 
 
 logger: Logger = getLogger(__name__)
+
+
+color_list: list[int] = [COLOR_EPD_BLACK, COLOR_EPD_WHITE, COLOR_EPD_YELLOW, COLOR_EPD_RED, COLOR_EPD_BLUE, COLOR_EPD_GREEN]
 
 
 def crop(img: Image, w: int, h: int) -> Image:
@@ -219,24 +221,25 @@ def remove(id: int) -> int:
 
 def update(id: int, mode: int | None, color: int | None, shadow: int | None) -> int:
 	model: WallpaperModel = WallpaperModel.query.get(id)
-
+	logger.info(f"update {id=} {mode=} {color=} {shadow=}")
 	if model is None:
 		return ERR_WALLPAPER_INVALID_ID
 
 	if mode is not None:
-		if TimeMode.OFF.value <= mode <= TimeMode.FULL_3.value:
+		if TIMEMODE_OFF <= mode <= TIMEMODE_FULL_3:
 			model.mode = mode
 		else:
 			return ERR_WALLPAPER_INVALID_DATA
 
+	
 	if color is not None:
-		if TextColor.NONE.value <= color <= TextColor.GREEN.value:
+		if color in color_list:
 			model.color = color
 		else:
 			return ERR_WALLPAPER_INVALID_DATA
 
 	if shadow is not None:
-		if TextColor.NONE.value <= color <= TextColor.GREEN.value:
+		if shadow in color_list:
 			model.shadow = shadow
 		else:
 			return ERR_WALLPAPER_INVALID_DATA

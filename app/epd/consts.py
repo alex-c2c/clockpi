@@ -5,14 +5,14 @@ EPD_HEIGHT: int = 480
 # E-Paper Display color per channel
 EPD_NC: int = 2
 
-# EPD supported colors
-EPD_BLACK:int	= 0x000000	# 0000  BGR
-EPD_WHITE:int	= 0xffffff  # 0001
-EPD_YELLOW:int	= 0x00ffff  # 0010
-EPD_RED:int		= 0x0000ff  # 0011
-#EPD_ORANGE:int = 0x0080ff 	# 0100
-EPD_BLUE:int	= 0xff0000  # 0101
-EPD_GREEN:int	= 0x00ff00  # 0110
+# EPD supported colors (copied from epd lib)
+COLOR_EPD_BLACK: int	= 0x000000	# 0000  BGR
+COLOR_EPD_WHITE: int	= 0xffffff  # 0001
+COLOR_EPD_YELLOW: int	= 0x00ffff  # 0010
+COLOR_EPD_RED: int	= 0x0000ff  # 0011
+#COLOR_EPD_ORANGE: int = 0x0080ff 	# 0100
+COLOR_EPD_BLUE: int	= 0xff0000  # 0101
+COLOR_EPD_GREEN: int	= 0x00ff00  # 0110
 
 # Offsets
 SHADOW_OFFSET_X: int = -5
