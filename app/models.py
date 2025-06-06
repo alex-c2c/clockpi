@@ -1,5 +1,5 @@
 from sqlalchemy import ForeignKey
-from app.consts import TextColor, TimeMode
+from app.enums import TextColor, TimeMode
 from . import db
 
 

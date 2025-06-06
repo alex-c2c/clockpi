@@ -1,0 +1,43 @@
+from enum import Enum
+
+# Sleep Status
+class SleepStatus(Enum):
+	AWAKE = 0
+	SLEEP = 1
+
+
+# Time Mode
+class TimeMode(Enum):
+	OFF = 0
+	SECT_9_TOP_LEFT = 1
+	SECT_9_TOP_CENTER = 2
+	SECT_9_TOP_RIGHT = 3
+	SECT_9_MIDDLE_LEFT = 4
+	SECT_9_MIDDLE_CENTER = 5
+	SECT_9_MIDDLE_RIGHT = 6
+	SECT_9_BOTTOM_LEFT = 7
+	SECT_9_BOTTOM_CENTER = 8
+	SECT_9_BOTTOM_RIGHT = 9
+	SECT_6_TOP_LEFT = 10
+	SECT_6_TOP_RIGHT = 11
+	SECT_6_MIDDLE_LEFT = 12
+	SECT_6_MIDDLE_RIGHT = 13
+	SECT_6_BOTTOM_LEFT = 14
+	SECT_6_BOTTOM_RIGHT = 15
+	SECT_4_TOP_LEFT = 16
+	SECT_4_TOP_RIGHT = 17
+	SECT_4_BOTTOM_LEFT = 18
+	SECT_4_BOTTOM_RIGHT = 19
+	FULL_1 = 20  # Small
+	FULL_2 = 21  # Medium
+	FULL_3 = 22  # Large
+
+
+class TextColor(Enum):
+	NONE: int = 0
+	BLACK: int = 1
+	WHITE: int = 2
+	YELLOW: int = 3
+	RED: int = 4
+	BLUE: int = 5
+	GREEN: int = 6

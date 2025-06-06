@@ -5,9 +5,11 @@ import numpy as np
 
 from app import db, queue
 from app.consts import *
+from app.enums import TimeMode, TextColor
 from app.models import WallpaperModel
 
-from flask import current_app
+from app.epd.consts import EPD_WIDTH, EPD_HEIGHT, EPD_NC
+
 from flask.ctx import AppContext
 from logging import Logger, getLogger
 from PIL import Image as Image
@@ -118,7 +120,7 @@ def add(app_context: AppContext, file_name: str) -> int:
 	app_context.push()
 
 	logger.info(f"Processing {file_name=}")
-	temp_path: str = os.path.join(current_app.config["DIR_TMP_UPLOAD"], file_name)
+	temp_path: str = os.path.join(DIR_TMP_UPLOAD, file_name)
 
 	# validate image
 	if not _validate_image(temp_path):
@@ -126,11 +128,11 @@ def add(app_context: AppContext, file_name: str) -> int:
 		return ERR_UPLOAD_INVALID_IMAGE
 
 	# process image
-	if not os.path.isdir(current_app.config["DIR_TMP_PROCESSED"]):
-		os.mkdir(current_app.config["DIR_TMP_PROCESSED"])
+	if not os.path.isdir(DIR_TMP_PROCESSED):
+		os.mkdir(DIR_TMP_PROCESSED)
 
 	processed_path: str = os.path.join(
-		current_app.config["DIR_TMP_PROCESSED"], file_name
+		DIR_TMP_PROCESSED, file_name
 	)
 	process_result: bool = process_image(
 		temp_path, processed_path, EPD_WIDTH, EPD_HEIGHT, EPD_NC
@@ -164,7 +166,7 @@ def add(app_context: AppContext, file_name: str) -> int:
 	# copy processed image to upload dir
 	try:
 		hashname: str = f"{hash}.bmp"
-		dest_path: str = os.path.join(current_app.config["DIR_APP_UPLOAD"], hashname)
+		dest_path: str = os.path.join(DIR_APP_UPLOAD, hashname)
 		shutil.copy2(processed_path, dest_path)
 		os.remove(processed_path)
 
@@ -201,7 +203,7 @@ def remove(id: int) -> int:
 		return ERR_WALLPAPER_INVALID_ID
 
 	hash: str = model.hash
-	file_path: str = os.path.join(current_app.config["DIR_APP_UPLOAD"], f"{hash}.bmp")
+	file_path: str = os.path.join(DIR_APP_UPLOAD, f"{hash}.bmp")
 
 	logger.info(msg=f"Deleting {file_path=}")
 	if os.path.isfile(file_path):

@@ -4,8 +4,9 @@ import re
 from flask import g, redirect, request, url_for
 from logging import Logger, getLogger
 
-from app.consts import *
 from app.models import ApiKeyModel
+
+from .consts import *
 
 
 logger: Logger = getLogger(__name__)

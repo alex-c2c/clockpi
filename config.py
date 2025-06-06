@@ -12,10 +12,7 @@ class Config:
 		result_backend="redis://localhost",
 		task_ignore_result=True,
 	)
-	DIR_APP_UPLOAD: str = os.path.join(os.path.dirname(__file__), "upload")
-	DIR_TMP_UPLOAD: str = os.path.join(tempfile.gettempdir(), "upload")
-	DIR_TMP_PROCESSED: str = os.path.join(tempfile.gettempdir(), "processed")
-	
+ 
  
 class DevConfig(Config):
 	DEBUG: bool = True

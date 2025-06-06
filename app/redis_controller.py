@@ -3,7 +3,9 @@ from typing import Any
 from logging import Logger, getLogger
 from flask import Flask
 from flask_redis import FlaskRedis
+
 from app.consts import *
+from app.enums import SleepStatus
 from app import epd, queue, sleep
 
 

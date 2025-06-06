@@ -11,8 +11,10 @@ from flask import (
 from app import api_v1, epd, queue
 from app.auth.logic import apikey_required, login_required
 from app.consts import *
-from . import logger
+from app.enums import TimeMode, TextColor, SleepStatus
 from app.models import WallpaperModel
+
+from . import logger
 
 
 bp: Blueprint = Blueprint("main", __name__)
@@ -115,10 +117,42 @@ def view_test():
 	wallpaper_queue: list[int] = queue.logic.get_queue()
 
 	# Text Color
-	text_color: dict[str, int] = TEXT_COLOR_DICT
+	text_color: dict[str, int] = {
+		"none": int(TextColor.NONE.value),
+		"black": int(TextColor.BLACK.value),
+		"white": int(TextColor.WHITE.value),
+		"yellow": int(TextColor.YELLOW.value),
+		"red": int(TextColor.RED.value),
+		"blue": int(TextColor.BLUE.value),
+		"green": int(TextColor.GREEN.value),
+	}
 
 	# Time Modes
-	mode: dict[str, int] = TIME_MODE_DICT
+	mode: dict[str, int] = {
+		"off": int(TimeMode.OFF.value),
+		"sect_9_top_left": int(TimeMode.SECT_9_TOP_LEFT.value),
+		"sect_9_top_center": int(TimeMode.SECT_9_TOP_CENTER.value),
+		"sect_9_top_right": int(TimeMode.SECT_9_TOP_RIGHT.value),
+		"sect_9_middle_left": int(TimeMode.SECT_9_MIDDLE_LEFT.value),
+		"sect_9_middle_center": int(TimeMode.SECT_9_MIDDLE_CENTER.value),
+		"sect_9_middle_right": int(TimeMode.SECT_9_MIDDLE_RIGHT.value),
+		"sect_9_bottom_left": int(TimeMode.SECT_9_BOTTOM_LEFT.value),
+		"sect_9_bottom_center": int(TimeMode.SECT_9_BOTTOM_CENTER.value),
+		"sect_9_bottom_right": int(TimeMode.SECT_9_BOTTOM_RIGHT.value),
+		"sect_6_top_left": int(TimeMode.SECT_6_TOP_LEFT.value),
+		"sect_6_top_right": int(TimeMode.SECT_6_TOP_RIGHT.value),
+		"sect_6_middle_left": int(TimeMode.SECT_6_MIDDLE_LEFT.value),
+		"sect_6_middle_right": int(TimeMode.SECT_6_MIDDLE_RIGHT.value),
+		"sect_6_bottom_left": int(TimeMode.SECT_6_BOTTOM_LEFT.value),
+		"sect_6_bottom_right": int(TimeMode.SECT_6_BOTTOM_RIGHT.value),
+		"sect_4_top_left": int(TimeMode.SECT_4_TOP_LEFT.value),
+		"sect_4_top_right": int(TimeMode.SECT_4_TOP_RIGHT.value),
+		"sect_4_bottom_left": int(TimeMode.SECT_4_BOTTOM_LEFT.value),
+		"sect_4_bottom_right": int(TimeMode.SECT_4_BOTTOM_RIGHT.value),
+		"full_1": int(TimeMode.FULL_1.value),
+		"full_2": int(TimeMode.FULL_2.value),
+		"full_3": int(TimeMode.FULL_3.value),
+	}
 
 	return render_template(
 		"main/test.html",

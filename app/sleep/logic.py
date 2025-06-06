@@ -4,6 +4,7 @@ from logging import Logger, getLogger
 
 
 from app.consts import *
+from app.enums import SleepStatus
 from app import db, redis_controller
 from app.models import SleepScheduleModel
 

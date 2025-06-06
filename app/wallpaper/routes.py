@@ -8,11 +8,13 @@ from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
 
 from app import api_v1
-from app.auth.logic import apikey_required, login_required
 from app.consts import *
+from app.enums import TimeMode, TextColor
+from app.auth.logic import apikey_required, login_required
 from app.queue.logic import move_to_first
 
 from . import logger
+from .consts import *
 from .logic import add, remove, update
 
 
@@ -54,11 +56,11 @@ class WallpaperListRes(Resource):
 			# save file to temp dir
 			# TODO: improve location of "uploaded" files so that it doesn't get
 			# overwritten by someone else uploading the files with same file name at the same time
-			if not os.path.isdir(current_app.config["DIR_TMP_UPLOAD"]):
-				os.mkdir(current_app.config["DIR_TMP_UPLOAD"])
+			if not os.path.isdir(DIR_TMP_UPLOAD):
+				os.mkdir(DIR_TMP_UPLOAD)
 
 			temp_path: str = os.path.join(
-				current_app.config["DIR_TMP_UPLOAD"], filename
+				DIR_TMP_UPLOAD, filename
 			)
 			file.save(temp_path)
 
@@ -168,11 +170,11 @@ def view_upload():
 			# save file to temp dir
 			# TODO: improve location of "uploaded" files so that it doesn't get
 			# overwritten by someone else uploading the files with same file name at the same time
-			if not os.path.isdir(current_app.config["DIR_TMP_UPLOAD"]):
-				os.mkdir(current_app.config["DIR_TMP_UPLOAD"])
+			if not os.path.isdir(DIR_TMP_UPLOAD):
+				os.mkdir(DIR_TMP_UPLOAD)
 
 			temp_path: str = os.path.join(
-				current_app.config["DIR_TMP_UPLOAD"], file_name
+				DIR_TMP_UPLOAD, file_name
 			)
 			file.save(temp_path)
 

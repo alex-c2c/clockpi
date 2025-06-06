@@ -1,18 +1,16 @@
-from enum import Enum
-
-# Auth
-USERNAME_MIN_LEN: int = 4
-USERNAME_MAX_LEN: int = 32
-USERNAME_REGEX: str = r"^[A-Za-z][A-Za-z0-9_]*$"
-PASSWORD_MIN_LEN: int = 16
+import os
+import tempfile
 
 
-# Redis
+"""
+REDIS CONSTS
+"""
 R_CHANNEL_CLOCKPI: str = "clockpi"
 R_CHANNEL_EPDPI: str = "epdpi"
 
 R_MSG_CLEAR: str = "clear"
 R_MSG_DRAW: str = "draw"
+R_MSG_DRAW_BUFFER: str = "draw_buffer"
 R_MSG_BUSY: str = "busy"
 R_MSG_UPDATED: str = "updated"
 R_MSG_RESULT: str = "result"
@@ -27,105 +25,9 @@ R_SETTINGS_EPD_BUSY: str = "epd_busy"
 R_SETTINGS_DRAW_GRIDS: str = "draw_grids"
 
 
-# E-Paper Display Width
-EPD_WIDTH: int = 800
-
-
-# E-Paper Display Height
-EPD_HEIGHT: int = 480
-
-
-# E-Paper Display color per channel
-EPD_NC: int = 2
-
-
-# Allowed upload file extensions
-ALLOWED_EXTENSIONS: set[str] = ("png", "jpg", "jpeg", "bmp")
-
-
-# Sleep Status
-class SleepStatus(Enum):
-	AWAKE = 0
-	SLEEP = 1
-
-
-# Time Mode
-class TimeMode(Enum):
-	OFF = 0
-	SECT_9_TOP_LEFT = 1
-	SECT_9_TOP_CENTER = 2
-	SECT_9_TOP_RIGHT = 3
-	SECT_9_MIDDLE_LEFT = 4
-	SECT_9_MIDDLE_CENTER = 5
-	SECT_9_MIDDLE_RIGHT = 6
-	SECT_9_BOTTOM_LEFT = 7
-	SECT_9_BOTTOM_CENTER = 8
-	SECT_9_BOTTOM_RIGHT = 9
-	SECT_6_TOP_LEFT = 10
-	SECT_6_TOP_RIGHT = 11
-	SECT_6_MIDDLE_LEFT = 12
-	SECT_6_MIDDLE_RIGHT = 13
-	SECT_6_BOTTOM_LEFT = 14
-	SECT_6_BOTTOM_RIGHT = 15
-	SECT_4_TOP_LEFT = 16
-	SECT_4_TOP_RIGHT = 17
-	SECT_4_BOTTOM_LEFT = 18
-	SECT_4_BOTTOM_RIGHT = 19
-	FULL_1 = 20  # Small
-	FULL_2 = 21  # Medium
-	FULL_3 = 22  # Large
-
-
-TIME_MODE_DICT: dict[str, int] = {
-	"off": int(TimeMode.OFF.value),
-	"sect_9_top_left": int(TimeMode.SECT_9_TOP_LEFT.value),
-	"sect_9_top_center": int(TimeMode.SECT_9_TOP_CENTER.value),
-	"sect_9_top_right": int(TimeMode.SECT_9_TOP_RIGHT.value),
-	"sect_9_middle_left": int(TimeMode.SECT_9_MIDDLE_LEFT.value),
-	"sect_9_middle_center": int(TimeMode.SECT_9_MIDDLE_CENTER.value),
-	"sect_9_middle_right": int(TimeMode.SECT_9_MIDDLE_RIGHT.value),
-	"sect_9_bottom_left": int(TimeMode.SECT_9_BOTTOM_LEFT.value),
-	"sect_9_bottom_center": int(TimeMode.SECT_9_BOTTOM_CENTER.value),
-	"sect_9_bottom_right": int(TimeMode.SECT_9_BOTTOM_RIGHT.value),
-	"sect_6_top_left": int(TimeMode.SECT_6_TOP_LEFT.value),
-	"sect_6_top_right": int(TimeMode.SECT_6_TOP_RIGHT.value),
-	"sect_6_middle_left": int(TimeMode.SECT_6_MIDDLE_LEFT.value),
-	"sect_6_middle_right": int(TimeMode.SECT_6_MIDDLE_RIGHT.value),
-	"sect_6_bottom_left": int(TimeMode.SECT_6_BOTTOM_LEFT.value),
-	"sect_6_bottom_right": int(TimeMode.SECT_6_BOTTOM_RIGHT.value),
-	"sect_4_top_left": int(TimeMode.SECT_4_TOP_LEFT.value),
-	"sect_4_top_right": int(TimeMode.SECT_4_TOP_RIGHT.value),
-	"sect_4_bottom_left": int(TimeMode.SECT_4_BOTTOM_LEFT.value),
-	"sect_4_bottom_right": int(TimeMode.SECT_4_BOTTOM_RIGHT.value),
-	"full_1": int(TimeMode.FULL_1.value),
-	"full_2": int(TimeMode.FULL_2.value),
-	"full_3": int(TimeMode.FULL_3.value),
-}
-
-
-# Text Colors
-class TextColor(Enum):
-	NONE: int = 0
-	BLACK: int = 1
-	WHITE: int = 2
-	YELLOW: int = 3
-	RED: int = 4
-	BLUE: int = 5
-	GREEN: int = 6
-
-
-# Text Colors Dictionary
-TEXT_COLOR_DICT: dict[str, int] = {
-	"none": int(TextColor.NONE.value),
-	"black": int(TextColor.BLACK.value),
-	"white": int(TextColor.WHITE.value),
-	"yellow": int(TextColor.YELLOW.value),
-	"red": int(TextColor.RED.value),
-	"blue": int(TextColor.BLUE.value),
-	"green": int(TextColor.GREEN.value),
-}
-
-
+"""
+ERROR CODES
+"""
 # Exceptions - Auth (100)
 
 # Exceptions - EPD (200)
@@ -151,3 +53,12 @@ ERR_UPLOAD_COPY = -606
 ERR_UPLOAD_SAVE = -607
 ERR_WALLPAPER_INVALID_DATA = -608
 ERR_WALLPAPER_INVALID_ID = -609
+
+
+"""
+DIRECTORIES
+"""
+DIR_APP_UPLOAD: str = os.path.join(os.path.dirname(__file__), "..", "upload")
+DIR_FONT: str = os.path.join(os.path.dirname(__file__), "..", "font")
+DIR_TMP_UPLOAD: str = os.path.join(tempfile.gettempdir(), "upload")
+DIR_TMP_PROCESSED: str = os.path.join(tempfile.gettempdir(), "processed")
