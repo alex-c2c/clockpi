@@ -39,8 +39,7 @@ class TickRes(Resource):
 				epd.logic.clear_display()
 				sleep.logic.set_status(SLEEP_STATUS_SLEEP)
 		else:
-			#epd.logic.update_display()
-			epd.logic.update_display_with_buffer()
+			epd.logic.update_display()
 			if sleep_status == SLEEP_STATUS_SLEEP:
 				sleep.logic.set_status(SLEEP_STATUS_AWAKE)
 
