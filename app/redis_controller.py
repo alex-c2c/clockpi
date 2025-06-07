@@ -84,30 +84,6 @@ def event_handler(msg: dict) -> None:
 		# get notification from epd-pi that changes to the display has finished
 		...
 
-	elif data[0] == R_MSG_BTN:
-		# get notification from epd-pi that a button has been pressed
-
-		if epd.logic.get_busy():
-			logger.info(f"epdpi is busy, unable process event")
-			return
-
-		sleep_status: int = sleep.logic.get_status()
-
-		if data[1] == R_MSG_BTN_ONOFF:
-			# ON/OFF button has been pressed
-			if (sleep_status == SLEEP_STATUS_AWAKE):
-				rset(R_SLEEP_STATUS, str(object=SLEEP_STATUS_SLEEP))
-				epd.logic.clear()
-			elif (sleep_status == SLEEP_STATUS_SLEEP):
-				rset(R_SLEEP_STATUS, str(SLEEP_STATUS_AWAKE))
-				epd.logic.update()
-
-		elif data[1] == R_MSG_BTN_NEXT:
-			# NEXT button has been pressed
-			queue.logic.shift_next()
-			epd.logic.update()
-			rset(R_SLEEP_STATUS, str(SLEEP_STATUS_AWAKE))
-
 
 def rdelete(key: str) -> None:
 	global redis_client
