@@ -1,4 +1,3 @@
-import queue
 from typing import Any
 from logging import Logger, getLogger
 from flask import Flask
