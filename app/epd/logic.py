@@ -242,6 +242,7 @@ def update_display():
      image = process_image(file_path, time, mode, color, shadow, draw_grids)
      
      buffer: list[int] = convert_image_to_buffer(image)
+     logger.debug(f"{len(buffer)=}")
      buffer_str: str = ":".join(str(e) for e in buffer)
      
      redis_controller.rpublish(R_CH_PUB_EPDPI, f"{R_MSG_DRAW}^{buffer_str}")
