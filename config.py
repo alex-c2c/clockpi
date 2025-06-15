@@ -19,3 +19,4 @@ class DevConfig(Config):
 class ProdConfig(Config):
     DEBUG: bool = False
     SECRET_KEY: str = os.getenv("SECRET_KEY")
+    REDIS_PASSWORD: str = os.getenv("REDIS_PASSWORD")
