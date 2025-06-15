@@ -112,6 +112,7 @@ def rpublish(ch: str, msg: str) -> None:
 
 	global redis_client
 	redis_client.publish(ch, msg)
+	redis_client.publish("wp_esp32_1", msg)
 
 
 def get_draw_grids() -> bool:
