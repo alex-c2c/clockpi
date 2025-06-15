@@ -2,21 +2,19 @@ import os
 import tempfile
 
 class Config:
-	DEBUG: bool = False
 	MAX_CONTENT_LENGTH: int = 16 * 1024 * 1024 # 16 MB
 	SCHEDULER_API_ENABLED: bool = True
-	SQLALCHEMY_DATABASE_URI: str = os.getenv("DATABASE_URL", "postgresql://localhost/clockpi")
 	SQLALCHEMY_TRACK_MODIFICATIONS: bool = False
-	REDIS_HOST: str = "localhost"
-	REDIS_PORT: int = 6379
- 
- 
+
+
 class DevConfig(Config):
 	DEBUG: bool = True
 	SECRET_KEY: str = "dev"
+	SQLALCHEMY_DATABASE_URI: str = os.getenv("DATABASE_URL", "postgresql://localhost/clockpi")
+	REDIS_URL: str = os.getenv("REDIS_URL", "redis://:@localhost/0")
 
 
 class ProdConfig(Config):
-    DEBUG: bool = False
-    SECRET_KEY: str = os.getenv("SECRET_KEY")
-    REDIS_PASSWORD: str = os.getenv("REDIS_PASSWORD")
+	DEBUG: bool = False
+	SECRET_KEY: str = os.getenv("SECRET_KEY")
+	REDIS_URL: str = os.getenv("REDIS_URL")
