@@ -5,7 +5,6 @@ from flask import Flask
 from flask_redis import FlaskRedis
 
 from app.consts import *
-from app import epd, queue, sleep
 
 
 logger: Logger = getLogger(__name__)

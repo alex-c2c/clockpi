@@ -1,5 +1,4 @@
 import os
-import tempfile
 
 class Config:
 	MAX_CONTENT_LENGTH: int = 16 * 1024 * 1024 # 16 MB
