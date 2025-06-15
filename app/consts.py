@@ -39,8 +39,12 @@ TIMEMODE_FULL_3 = 22  # Large
 """
 REDIS CONSTS
 """
-R_CHANNEL_CLOCKPI: str = "clockpi"
-R_CHANNEL_EPDPI: str = "epdpi"
+R_CH_SUB_CLOCKPI: str = "clockpi"
+R_CH_SUB_CALLER_EPDPI: str = "caller_epdpi"
+R_CH_SUB_CALLER_WP_ESP32_1: str = "caller_wp_esp32_1"
+
+R_CH_PUB_EPDPI: str = "epdpi"
+R_CH_PUB_WP_ESP32_1: str = "wp_esp32_1"
 
 R_MSG_CLEAR: str = "clear"
 R_MSG_DRAW: str = "draw"

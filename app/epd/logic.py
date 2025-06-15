@@ -244,9 +244,9 @@ def update_display():
      buffer: list[int] = convert_image_to_buffer(image)
      buffer_str: str = ":".join(str(e) for e in buffer)
      
-     redis_controller.rpublish(f"{R_MSG_DRAW}^{buffer_str}")
+     redis_controller.rpublish(R_CH_PUB_EPDPI, f"{R_MSG_DRAW}^{buffer_str}")
 
 
 def clear_display() -> None:
 	logger.debug(f"clear")
-	redis_controller.rpublish(R_MSG_CLEAR)
+	redis_controller.rpublish(R_CH_PUB_EPDPI, R_MSG_CLEAR)

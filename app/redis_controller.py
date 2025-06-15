@@ -19,7 +19,7 @@ def exception_handler(ex, pubsub, thread):
 def unsub_from_channel() -> None:
 	global redis_client
 	redis_pubsub = redis_client.pubsub()
-	redis_pubsub.unsubscribe(R_CHANNEL_CLOCKPI)
+	redis_pubsub.unsubscribe(R_CH_SUB_CLOCKPI)
 
 	"""
 	redis_thread.stop()
@@ -31,7 +31,7 @@ def unsub_from_channel() -> None:
 
 
 def sub_to_channel() -> None:
-	logger.info(f"Subscribing to {R_CHANNEL_CLOCKPI}")
+	logger.info(f"Subscribing to {R_CH_SUB_CLOCKPI}")
 
 	global redis_client
 	redis_pubsub = redis_client.pubsub(ignore_subscribe_messages=True)
@@ -43,7 +43,7 @@ def sub_to_channel() -> None:
 	which in turn causes 2 redis-subscriber to be spawn, leading to 2 event_handler method to be called whenever there is a message.
 	To bypass this during development, run flask with --no-reload option.
  	"""
-	redis_pubsub.subscribe(**{f"{R_CHANNEL_CLOCKPI}": event_handler})
+	redis_pubsub.subscribe(**{f"{R_CH_SUB_CLOCKPI}": event_handler})
 
 	"""
 	Running redis subscribe in a seperate thread because otherwise, need to implement it
@@ -68,18 +68,23 @@ def event_handler(msg: dict) -> None:
 
 	if (
 		msg["type"] != "message"
-		or msg["channel"] != R_CHANNEL_CLOCKPI
+		or msg["channel"] != R_CH_SUB_CLOCKPI
 		or len(msg["data"]) == 0
 	):
 		return
 
 	data: list[str] = msg["data"].split("^")
+
+	if data[0] == R_CH_SUB_CALLER_EPDPI:
+		
+		...
+	elif data[0] == R_CH_SUB_CALLER_WP_ESP32_1:
+		...
+
 	if data[0] == R_MSG_BUSY:
-		# get notification from epd-pi that epd_busy has been updated
 		...
 
 	elif data[0] == R_MSG_RESULT:
-		# get notification from epd-pi that changes to the display has finished
 		...
 
 
@@ -102,11 +107,11 @@ def rset(key: str, value: str) -> None:
 	redis_client[key] = value
 
 
-def rpublish(msg: str) -> None:
-	logger.info(f"rpublish {msg=}")
+def rpublish(ch: str, msg: str) -> None:
+	logger.info(f"rpublish {ch=} {msg=}")
 
 	global redis_client
-	redis_client.publish(R_CHANNEL_EPDPI, msg)
+	redis_client.publish(ch, msg)
 
 
 def get_draw_grids() -> bool:
