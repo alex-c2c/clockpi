@@ -234,8 +234,8 @@ def get_busy() -> bool:
 	return True if redis_controller.rget(R_SETTINGS_EPD_BUSY, "0") == "1" else False
 
 
-def update_display():
-     logger.info(f"update_display")
+def update_clock_display():
+     logger.info(f"update_clock_display")
      
      file_path, time, mode, color, shadow, draw_grids = prepare_image()
      
@@ -244,9 +244,17 @@ def update_display():
      buffer: list[int] = convert_image_to_buffer(image)
      buffer_str: str = ":".join(str(e) for e in buffer)
      
-     redis_controller.rpublish(R_CH_PUB_EPDPI, f"{R_MSG_DRAW}^{buffer_str}")
+     redis_controller.rpublish(R_CH_PUB, 1, f"{R_MSG_DRAW}^{buffer_str}")
 
 
-def clear_display() -> None:
-	logger.debug(f"clear")
-	redis_controller.rpublish(R_CH_PUB_EPDPI, R_MSG_CLEAR)
+def clear_clock_display() -> None:
+	logger.debug(f"clear_clock_display")
+	redis_controller.rpublish(R_CH_PUB, 1, R_MSG_CLEAR)
+
+
+def update_frame_display() -> None:
+    ...
+    
+
+def clear_frame_display() -> None:
+    ...

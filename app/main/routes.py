@@ -1,3 +1,5 @@
+import time
+
 from flask_restx import Namespace, Resource
 from app import redis_controller, sleep
 from flask import (
@@ -25,6 +27,11 @@ ns: Namespace = api_v1.namespace("main", description="Main operations")
 API
 """
 
+@ns.route("/time")
+class TimeRes(Resource):
+    def get(self) -> dict:
+        return {"time": time.time()}, 200
+
 
 @ns.route("/tick")
 class TickRes(Resource):
@@ -36,10 +43,10 @@ class TickRes(Resource):
 
 		if should_sleep_now:
 			if sleep_status == SLEEP_STATUS_AWAKE:
-				epd.logic.clear_display()
+				epd.logic.clear_clock_display()
 				sleep.logic.set_status(SLEEP_STATUS_SLEEP)
 		else:
-			epd.logic.update_display()
+			epd.logic.update_clock_display()
 			if sleep_status == SLEEP_STATUS_SLEEP:
 				sleep.logic.set_status(SLEEP_STATUS_AWAKE)
 
@@ -176,3 +183,8 @@ def view_set_draw_grids():
 		redis_controller.rset(R_SETTINGS_DRAW_GRIDS, "1" if draw_grids else "0")
 
 	return redirect(url_for(endpoint="main.view_test"))
+
+
+@bp.route("/time", methods=["GET"])
+def get_current_time():
+    return {"time": time.time()}
