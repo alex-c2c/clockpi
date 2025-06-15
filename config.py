@@ -7,11 +7,8 @@ class Config:
 	SCHEDULER_API_ENABLED: bool = True
 	SQLALCHEMY_DATABASE_URI: str = os.getenv("DATABASE_URL", "postgresql://localhost/clockpi")
 	SQLALCHEMY_TRACK_MODIFICATIONS: bool = False
-	CELERY = dict(
-		broker_url="redis://localhost",
-		result_backend="redis://localhost",
-		task_ignore_result=True,
-	)
+	REDIS_HOST: str = "localhost"
+	REDIS_PORT: int = 6379
  
  
 class DevConfig(Config):
