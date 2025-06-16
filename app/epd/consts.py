@@ -1,6 +1,14 @@
+import os
+
 # Dimensions
-EPD_WIDTH: int = 800
-EPD_HEIGHT: int = 480
+if os.getenv("ORIENTATION").lower() == "vertical":
+    EPD_ORIENTATION :int = 1
+    EPD_WIDTH: int = 480
+    EPD_HEIGHT: int = 800
+else:
+    EPD_ORIENTATION: int = 0
+    EPD_WIDTH: int = 800
+    EPD_HEIGHT: int = 480
 
 # E-Paper Display color per channel
 EPD_NC: int = 2
