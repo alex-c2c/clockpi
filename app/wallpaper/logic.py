@@ -11,7 +11,7 @@ from app.epd.consts import *
 
 from flask.ctx import AppContext
 from logging import Logger, getLogger
-from PIL import Image as Image
+from PIL import Image, ImageFilter
 
 
 logger: Logger = getLogger(__name__)
@@ -20,11 +20,11 @@ logger: Logger = getLogger(__name__)
 color_list: list[int] = [COLOR_EPD_BLACK, COLOR_EPD_WHITE, COLOR_EPD_YELLOW, COLOR_EPD_RED, COLOR_EPD_BLUE, COLOR_EPD_GREEN]
 
 
-def crop(img: Image, w: int, h: int) -> Image:
-	l: float = (img.width - w) * 0.5
-	r: float = l + w
-	t: float = (img.height - h) * 0.5
-	b: float = t + h
+def crop(img: Image, size: tuple[int, int]) -> Image:
+	l: float = (img.width - size[0]) * 0.5
+	r: float = l + size[0]
+	t: float = (img.height - size[1]) * 0.5
+	b: float = t + size[1]
 
 	return img.crop((l, t, r, b))
 
@@ -82,31 +82,46 @@ def _validate_image(file_path: str) -> bool:
 def process_image(
 	file_path: str,
 	dest_path: str,
-	to_width: int,
-	to_height: int,
+	canvas_size: tuple[int, int],
+	image_size: tuple[int, int],
+	image_pos: tuple[int, int],
 	nc: int,
 	del_src: bool = True,
 ) -> bool:
 	try:
-		img: Image = Image.open(file_path)
-		w: int = img.width
-		h: int = img.height
+		canvas: Image = Image.new("RGB", canvas_size)
+		bg: Image = Image.open(file_path)
+		fg: Image = Image.open(file_path)
+  
+		w: int = bg.width
+		h: int = bg.height
 
-		# resize
-		r: float = max(to_width / w, to_height / h)
-		img.thumbnail((w * r, h * r), Image.Resampling.LANCZOS)
+		# Resize
+		bg_r: float = max(canvas_size[0] / w, canvas_size[1] / h)
+		bg.thumbnail((w * bg_r, h * bg_r), Image.Resampling.LANCZOS)
+  
+		fg_r: float = max(image_size[0] / w, image_size[1] / h)
+		fg.thumbnail((w * fg_r, h * fg_r), Image.Resampling.LANCZOS)
+    
+		# Apply gaussian blur to bg
+		bg = bg.filter(ImageFilter.GaussianBlur(radius=5))
 
-		# _crop
-		img: Image = crop(img, to_width, to_height)
+		# Crop
+		bg = crop(bg, canvas_size)
+		fg = crop(fg, image_size)
+  
+		# Paste bg & fg to canvas
+		canvas.paste(bg, (0, 0))
+		canvas.paste(fg, image_pos)
 
 		# Apply fyold steinburg dithering
-		img = fs_dither(img, nc)
+		canvas = fs_dither(canvas, nc)
 
 		# Reduce palette color
-		img = palette_reduce(img, nc)
+		canvas = palette_reduce(canvas, nc)
 
 		# Save file
-		img.save(dest_path)
+		canvas.save(dest_path)
 
 		if del_src:
 			os.remove(file_path)
@@ -114,7 +129,7 @@ def process_image(
 		return True
 
 	except IOError as error:
-		logger.error(error)
+		logger.error(f"process_image: {error}")
 		return False
 
 
@@ -137,7 +152,12 @@ def add(app_context: AppContext, file_name: str) -> int:
 		DIR_TMP_PROCESSED, file_name
 	)
 	process_result: bool = process_image(
-		temp_path, processed_path, EPD_WIDTH, EPD_HEIGHT, EPD_NC
+		file_path=temp_path,
+		dest_path=processed_path,
+  		canvas_size=(EPD_WIDTH, EPD_WIDTH),
+    	image_size=(EPD_WIDTH, EPD_WIDTH),
+  		image_pos=(0, 0),
+  		nc=EPD_NC
 	)
 
 	if not process_result:
