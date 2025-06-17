@@ -36,23 +36,26 @@ def view_login():
 			error = "Incorrect password."
 
 		if error is None:
-			session.clear()
-			session["acct_id"] = acct.id
+			session["username"] = acct.username
 			return redirect(url_for("main.view_index"))
+		else:
+			session["username"] = None
 
 		flash(error)
-
+		
 	return render_template("auth/login.html")
 
 
 @bp.before_app_request
 def load_logged_in_user():
-	acct_id = session.get("acct_id")
+	username: str | None = session.get("username")
+	if username is not None or username != "":
+		acct = AccountModel.query.filter_by(username=username).first()
+		if acct is not None:
+			g.user = acct.username
+			return
 
-	if acct_id is None:
-		g.user = None
-	else:
-		g.user = AccountModel.query.get(acct_id)
+	g.user = None
 
 
 @bp.route("/logout")

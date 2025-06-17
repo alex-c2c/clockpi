@@ -1,7 +1,7 @@
 import functools
 import re
 
-from flask import g, redirect, request, url_for
+from flask import redirect, request, session, url_for
 from logging import Logger, getLogger
 
 from app.models import ApiKeyModel
@@ -60,7 +60,8 @@ def is_password_valid(password: str) -> bool:
 def login_required(view):
 	@functools.wraps(view)
 	def wrapped_view(**kwargs):
-		if g.user is None:
+		if session.get("username") is None:
+		#if g.user is None:
 			return redirect(url_for("auth.view_login"))
 
 		return view(**kwargs)

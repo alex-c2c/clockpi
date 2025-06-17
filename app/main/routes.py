@@ -1,7 +1,7 @@
 import time
 
 from flask_restx import Namespace, Resource
-from app import redis_controller, sleep
+from app import api_v1, epd, queue, redis_controller, sleep
 from flask import (
 	Blueprint,
 	redirect,
@@ -10,7 +10,6 @@ from flask import (
 	url_for,
 )
 
-from app import api_v1, epd, queue
 from app.auth.logic import apikey_required, login_required
 from app.consts import *
 from app.epd.consts import *
