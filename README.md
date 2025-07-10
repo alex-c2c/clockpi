@@ -3,6 +3,9 @@
 By default, after installation, a new user `postgres` is created, this will be the default username, with no password required for login, as `peer` mode is the default.
 To turn on password authentication, follow https://stackoverflow.com/questions/18664074/getting-error-peer-authentication-failed-for-user-postgres-when-trying-to-ge and change `peer` -> `md5`
 
+# Start Redis
+`redis-server --daemonize yes`
+
 # New Postgresql Cluster on Mac
 ## Create seprate postgresql database cluster
 `initdb <cluster_name>`

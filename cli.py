@@ -18,7 +18,7 @@ def cli_create_super_user() -> None:
 		print(f"[ERROR] Unable to create super user")
 		return
 
-	password: str = getpass(f"Password: ")
+	password: str = getpass.getpass(f"Password: ")
 	if not is_password_valid(password):
 		print(f"[ERROR] Unable to create super user")
 		return
