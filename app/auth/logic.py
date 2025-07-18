@@ -69,6 +69,20 @@ def login_required(view):
 	return wrapped_view
 
 
+def react_login_required(func):
+	@functools.wraps(func)
+	def decorator(*args, **kwargs):
+		logger.debug(f"{session=}")
+		if session.get("user") is None:
+			res: dict = {}
+			res["message"] = "Invalid session data"
+			return res, 401
+
+		return func(*args, **kwargs)
+
+	return decorator
+
+
 def apikey_required(func):
 	@functools.wraps(func)
 	def decorator(*args, **kwargs):

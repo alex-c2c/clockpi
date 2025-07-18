@@ -2,6 +2,7 @@ import atexit
 import logging
 
 from flask import Flask
+from flask_cors import CORS
 
 from app import api_v1_bp, auth, epd, main, queue, sleep, wallpaper
 from app import create_app, redis_controller
@@ -37,6 +38,10 @@ app.add_url_rule("/", endpoint="index")
 # Redis
 redis_controller.init_app(app)
 redis_controller.sub_to_channel()
+
+
+# Flask CORS x Nextjs
+CORS(app, supports_credentials=True, origins=['http://localhost:3000'])
 
 
 # Register exit callback

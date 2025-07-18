@@ -11,7 +11,7 @@ from flask import (
 	url_for,
 )
 
-from app.auth.logic import apikey_required, login_required
+from app.auth.logic import apikey_required, login_required, react_login_required
 from app.consts import *
 from app.epd.consts import *
 from app.models import WallpaperModel
@@ -29,6 +29,7 @@ API
 
 @ns.route("/time")
 class TimeRes(Resource):
+    @react_login_required
     def get(self) -> dict:
         return {"time": time.time()}, 200
 

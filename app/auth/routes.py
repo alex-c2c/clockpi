@@ -3,6 +3,7 @@ from flask import (
 	flash,
 	Blueprint,
 	g,
+	jsonify,
 	redirect,
 	render_template,
 	request,
@@ -13,6 +14,7 @@ from werkzeug.security import check_password_hash
 from flask_restx import Namespace, Resource
 
 from app import api_v1
+from app.auth.logic import react_login_required
 from . import logger
 from app.models import AccountModel
 
@@ -28,27 +30,56 @@ API
 
 @ns.route("/login")
 class LoginRes(Resource):
-	def get(self) -> dict:
+	def post(self) -> dict:
 		d: dict = request.get_json()
+		res: dict = {}
+
 		username: str | None = d.get("username")
 		password: str | None = d.get("password")
-		error = None
+		if username is None or password is None:
+			session["user"] = None
+			res["message"] = "Username or password cannot be empty"
+
+			return res, 401
+
 		acct: Any | None = AccountModel.query.filter_by(username=username).first()
+		if acct is None or not check_password_hash(acct.password, password):
+			session["user"] = None
+			res["message"] = "Unknown username or password"
 
-		if acct is None:
-			error = "Incorrect username."
-		elif not check_password_hash(acct.password, password):
-			error = "Incorrect password."
+			return res, 401
 
-		if error is not None:
-			session["username"] = None
-			return error, 403
+		session["user"] = { "username": acct.username }
+		res["message"] = "Login successful"
+		res["user"] = session["user"]
 
-		session["username"] = acct.username
-  
-		logger.info(msg=str(session))
-  
-		return "", 204
+		return res, 200
+
+
+@ns.route("/logout")
+class LoginRes(Resource):
+	@react_login_required
+	def post(self) -> dict:
+		session.clear()
+		res: dict = {}
+
+		return res, 200
+
+
+@ns.route("/session")
+class SessionRes(Resource):
+	def get(self) -> dict:
+		logger.debug(f"{session=}")
+		user: Any | None = session.get("user")
+		res: dict = {}
+
+		if user is None:
+			res["message"] = "Missing session"
+			return res, 401
+
+		res["message"] = ""
+		res["user"] = user
+		return res, 200
 
 
 """
@@ -60,7 +91,7 @@ Blueprints
 def view_login():
 	if session.get("username") is not None:
 		return redirect(url_for("main.view_index"))
-    
+
 	if request.method == "POST":
 		username: str = request.form["username"]
 		password: str = request.form["password"]
@@ -73,21 +104,23 @@ def view_login():
 			error = "Incorrect password."
 
 		if error is not None:
-			session["username"] = None
-			flash(error)
+			session["user"] = None
+			flash(message=error)
 			return render_template("auth/login.html")
 
-		session["username"] = acct.username
+		session["user"] = { "username": acct.username }
 		return redirect(url_for("main.view_index"))
- 
+
 	return render_template("auth/login.html")
 
 
 @bp.before_app_request
 def load_logged_in_user():
-	username: str | None = session.get("username")
-	if username is not None or username != "":
-		acct = AccountModel.query.filter_by(username=username).first()
+	user: Any | None = session.get("user")
+	username: str = "" if user is None else user.get("username", "")
+ 
+	if user is not None or username != "":
+		acct: Any | None = AccountModel.query.filter_by(username=username).first()
 		if acct is not None:
 			g.user = acct.username
 			return
