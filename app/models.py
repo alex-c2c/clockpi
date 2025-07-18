@@ -8,25 +8,27 @@ from . import db
 class AccountModel(db.Model):
 	__tablename__: str = "account"
 
-	id = db.Column(db.Integer, primary_key=True)
-	username = db.Column(db.String(), unique=True, nullable=False)
-	password = db.Column(db.String(), nullable=False)
+	id: int = db.Column(db.Integer, primary_key=True)
+	username: str = db.Column(db.String(), unique=True, nullable=False)
+	password: str = db.Column(db.String(), nullable=False)
+	display_name: str = db.Column(db.String(), nullable=False, server_default="User")
 
-	def __init__(self, username, password) -> None:
+	def __init__(self, username: str, password: str, display_name: str) -> None:
 		self.username = username
 		self.password = password
+		self.display_name = display_name
 
 	def __repr__(self) -> str:
-		return f"<Account username:{self.username}>"
+		return f"<Account username:{self.username} | display_name:{self.display_name}>"
 
 
 class ApiKeyModel(db.Model):
 	__tablename__: str = "apikey"
 	
-	id = db.Column(db.Integer, primary_key=True)
-	acct_id = db.Column(db.Integer, ForeignKey("account.id"), nullable=False)
-	key = db.Column(db.String(), unique=True, nullable=False)
-	comment = db.Column(db.String(), nullable=True)
+	id: int = db.Column(db.Integer, primary_key=True)
+	acct_id: int = db.Column(db.Integer, ForeignKey("account.id"), nullable=False)
+	key: str = db.Column(db.String(), unique=True, nullable=False)
+	comment:str = db.Column(db.String(), nullable=True)
 	
 	def __init__(self, acct_id: int, key: str, comment: str) -> None:
 		self.acct_id = acct_id
@@ -40,12 +42,12 @@ class ApiKeyModel(db.Model):
 class SleepScheduleModel(db.Model):
 	__tablename__: str = "sleep_schedule"
 
-	id = db.Column(db.Integer, primary_key=True)
-	days = db.Column(db.String(), nullable=False)
-	hour = db.Column(db.Integer, nullable=False)
-	minute = db.Column(db.Integer, nullable=False)
-	duration = db.Column(db.Integer, nullable=False)
-	enabled = db.Column(db.Boolean, default=True)
+	id: int = db.Column(db.Integer, primary_key=True)
+	days: int = db.Column(db.String(), nullable=False)
+	hour: int = db.Column(db.Integer, nullable=False)
+	minute: int = db.Column(db.Integer, nullable=False)
+	duration: int = db.Column(db.Integer, nullable=False)
+	enabled: bool = db.Column(db.Boolean, default=True)
 
 	def __init__(self, days: int, hour: int, minute: int, duration: int, enabled: bool = True):
 		self.days = days
@@ -61,13 +63,13 @@ class SleepScheduleModel(db.Model):
 class WallpaperModel(db.Model):
 	__tablename__: str = "wallpaper"
 
-	id = db.Column(db.Integer, primary_key=True)
-	name = db.Column(db.String(), nullable=False)
-	hash = db.Column(db.String(), nullable=False)
-	size = db.Column(db.Integer, nullable=False)
-	mode = db.Column(db.Integer, nullable=False)
-	color = db.Column(db.Integer, nullable=False)
-	shadow = db.Column(db.Integer, nullable=False)
+	id: int = db.Column(db.Integer, primary_key=True)
+	name: str = db.Column(db.String(), nullable=False)
+	hash: str = db.Column(db.String(), nullable=False)
+	size: int = db.Column(db.Integer, nullable=False)
+	mode: int = db.Column(db.Integer, nullable=False)
+	color: int = db.Column(db.Integer, nullable=False)
+	shadow: int = db.Column(db.Integer, nullable=False)
 
 	def __init__(
 		self,
