@@ -49,7 +49,10 @@ class LoginRes(Resource):
 
 			return res, 401
 
-		session["user"] = { "username": acct.username }
+		session["user"] = {
+			"username": acct.username,
+			"display_name": acct.display_name
+       	}
 		res["message"] = "Login successful"
 		res["user"] = session["user"]
 
