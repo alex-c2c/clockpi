@@ -60,8 +60,7 @@ def is_password_valid(password: str) -> bool:
 def login_required(view):
 	@functools.wraps(view)
 	def wrapped_view(**kwargs):
-		if session.get("username") is None:
-		#if g.user is None:
+		if session.get("user") is None:
 			return redirect(url_for("auth.view_login"))
 
 		return view(**kwargs)
