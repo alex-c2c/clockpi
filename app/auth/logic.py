@@ -96,3 +96,18 @@ def apikey_required(func):
 			return {"error": "The provided API key is not valid"}, 403
 
 	return decorator
+
+
+def apikey_or_login_required(func):
+	@functools.wraps(func)
+	def decorator(*args, **kwargs):
+		api_key: str | None = request.headers.get("api-key")
+		if is_apikey_valid(api_key):
+			return func(*args, **kwargs)
+		
+		if session.get("user") is not None:
+			return func(*args, **kwargs)
+
+		return {"error": "Invalid authentication"}, 401
+
+	return decorator

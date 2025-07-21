@@ -2,7 +2,7 @@ from flask import Blueprint, redirect, request, url_for
 from flask_restx import Namespace, Resource
 
 from app import api_v1
-from app.auth.logic import apikey_required, login_required
+from app.auth.logic import apikey_or_login_required, login_required
 from app.consts import ERR_QUEUE_INVALID_ID
 from . import logger
 from .logic import shuffle_queue, move_to_first, shift_next
@@ -18,7 +18,7 @@ API
 
 @ns.route("/shuffle")
 class ShuffleRes(Resource):
-	@apikey_required
+	@apikey_or_login_required
 	def get(self) -> dict:
 		shuffle_queue()
 		return "", 204
@@ -26,7 +26,7 @@ class ShuffleRes(Resource):
 
 @ns.route("/next")
 class NextRes(Resource):
-	@apikey_required
+	@apikey_or_login_required
 	def get(self) -> dict:
 		shift_next()
 		return "", 204
@@ -36,7 +36,7 @@ class NextRes(Resource):
 @api_v1.doc(responses={400: "Wallpaper ID not found"}, params={"id": "Wallpaper ID"})
 class SelectRes(Resource):
 	@api_v1.doc(description="")
-	@apikey_required
+	@apikey_or_login_required
 	def get(self, id):
 		result: int = move_to_first(id)
 		if result == 0:
