@@ -1,6 +1,8 @@
+from genericpath import isfile
 import hashlib
 import os
 import shutil
+from flask import app
 import numpy as np
 
 from app import db, queue
@@ -249,21 +251,33 @@ def update(id: int, mode: int | None, color: int | None, shadow: int | None) -> 
 		if TIMEMODE_OFF <= mode <= TIMEMODE_FULL_3:
 			model.mode = mode
 		else:
-			return ERR_WALLPAPER_INVALID_DATA
+			return ERR_WALLPAPER_INVALID_PARAMS
 
 	
 	if color is not None:
 		if color in color_list:
 			model.color = color
 		else:
-			return ERR_WALLPAPER_INVALID_DATA
+			return ERR_WALLPAPER_INVALID_PARAMS
 
 	if shadow is not None:
 		if shadow in color_list:
 			model.shadow = shadow
 		else:
-			return ERR_WALLPAPER_INVALID_DATA
+			return ERR_WALLPAPER_INVALID_PARAMS
 
 	db.session.commit()
 
 	return 0
+
+
+def get_wallpaper_name(id: int) -> tuple[str, int]:
+    model: WallpaperModel | None = WallpaperModel.query.get(id)
+    if model is None:
+        return "", ERR_WALLPAPER_INVALID_ID
+        
+    file_path: str = os.path.join(DIR_APP_UPLOAD, f"{model.hash}.bmp")
+    if not os.path.isfile(file_path):
+        return "", ERR_WALLPAPER_INVALID_PARAMS
+
+    return f"{model.hash}.bmp", 0

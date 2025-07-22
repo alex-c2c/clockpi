@@ -1,4 +1,5 @@
 import functools
+import os
 import re
 
 from flask import redirect, request, session, url_for
@@ -94,6 +95,26 @@ def apikey_required(func):
 			return func(*args, **kwargs)
 		else:
 			return {"error": "The provided API key is not valid"}, 403
+
+	return decorator
+
+
+def local_apikey_required(func):
+	@functools.wraps(func)
+	def decorator(*args, **kwargs):
+		local_apikey: str | None = os.environ.get("LOCAL_API_KEY")
+		if os.environ.get("LOCAL_API_KEY") is None:
+			return {"error": "Internal Server Error"}, 500
+
+  		# header keys cannot contain '_'
+		api_key: str | None = request.headers.get("api-key")
+		if api_key is None:
+			return {"error": "Please provide an API key"}, 400		
+
+		if local_apikey != api_key:
+			return {"error": "Invalid API key"}, 400
+
+		return func(*args, **kwargs)
 
 	return decorator
 

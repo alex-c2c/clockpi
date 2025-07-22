@@ -1,6 +1,6 @@
 import os
 
-from flask import Blueprint, current_app, flash, redirect, request, url_for
+from flask import Blueprint, current_app, flash, redirect, request, send_from_directory, url_for
 from threading import Thread
 
 from flask_restx import Namespace, Resource
@@ -10,12 +10,12 @@ from werkzeug.datastructures import FileStorage
 from app import api_v1
 from app.consts import *
 from app.epd.consts import *
-from app.auth.logic import apikey_required, login_required
-from app.queue.logic import move_to_first
+from app.auth.logic import apikey_or_login_required, apikey_required, login_required, local_apikey_required, react_login_required
+from app.queue.logic import move_to_first, get_queue
 
 from . import logger
 from .consts import *
-from .logic import add, remove, update
+from .logic import add, remove, update, get_wallpaper_name
 
 
 bp: Blueprint = Blueprint("wallpaper", __name__, url_prefix="/wallpaper")
@@ -27,9 +27,9 @@ API
 """
 
 
-@ns.route("/")
-class WallpaperListRes(Resource):
-	@apikey_required
+@ns.route("/upload")
+class UploadRes(Resource):
+	@react_login_required
 	def post(self) -> dict:
 		# Check for file in request.files
 		if "file" not in request.files:
@@ -59,9 +59,7 @@ class WallpaperListRes(Resource):
 			if not os.path.isdir(DIR_TMP_UPLOAD):
 				os.mkdir(DIR_TMP_UPLOAD)
 
-			temp_path: str = os.path.join(
-				DIR_TMP_UPLOAD, filename
-			)
+			temp_path: str = os.path.join(DIR_TMP_UPLOAD, filename)
 			file.save(temp_path)
 
 			t: Thread = Thread(
@@ -76,23 +74,53 @@ class WallpaperListRes(Resource):
 		return "", 204
 
 
+@ns.route("/file/<int:id>")
+@api_v1.doc(responses={400: "Bad Request", 404: "Wallpaper ID not found"}, params={"id": "Wallpaper ID"})
+class FileRes(Resource):
+    @local_apikey_required
+    def get(self, id: int) -> dict:
+        file_name, result = get_wallpaper_name(id)
+        if result == 0:
+            return send_from_directory(DIR_APP_UPLOAD, file_name)
+        elif result == ERR_WALLPAPER_INVALID_ID:
+            api_v1.abort(404, "Invalid wallpaper ID")
+        else:
+            api_v1.abort(400, "Bad Request")
+
+
+@ns.route("/file/current")
+@api_v1.doc(responses={400: "Bad Request", 404: "No wallpaper found"}, params={})
+class FileCurrentRes(Resource):
+    @local_apikey_required
+    def get(self) -> dict:
+        queue: list[int] = get_queue()
+        if len(queue) == 0:
+            api_v1.abort(400)
+        
+        file_name, result = get_wallpaper_name(queue[0])
+        if result == 0:
+            return send_from_directory(DIR_APP_UPLOAD, file_name)
+        elif result == ERR_WALLPAPER_INVALID_ID:
+            api_v1.abort(404, "Invalid wallpaper ID")
+        else:
+            api_v1.abort(400, "Bad Request")
+        
+        
 @ns.route("/<int:id>")
-@api_v1.doc(responses={400: "Wallpaper ID not found"}, params={"id": "Wallpaper ID"})
-class WallpaperRes(Resource):
-	@apikey_required
+@api_v1.doc(responses={400: "Bad Request", 404: "Wallpaper ID not found"}, params={"id": "Wallpaper ID"})
+class Res(Resource):
+	@react_login_required
 	def delete(self, id: int) -> dict:
 		result: int = remove(id)
 
 		if result == 0:
 			return "", 204
-
 		elif result == ERR_WALLPAPER_INVALID_ID:
-			api_v1.abort(400, "Wallpaper ID not found")
-
+			api_v1.abort(404, "Invalid wallpaper ID")
 		else:
-			return api_v1.abort(400, "Bad request")
+			return api_v1.abort(400, "Bad Request")
 
-	@apikey_required
+	@react_login_required
 	def patch(self, id: int) -> dict:
 		d: dict = request.get_json()
 		logger.info(f"{d=}")
@@ -125,14 +153,14 @@ class WallpaperRes(Resource):
 
 			return "", 204
 
-		elif result == ERR_WALLPAPER_INVALID_DATA:
-			api_v1.abort(400, "Invalid data")
+		elif result == ERR_WALLPAPER_INVALID_PARAMS:
+			api_v1.abort(400, "Invalid wallpaper params")
 
 		elif result == ERR_WALLPAPER_INVALID_ID:
-			api_v1.abort(400, "Invalid ID")
+			api_v1.abort(400, "Invalid wallpaper ID")
 
 		else:
-			return api_v1.abort(400, "Bad request")
+			return api_v1.abort(400, "Bad Request")
 
 
 """
@@ -173,9 +201,7 @@ def view_upload():
 			if not os.path.isdir(DIR_TMP_UPLOAD):
 				os.mkdir(DIR_TMP_UPLOAD)
 
-			temp_path: str = os.path.join(
-				DIR_TMP_UPLOAD, file_name
-			)
+			temp_path: str = os.path.join(DIR_TMP_UPLOAD, file_name)
 			file.save(temp_path)
 
 			t: Thread = Thread(
@@ -196,11 +222,25 @@ def view_update(id: int):
 	if request.method == "POST":
 		is_select: bool = request.form.get("select") is not None
 		is_delete: bool = request.form.get("delete") is not None
-		mode: int = TIMEMODE_FULL_3 if request.form.get("mode") is None else int(request.form.get("mode"))
-		color: int = COLOR_EPD_WHITE if request.form.get("color") is None else int(request.form.get("color"))
-		shadow: int = COLOR_EPD_BLACK if request.form.get("shadow") is None else int(request.form.get("shadow"))
-		
-		logger.info(f"update {id=} {mode=} {color=} {shadow=} {is_select=} {is_delete=}")
+		mode: int = (
+			TIMEMODE_FULL_3
+			if request.form.get("mode") is None
+			else int(request.form.get("mode"))
+		)
+		color: int = (
+			COLOR_EPD_WHITE
+			if request.form.get("color") is None
+			else int(request.form.get("color"))
+		)
+		shadow: int = (
+			COLOR_EPD_BLACK
+			if request.form.get("shadow") is None
+			else int(request.form.get("shadow"))
+		)
+
+		logger.info(
+			f"update {id=} {mode=} {color=} {shadow=} {is_select=} {is_delete=}"
+		)
 
 		if is_delete:
 			remove(id)

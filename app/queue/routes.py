@@ -5,7 +5,7 @@ from app import api_v1
 from app.auth.logic import apikey_or_login_required, login_required
 from app.consts import ERR_QUEUE_INVALID_ID
 from . import logger
-from .logic import shuffle_queue, move_to_first, shift_next
+from .logic import get_queue, shuffle_queue, move_to_first, shift_next
 
 
 bp: Blueprint = Blueprint("queue", __name__, url_prefix="/queue")
@@ -14,6 +14,14 @@ ns: Namespace = api_v1.namespace("queue", description="Queue operations")
 """
 API
 """
+
+
+@ns.route("/")
+class QueueRes(Resource):
+	@apikey_or_login_required
+	def get(self) -> dict:
+		queue: list[int] = get_queue()
+		return {"queue": queue}, 200
 
 
 @ns.route("/shuffle")

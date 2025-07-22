@@ -60,7 +60,7 @@ class LoginRes(Resource):
 
 
 @ns.route("/logout")
-class LoginRes(Resource):
+class LogoutRes(Resource):
 	@react_login_required
 	def post(self) -> dict:
 		session.clear()
