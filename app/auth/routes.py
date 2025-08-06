@@ -3,7 +3,6 @@ from flask import (
 	flash,
 	Blueprint,
 	g,
-	jsonify,
 	redirect,
 	render_template,
 	request,
@@ -83,55 +82,3 @@ class SessionRes(Resource):
 		res["message"] = ""
 		res["user"] = user
 		return res, 200
-
-
-"""
-Blueprints
-"""
-
-
-@bp.route("/login", methods=("GET", "POST"))
-def view_login():
-	if session.get("username") is not None:
-		return redirect(url_for("main.view_index"))
-
-	if request.method == "POST":
-		username: str = request.form["username"]
-		password: str = request.form["password"]
-		error: str | None = None
-		acct: Any | None = AccountModel.query.filter_by(username=username).first()
-
-		if acct is None:
-			error = "Incorrect username."
-		elif not check_password_hash(acct.password, password):
-			error = "Incorrect password."
-
-		if error is not None:
-			session["user"] = None
-			flash(message=error)
-			return render_template("auth/login.html")
-
-		session["user"] = { "username": acct.username }
-		return redirect(url_for("main.view_index"))
-
-	return render_template("auth/login.html")
-
-
-@bp.before_app_request
-def load_logged_in_user():
-	user: Any | None = session.get("user")
-	username: str = "" if user is None else user.get("username", "")
- 
-	if user is not None or username != "":
-		acct: Any | None = AccountModel.query.filter_by(username=username).first()
-		if acct is not None:
-			g.user = acct.username
-			return
-
-	g.user = None
-
-
-@bp.route("/logout")
-def view_logout():
-	session.clear()
-	return redirect(url_for("main.view_index"))

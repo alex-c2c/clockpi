@@ -43,7 +43,7 @@ class SleepScheduleModel(db.Model):
 	__tablename__: str = "sleep_schedule"
 
 	id: int = db.Column(db.Integer, primary_key=True)
-	days: int = db.Column(db.String(), nullable=False)
+	days: str = db.Column(db.String(), nullable=False)
 	hour: int = db.Column(db.Integer, nullable=False)
 	minute: int = db.Column(db.Integer, nullable=False)
 	duration: int = db.Column(db.Integer, nullable=False)

@@ -72,7 +72,6 @@ def login_required(view):
 def react_login_required(func):
 	@functools.wraps(func)
 	def decorator(*args, **kwargs):
-		logger.debug(f"{session=}")
 		if session.get("user") is None:
 			res: dict = {}
 			res["message"] = "Invalid session data"

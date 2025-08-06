@@ -4,6 +4,7 @@ import secrets
 from app import create_app, db
 from app.auth.logic import is_password_valid, is_username_valid
 from app.models import AccountModel, ApiKeyModel
+from flask.cli import with_appcontext
 
 from werkzeug.security import generate_password_hash
 
@@ -11,7 +12,7 @@ from werkzeug.security import generate_password_hash
 app = create_app()
 
 
-@app.cli.command("create_super_user")
+@app.cli.command("create-superuser")
 def cli_create_super_user() -> None:
 	username: str = str(input(f"Username: "))
 	if not is_username_valid(username):
@@ -30,7 +31,7 @@ def cli_create_super_user() -> None:
 	print(f"Created super user {new_acct.id}:{new_acct.username}")
 
 
-@app.cli.command("create_api_key")
+@app.cli.command("create-apikey")
 def cli_create_api_key() -> None:
 	id: str = str(input(f"Account ID: "))
 	if not id.isdigit():

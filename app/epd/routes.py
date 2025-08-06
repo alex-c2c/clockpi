@@ -31,24 +31,3 @@ class RefreshRes(Resource):
 	def get(self) -> dict:
 		update_clock_display()
 		return "", 204
-
-
-"""
-Blueprint
-"""
-
-
-@bp.route("/clear", methods=["GET"])
-@login_required
-def view_clear():
-	clear_clock_display()
-
-	return redirect(location=url_for("main.view_test"))
-
-
-@bp.route("/refresh", methods=["GET"])
-@login_required
-def view_refresh():
-	update_clock_display()
-
-	return redirect(location=url_for("main.view_test"))
