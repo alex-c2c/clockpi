@@ -12,13 +12,11 @@ from app.queue import logic
 
 from .consts import *
 
-
 logger: Logger = getLogger(__name__)
 
-
-"""
-UTILITY
-"""
+"""""
+LOGIC
+"""""
 
 def get_time_pos(mode: int) -> tuple[int, int]:
 	# 9 Section

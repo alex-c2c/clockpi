@@ -1,23 +1,23 @@
-from genericpath import isfile
 import hashlib
 import os
 import shutil
-from flask import app
 import numpy as np
 
-from app import db, queue
-from app.consts import *
-from app.models import WallpaperModel
-
-from app.epd.consts import *
-
-from flask.ctx import AppContext
 from logging import Logger, getLogger
 from PIL import Image, ImageFilter
 
+from flask.ctx import AppContext
+
+from app import db, queue
+from app.consts import *
+from app.epd.consts import *
+from app.models import WallpaperModel
 
 logger: Logger = getLogger(__name__)
 
+"""""
+LOGIC
+"""""
 
 color_list: list[int] = [COLOR_EPD_BLACK, COLOR_EPD_WHITE, COLOR_EPD_YELLOW, COLOR_EPD_RED, COLOR_EPD_BLUE, COLOR_EPD_GREEN]
 

@@ -1,27 +1,18 @@
 import time
+from logging import Logger, getLogger
 
-from flask_restx import Namespace, Resource
-from app import api_v1, epd, queue, redis_controller, sleep
-from flask import (
-	Blueprint,
-	redirect,
-	render_template,
-	request,
-	session,
-	url_for,
-)
+from flask import request
+from flask_restx import Resource
 
-from app.auth.logic import apikey_required, login_required, react_login_required
+from app import epd, queue, redis_controller, sleep
+from app.auth.logic import apikey_required, react_login_required
 from app.consts import *
 from app.epd.consts import *
 from app.models import WallpaperModel
 
-from . import logger
+from . import ns
 
-
-bp: Blueprint = Blueprint("main", __name__)
-ns: Namespace = api_v1.namespace("main", description="Main operations")
-
+logger: Logger = getLogger(__name__)
 
 """
 API

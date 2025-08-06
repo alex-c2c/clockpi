@@ -1,17 +1,20 @@
 from dataclasses import dataclass
 from datetime import datetime
-from gc import enable
 from logging import Logger, getLogger
 
 
-from app.consts import *
-from .consts import DAYS_OF_WEEK
 from app import db, redis_controller
+from app.consts import *
 from app.models import SleepScheduleModel
 
+from .consts import DAYS_OF_WEEK
 
 logger: Logger = getLogger(__name__)
 
+
+"""""
+LOGIC
+"""""
 
 @dataclass
 class SleepSchedule:

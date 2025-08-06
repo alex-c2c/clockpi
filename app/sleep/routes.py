@@ -1,18 +1,17 @@
 import time
 
-from flask import Blueprint, flash, redirect, render_template, request, url_for
-from flask_restx import Namespace, Resource
+from flask import request
+from flask_restx import Resource
+from logging import Logger, getLogger
 
-from app import api_v1
-from app.auth.logic import login_required, react_login_required
+from app import api
+from app.auth.logic import react_login_required
 from app.consts import *
-from . import logger
+
+from . import ns
 from .logic import SleepSchedule, add, get_schedules, get_status, remove, update
 
-
-bp = Blueprint("sleep", __name__, url_prefix="/sleep")
-ns: Namespace = api_v1.namespace("sleep", description="Sleep operations")
-
+logger: Logger = getLogger(__name__)
 
 """
 API
@@ -48,23 +47,23 @@ class SleepCreateRes(Resource):
 		days: tuple[str] | None = d.get("days")
   
 		if start_time is None or duration is None or days is None:
-			api_v1.abort(400, "Invalid or missing data")
+			api.abort(400, "Invalid or missing data")
    
 		res: int = add(start_time, duration, days)
 		if res != 0:
-			api_v1.abort(400, "Invalid or missing data")
+			api.abort(400, "Invalid or missing data")
    
 		return {}, 200
 
 
 @ns.route("/<int:id>")
-@api_v1.doc(responses={404: "Invalid or missing ID"}, params={"id": "Schedule ID"})
+@api.doc(responses={404: "Invalid or missing ID"}, params={"id": "Schedule ID"})
 class SleepRes(Resource):
 	@react_login_required
 	def delete(self, id: int):
 		result: int = remove(id)
 		if result == ERR_SLEEP_INVALID_ID:
-			api_v1.abort(404, "Invalid or missing ID")
+			api.abort(404, "Invalid or missing ID")
 		return "", 204
 
 	@react_login_required
@@ -84,10 +83,10 @@ class SleepRes(Resource):
 			return "", 204
 
 		elif res == ERR_SLEEP_INVALID_ID:
-			api_v1.abort(404, "Invalid or missing ID")
+			api.abort(404, "Invalid or missing ID")
 
 		elif res == ERR_SLEEP_INVALID_DATA:
-			api_v1.abort(400, "Invalid data")
+			api.abort(400, "Invalid data")
 
 		else:
-			api_v1.abort(400, "Bad request")
+			api.abort(400, "Bad request")

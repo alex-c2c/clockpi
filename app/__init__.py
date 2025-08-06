@@ -12,11 +12,10 @@ db = SQLAlchemy()
 migrate = Migrate()
 session = Session()
 
-api_v1_bp = Blueprint("api", __name__, url_prefix="/api/1")
-api_v1 = Api(
-	api_v1_bp, version="1.0", title="Clockpi API", description="Clockpi controls"
+api_bp = Blueprint("api", __name__, url_prefix="/api")
+api = Api(
+	api_bp, version="1.0", title="Clockpi API", description="Clockpi controls", doc="/docs"
 )
-
 
 def create_app():
 	app = Flask(__name__)

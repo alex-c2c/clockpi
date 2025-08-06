@@ -1,15 +1,12 @@
-from flask import Blueprint, redirect, request, url_for
-from flask_restx import Namespace, Resource
+from flask_restx import Resource
 
-from app import api_v1
-from app.auth.logic import apikey_or_login_required, login_required
+from app import api
+from app.auth.logic import apikey_or_login_required
 from app.consts import ERR_QUEUE_INVALID_ID
-from . import logger
+
+from . import ns
 from .logic import get_queue, shuffle_queue, move_to_first, shift_next
 
-
-bp: Blueprint = Blueprint("queue", __name__, url_prefix="/queue")
-ns: Namespace = api_v1.namespace("queue", description="Queue operations")
 
 """
 API
@@ -41,9 +38,9 @@ class NextRes(Resource):
 
 
 @ns.route("/select/<int:id>")
-@api_v1.doc(responses={400: "Wallpaper ID not found"}, params={"id": "Wallpaper ID"})
+@api.doc(responses={400: "Wallpaper ID not found"}, params={"id": "Wallpaper ID"})
 class SelectRes(Resource):
-	@api_v1.doc(description="")
+	@api.doc(description="")
 	@apikey_or_login_required
 	def get(self, id):
 		result: int = move_to_first(id)

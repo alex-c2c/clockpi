@@ -1,15 +1,13 @@
-from flask import Blueprint, redirect, url_for
-from flask_restx import Namespace, Resource
+from logging import Logger, getLogger
 
-from app import api_v1
-from app.auth.logic import login_required, apikey_or_login_required
-from . import logger
+from flask_restx import Resource
+
+from app.auth.logic import apikey_or_login_required
+
+from . import ns
 from .logic import clear_clock_display, update_clock_display
 
-
-bp: Blueprint = Blueprint("epd", __name__, url_prefix="/epd")
-ns: Namespace = api_v1.namespace("epd", description="EPD operations")
-ns_int: Namespace = api_v1.namespace("epd_int", description="EPD operations (Internal use)")
+logger: Logger = getLogger(__name__)
 
 
 """

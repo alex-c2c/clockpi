@@ -1,10 +1,9 @@
-from logging import Logger, getLogger
-from flask import Flask
+from flask_restx import Api, Namespace
 
+ns: Namespace = Namespace("auth v1", description="Authentication operations v1", path="/1/auth")
 
-logger: Logger = getLogger(__name__)
-
-
-def register_blueprint(app: Flask) -> None:
-	from .routes import bp
-	app.register_blueprint(bp)
+def append_namespace(api: Api) -> None:
+	# This is to trigger the import of routes
+	from . import routes
+ 
+	api.add_namespace(ns)

@@ -1,14 +1,15 @@
 import random
+from logging import Logger, getLogger
 
 from app import redis_controller
 from app.consts import *
-from logging import Logger, getLogger
-
 from app.models import WallpaperModel
-
 
 logger: Logger = getLogger(__name__)
 
+"""""
+LOGIC
+"""""
 
 def generate_initial_queue() -> None:
 	wallpapers: list = WallpaperModel.query.all()

@@ -1,17 +1,19 @@
 import functools
 import os
 import re
+from logging import Logger, getLogger
 
 from flask import redirect, request, session, url_for
-from logging import Logger, getLogger
 
 from app.models import ApiKeyModel
 
 from .consts import *
 
-
 logger: Logger = getLogger(__name__)
 
+"""""
+LOGIC
+"""""
 
 def is_username_valid(username: str) -> bool:
 	if len(username) < USERNAME_MIN_LEN or len(username) > USERNAME_MAX_LEN:

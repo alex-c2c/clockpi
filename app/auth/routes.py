@@ -1,31 +1,19 @@
+from logging import Logger, getLogger
 from typing import Any
-from flask import (
-	flash,
-	Blueprint,
-	g,
-	redirect,
-	render_template,
-	request,
-	session,
-	url_for,
-)
-from werkzeug.security import check_password_hash
-from flask_restx import Namespace, Resource
 
-from app import api_v1
+from flask import request, session
+from werkzeug.security import check_password_hash
+from flask_restx import Resource
+
+from . import ns
 from app.auth.logic import react_login_required
-from . import logger
 from app.models import AccountModel
 
-
-bp: Blueprint = Blueprint("auth", __name__, url_prefix="/auth")
-ns: Namespace = api_v1.namespace("auth", description="Authentication operations")
-
+logger: Logger = getLogger(__name__)
 
 """
 API
 """
-
 
 @ns.route("/login")
 class LoginRes(Resource):

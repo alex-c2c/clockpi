@@ -41,7 +41,7 @@ Run this first if migration failed due to "database not up to date" from migrati
 
 # Start development server
 # "run" is from run.py
-`flask --app run(.py) run --host 0.0.0.0 --port 5001`
+`flask --app clockpi(.py) run --host 0.0.0.0 --port 5001`
 `--debug`: Optional
 `--no-reload`: Optional
 
