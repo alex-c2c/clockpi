@@ -5,9 +5,9 @@ from logging import Logger, getLogger
 
 from app import db, redis_controller
 from app.consts import *
-from app.models import SleepScheduleModel
 
 from .consts import DAYS_OF_WEEK
+from .model import SleepModel
 
 logger: Logger = getLogger(__name__)
 
@@ -71,7 +71,7 @@ def validate_days(days: tuple [str]) -> bool:
 
 def get_schedules() -> list[SleepSchedule]:
 	schedules: list[SleepSchedule] = []
-	data: list = SleepScheduleModel.query.order_by(SleepScheduleModel.id).all()
+	data: list = SleepModel.query.order_by(SleepModel.id).all()
 
 	for model in data:
 		sch = SleepSchedule()
@@ -108,7 +108,7 @@ def add(
 		return ERR_SLEEP_INVALID_DATA
 
 	# Add to DB
-	new_model: SleepScheduleModel = SleepScheduleModel(
+	new_model: SleepModel = SleepModel(
 		days=",".join(day.lower() for day in days),
 		hour=hour,
 		minute=minute,
@@ -125,7 +125,7 @@ def remove(id: int) -> int:
 	logger.info(f"Remove {id=}")
 
 	# Remove from DB
-	model: SleepScheduleModel | None = SleepScheduleModel.query.get(id)
+	model: SleepModel | None = SleepModel.query.get(id)
 	if model is None:
 		return ERR_SLEEP_INVALID_ID
 
@@ -150,7 +150,7 @@ def update(
 		return ERR_QUEUE_INVALID_ID
 
 	# Update DB
-	model: SleepScheduleModel = SleepScheduleModel.query.get(id)
+	model: SleepModel = SleepModel.query.get(id)
 	if model is None:
 		return ERR_SLEEP_INVALID_ID
 

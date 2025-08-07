@@ -11,7 +11,8 @@ from flask.ctx import AppContext
 from app import db, queue
 from app.consts import *
 from app.epd.consts import *
-from app.models import WallpaperModel
+
+from .model import WallpaperModel
 
 logger: Logger = getLogger(__name__)
 

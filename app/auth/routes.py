@@ -6,8 +6,8 @@ from werkzeug.security import check_password_hash
 from flask_restx import Resource
 
 from . import ns
+from .model import UserModel
 from app.auth.logic import react_login_required
-from app.models import AccountModel
 
 logger: Logger = getLogger(__name__)
 
@@ -29,7 +29,7 @@ class LoginRes(Resource):
 
 			return res, 401
 
-		acct: Any | None = AccountModel.query.filter_by(username=username).first()
+		acct: Any | None = UserModel.query.filter_by(username=username).first()
 		if acct is None or not check_password_hash(acct.password, password):
 			session["user"] = None
 			res["message"] = "Unknown username or password"
@@ -53,20 +53,4 @@ class LogoutRes(Resource):
 		session.clear()
 		res: dict = {}
 
-		return res, 200
-
-
-@ns.route("/session")
-class SessionRes(Resource):
-	def get(self) -> dict:
-		logger.debug(f"{session=}")
-		user: Any | None = session.get("user")
-		res: dict = {}
-
-		if user is None:
-			res["message"] = "Missing session"
-			return res, 401
-
-		res["message"] = ""
-		res["user"] = user
 		return res, 200

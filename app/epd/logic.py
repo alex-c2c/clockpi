@@ -6,9 +6,9 @@ from PIL import Image, ImageDraw, ImageFont, ImageFile
 from PIL.ImageFont import FreeTypeFont
 
 from app.consts import *
-from app.models import WallpaperModel
 from app import redis_controller
 from app.queue import logic
+from app.wallpaper.model import WallpaperModel
 
 from .consts import *
 

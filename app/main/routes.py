@@ -5,10 +5,10 @@ from flask import request
 from flask_restx import Resource
 
 from app import epd, queue, redis_controller, sleep
-from app.auth.logic import apikey_required, react_login_required
+from app.auth.logic import local_apikey_required, react_login_required
 from app.consts import *
 from app.epd.consts import *
-from app.models import WallpaperModel
+from app.wallpaper.model import WallpaperModel
 
 from . import ns
 
@@ -27,7 +27,7 @@ class TimeRes(Resource):
 
 @ns.route("/tick")
 class TickRes(Resource):
-	@apikey_required
+	@local_apikey_required
 	def get(self) -> dict:
 		sleep_status: int = sleep.logic.get_status()
 		should_sleep_now: bool = sleep.logic.should_sleep_now()
@@ -47,7 +47,7 @@ class TickRes(Resource):
 
 @ns.route("/test")
 class TestRes(Resource):
-	@apikey_required
+	@local_apikey_required
 	def get(self) -> dict:
 		d: dict = {}
 
@@ -75,7 +75,7 @@ class TestRes(Resource):
 
 @ns.route("/draw_grids")
 class DrawGridsRes(Resource):
-	@apikey_required
+	@local_apikey_required
 	def patch(self) -> dict:
 		d: dict = request.get_json()
 		draw_grids: bool | None = d.get("draw_grids")

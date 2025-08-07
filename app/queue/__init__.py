@@ -1,6 +1,6 @@
 from flask_restx import Api, Namespace
 
-ns: Namespace = Namespace("queue", description="Queue operations", path="/1/queue")
+ns: Namespace = Namespace("queue_v1", description="Queue operations (Ver 1)", path="/1/queue")
 
 def append_namespace(api: Api) -> None:
 	# This is to trigger the import of routes

@@ -2,7 +2,7 @@ from logging import Logger, getLogger
 
 from flask_restx import Resource
 
-from app.auth.logic import apikey_or_login_required
+from app.auth.logic import local_apikey_required
 
 from . import ns
 from .logic import clear_clock_display, update_clock_display
@@ -17,7 +17,7 @@ API
 
 @ns.route("/clear")
 class ClearRes(Resource):
-	@apikey_or_login_required
+	@local_apikey_required
 	def get(self) -> dict:
 		clear_clock_display()
 		return "", 204
@@ -25,7 +25,7 @@ class ClearRes(Resource):
 
 @ns.route("/refresh")
 class RefreshRes(Resource):
-	@apikey_or_login_required
+	@local_apikey_required
 	def get(self) -> dict:
 		update_clock_display()
 		return "", 204

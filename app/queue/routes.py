@@ -1,7 +1,7 @@
 from flask_restx import Resource
 
 from app import api
-from app.auth.logic import apikey_or_login_required
+from app.auth.logic import local_apikey_required, react_login_required
 from app.consts import ERR_QUEUE_INVALID_ID
 
 from . import ns
@@ -15,7 +15,7 @@ API
 
 @ns.route("/")
 class QueueRes(Resource):
-	@apikey_or_login_required
+	@local_apikey_required
 	def get(self) -> dict:
 		queue: list[int] = get_queue()
 		return {"queue": queue}, 200
@@ -23,7 +23,7 @@ class QueueRes(Resource):
 
 @ns.route("/shuffle")
 class ShuffleRes(Resource):
-	@apikey_or_login_required
+	@local_apikey_required
 	def get(self) -> dict:
 		shuffle_queue()
 		return "", 204
@@ -31,7 +31,7 @@ class ShuffleRes(Resource):
 
 @ns.route("/next")
 class NextRes(Resource):
-	@apikey_or_login_required
+	@local_apikey_required
 	def get(self) -> dict:
 		shift_next()
 		return "", 204
@@ -41,7 +41,7 @@ class NextRes(Resource):
 @api.doc(responses={400: "Wallpaper ID not found"}, params={"id": "Wallpaper ID"})
 class SelectRes(Resource):
 	@api.doc(description="")
-	@apikey_or_login_required
+	@react_login_required
 	def get(self, id):
 		result: int = move_to_first(id)
 		if result == 0:

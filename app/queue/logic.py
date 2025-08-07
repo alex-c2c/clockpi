@@ -3,7 +3,7 @@ from logging import Logger, getLogger
 
 from app import redis_controller
 from app.consts import *
-from app.models import WallpaperModel
+from app.wallpaper.model import WallpaperModel
 
 logger: Logger = getLogger(__name__)
 

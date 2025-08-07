@@ -3,9 +3,7 @@ import os
 import re
 from logging import Logger, getLogger
 
-from flask import redirect, request, session, url_for
-
-from app.models import ApiKeyModel
+from flask import request, session
 
 from .consts import *
 
@@ -27,11 +25,6 @@ def is_username_valid(username: str) -> bool:
 		return False
 
 	return True
-
-
-def is_apikey_valid(key: str) -> bool:
-	model: ApiKeyModel | None = ApiKeyModel.query.filter_by(key=key).first()
-	return False if model is None else True
 
 
 def is_password_valid(password: str) -> bool:
@@ -60,17 +53,6 @@ def is_password_valid(password: str) -> bool:
 	return True
 
 
-def login_required(view):
-	@functools.wraps(view)
-	def wrapped_view(**kwargs):
-		if session.get("user") is None:
-			return redirect(url_for("auth.view_login"))
-
-		return view(**kwargs)
-
-	return wrapped_view
-
-
 def react_login_required(func):
 	@functools.wraps(func)
 	def decorator(*args, **kwargs):
@@ -80,22 +62,6 @@ def react_login_required(func):
 			return res, 401
 
 		return func(*args, **kwargs)
-
-	return decorator
-
-
-def apikey_required(func):
-	@functools.wraps(func)
-	def decorator(*args, **kwargs):
-		# header keys cannot contain '_'
-		api_key: str | None = request.headers.get("api-key")
-		if api_key is None:
-			return {"error": "Please provide an API key"}, 400
-
-		if is_apikey_valid(api_key):
-			return func(*args, **kwargs)
-		else:
-			return {"error": "The provided API key is not valid"}, 403
 
 	return decorator
 
@@ -116,20 +82,5 @@ def local_apikey_required(func):
 			return {"error": "Invalid API key"}, 400
 
 		return func(*args, **kwargs)
-
-	return decorator
-
-
-def apikey_or_login_required(func):
-	@functools.wraps(func)
-	def decorator(*args, **kwargs):
-		api_key: str | None = request.headers.get("api-key")
-		if is_apikey_valid(api_key):
-			return func(*args, **kwargs)
-		
-		if session.get("user") is not None:
-			return func(*args, **kwargs)
-
-		return {"error": "Invalid authentication"}, 401
 
 	return decorator
