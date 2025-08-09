@@ -3,7 +3,7 @@ from logging import Logger, getLogger
 
 from app import redis_controller
 from app.consts import *
-from app.wallpaper.model import WallpaperModel
+from app.wallpaper.models import WallpaperModel
 
 logger: Logger = getLogger(__name__)
 
@@ -89,7 +89,7 @@ def move_to_first(id: int) -> int:
 	return ERR_QUEUE_INVALID_ID
 
 
-def remove_id(id: int) -> int:
+def remove_from_queue(id: int) -> int:
 	queue: list[int] = get_queue()
 
 	size: int = len(queue)

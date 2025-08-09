@@ -1,11 +1,14 @@
 import functools
 import os
-import re
 from logging import Logger, getLogger
 
 from flask import request, session
+from werkzeug.security import check_password_hash
 
-from .consts import *
+from app.session_pkg.logic import init_session
+from app.user.models import UserModel
+
+from . import ns
 
 logger: Logger = getLogger(__name__)
 
@@ -13,47 +16,7 @@ logger: Logger = getLogger(__name__)
 LOGIC
 """""
 
-def is_username_valid(username: str) -> bool:
-	if len(username) < USERNAME_MIN_LEN or len(username) > USERNAME_MAX_LEN:
-		logger.error(
-			f"[ERROR] Username's length needs to be between {USERNAME_MIN_LEN} and {USERNAME_MAX_LEN}"
-		)
-		return False
-
-	if not bool(re.match(USERNAME_REGEX, username)):
-		print(f"[ERROR] Username failed regex check")
-		return False
-
-	return True
-
-
-def is_password_valid(password: str) -> bool:
-	if len(password) < PASSWORD_MIN_LEN:
-		logger.error(
-			f"[ERROR] Password needs to be at least {PASSWORD_MIN_LEN} character long"
-		)
-		return False
-
-	if not re.search(r"[A-Z]", password):
-		print(f"[ERROR] Password needs to contain at least one capital letter")
-		return False
-
-	if not re.search(r"[a-z]", password):
-		print(f"[ERROR] Password needs to contain at least one small case letter")
-		return False
-
-	if not re.search(r"[0-9]", password):
-		print(f"[ERROR] Password needs to contain at least one number")
-		return False
-
-	if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
-		print(f"[ERROR] Password needs to contain at least one special character")
-		return False
-
-	return True
-
-
-def react_login_required(func):
+def login_required(func):
 	@functools.wraps(func)
 	def decorator(*args, **kwargs):
 		if session.get("user") is None:
@@ -84,3 +47,19 @@ def local_apikey_required(func):
 		return func(*args, **kwargs)
 
 	return decorator
+
+
+def login_user(data: dict) -> None:
+	username: str = data.get("username", "")
+	password: str = data.get("password", "")
+	
+	user: UserModel | None = UserModel.query.filter_by(username=username).one_or_none()
+	if user is None:
+		ns.abort(401, "Invalid username or password")
+		return
+		
+	if not check_password_hash(user.password, password):
+		ns.abort(401, "Invalid username or password")
+		return
+	
+	init_session(user)

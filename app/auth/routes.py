@@ -1,13 +1,11 @@
 from logging import Logger, getLogger
-from typing import Any
 
-from flask import request, session
-from werkzeug.security import check_password_hash
+from flask import session
 from flask_restx import Resource
 
 from . import ns
-from .model import UserModel
-from app.auth.logic import react_login_required
+from .fields import *
+from app.auth.logic import login_required, login_user
 
 logger: Logger = getLogger(__name__)
 
@@ -17,40 +15,24 @@ API
 
 @ns.route("/login")
 class LoginRes(Resource):
-	def post(self) -> dict:
-		d: dict = request.get_json()
-		res: dict = {}
-
-		username: str | None = d.get("username")
-		password: str | None = d.get("password")
-		if username is None or password is None:
-			session["user"] = None
-			res["message"] = "Username or password cannot be empty"
-
-			return res, 401
-
-		acct: Any | None = UserModel.query.filter_by(username=username).first()
-		if acct is None or not check_password_hash(acct.password, password):
-			session["user"] = None
-			res["message"] = "Unknown username or password"
-
-			return res, 401
-
-		session["user"] = {
-			"username": acct.username,
-			"display_name": acct.display_name
-       	}
-		res["message"] = "Login successful"
-		res["user"] = session["user"]
-
-		return res, 200
+	@ns.response(204, "")
+	@ns.response(400, "Bad Request")
+	@ns.response(401, "Authentication Error")
+	@ns.expect(login_field)
+	def post(self):
+		data = ns.payload
+		
+		login_user(data)
+		
+		return "", 204
 
 
 @ns.route("/logout")
 class LogoutRes(Resource):
-	@react_login_required
-	def post(self) -> dict:
+	@login_required
+	@ns.response(204, "")
+	@ns.response(401, "Authentication Error")
+	def post(self):
 		session.clear()
-		res: dict = {}
 
-		return res, 200
+		return "", 204

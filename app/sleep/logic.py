@@ -7,7 +7,7 @@ from app import db, redis_controller
 from app.consts import *
 
 from .consts import DAYS_OF_WEEK
-from .model import SleepModel
+from .models import SleepModel
 
 logger: Logger = getLogger(__name__)
 
@@ -21,11 +21,12 @@ class SleepSchedule:
 	id: int
 	days: tuple[str]
 	start_time: str
+	duration: int
 	enabled: bool
 
 	def __init__(self):
 		self.id = 0
-		self.days = ()
+		self.days = tuple()
 		self.start_time = "12:00"
 		self.duration = 1
 		self.enabled = False
@@ -58,6 +59,7 @@ def validate_minute(minute: int) -> bool:
 def validate_duration(duration: int) -> bool:
 	return duration >= 1 and duration <= 1440
 
+
 def validate_days(days: tuple [str]) -> bool:
     if len(days) > 7:
         return False
@@ -71,7 +73,7 @@ def validate_days(days: tuple [str]) -> bool:
 
 def get_schedules() -> list[SleepSchedule]:
 	schedules: list[SleepSchedule] = []
-	data: list = SleepModel.query.order_by(SleepModel.id).all()
+	data: list = SleepModel.query.all()
 
 	for model in data:
 		sch = SleepSchedule()
@@ -140,7 +142,7 @@ def update(
     start_time : str | None,
 	duration: int | None,
 	days: tuple[str] | None,
-	enabled: bool = True,
+	enabled: bool | None,
 ) -> int:
 	logger.info(
 	logger.info(f"Update {id=} {start_time=} {duration=} {days=} {enabled=}")
@@ -150,7 +152,7 @@ def update(
 		return ERR_QUEUE_INVALID_ID
 
 	# Update DB
-	model: SleepModel = SleepModel.query.get(id)
+	model: SleepModel | None = SleepModel.query.get(id)
 	if model is None:
 		return ERR_SLEEP_INVALID_ID
 
@@ -201,10 +203,13 @@ def should_sleep_now() -> bool:
 	for sch in schedules:
 		if not sch.enabled:
 			continue
+		
+		hour: int = int(sch.start_time[0:2])
+		minute: int = int(sch.start_time[3:5])
 
 		for x in range(len(sch.days)):
 			if sch.days[x]:
-				s: int = (x * 1440) + (sch.hour * 60) + sch.minute
+				s: int = (x * 1440) + (hour * 60) + minute
 				e: int = s + sch.duration
 				if e > 10080:
 					e = 10080

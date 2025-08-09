@@ -18,7 +18,7 @@ API
 @ns.route("/clear")
 class ClearRes(Resource):
 	@local_apikey_required
-	def get(self) -> dict:
+	def get(self):
 		clear_clock_display()
 		return "", 204
 
@@ -26,6 +26,6 @@ class ClearRes(Resource):
 @ns.route("/refresh")
 class RefreshRes(Resource):
 	@local_apikey_required
-	def get(self) -> dict:
+	def get(self):
 		update_clock_display()
 		return "", 204

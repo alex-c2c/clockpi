@@ -4,7 +4,11 @@ from typing import Any
 from flask import session
 from flask_restx import Resource
 
+from app import db
+from app.user.models import UserModel
+
 from . import ns
+from .logic import *
 
 logger: Logger = getLogger(__name__)
 
@@ -14,15 +18,21 @@ API
 
 @ns.route("/")
 class SessionRes(Resource):
-	def get(self) -> dict:
+	@ns.response(200, "")
+	@ns.response(401, "Authentication Error")
+	def get(self):
 		logger.debug(f"{session=}")
-		user: Any | None = session.get("user")
-		res: dict = {}
-
+		user_id: int | None = session.get("userId")
+		if user_id is None:
+			ns.abort(401, "Authentication Error")
+			return
+			
+		user: UserModel | None = db.session.get(UserModel, user_id)
 		if user is None:
-			res["message"] = "Missing session"
-			return res, 401
+			ns.abort(404, "User not found")
+			return
+		
+		clear_session()
+		init_session(user)
 
-		res["message"] = ""
-		res["user"] = user
-		return res, 200
+		return user.to_dict(), 200

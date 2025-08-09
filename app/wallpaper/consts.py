@@ -1,1 +1,1 @@
-ALLOWED_EXTENSIONS: set[str] = ("png", "jpg", "jpeg", "bmp")
+ALLOWED_EXTENSIONS: tuple[str, ...] = ("png", "jpg", "jpeg", "bmp")

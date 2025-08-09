@@ -8,7 +8,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
 
 from app import api
-from app.auth.logic import local_apikey_required, react_login_required
+from app.auth.logic import local_apikey_required, login_required
 from app.consts import *
 from app.epd.consts import *
 from app.queue.logic import move_to_first, get_queue
@@ -27,8 +27,8 @@ API
 
 @ns.route("/upload")
 class UploadRes(Resource):
-	@react_login_required
-	def post(self) -> dict:
+	@login_required
+	def post(self):
 		# Check for file in request.files
 		if "file" not in request.files:
 			api.abort(400, "Missing file(s)")
@@ -37,19 +37,20 @@ class UploadRes(Resource):
 
 		# Validate files first
 		for file in files:
-			if file.filename == "":
+			file_name: str | None = file.filename
+			if file_name is None or len(file_name) == 0:
 				api.abort(400, "Invalid file name")
-
+				return
+			
 			if (
-				"." not in file.filename
-				or file.filename.rsplit(".", 1)[1].lower() not in ALLOWED_EXTENSIONS
+				"." not in file_name
+				or file_name.rsplit(".", 1)[1].lower() not in ALLOWED_EXTENSIONS
 			):
 				api.abort(400, "Invalid file extension")
-
-		# Process files
-		for file in files:
+				return
+		
 			# secure file name
-			filename: str = secure_filename(file.filename)
+			secured_file_name: str = secure_filename(file_name)
 
 			# save file to temp dir
 			# TODO: improve location of "uploaded" files so that it doesn't get
@@ -57,14 +58,14 @@ class UploadRes(Resource):
 			if not os.path.isdir(DIR_TMP_UPLOAD):
 				os.mkdir(DIR_TMP_UPLOAD)
 
-			temp_path: str = os.path.join(DIR_TMP_UPLOAD, filename)
+			temp_path: str = os.path.join(DIR_TMP_UPLOAD, secured_file_name)
 			file.save(temp_path)
 
 			t: Thread = Thread(
 				target=add,
 				args=(
 					current_app.app_context(),
-					filename,
+					secured_file_name,
 				),
 			)
 			t.start()
@@ -76,7 +77,7 @@ class UploadRes(Resource):
 @api.doc(responses={400: "Bad Request", 404: "Wallpaper ID not found"}, params={"id": "Wallpaper ID"})
 class FileRes(Resource):
     @local_apikey_required
-    def get(self, id: int) -> dict:
+    def get(self, id: int):
         file_name, result = get_wallpaper_name(id)
         if result == 0:
             return send_from_directory(DIR_APP_UPLOAD, file_name)
@@ -90,7 +91,7 @@ class FileRes(Resource):
 @api.doc(responses={400: "Bad Request", 404: "No wallpaper found"}, params={})
 class FileCurrentRes(Resource):
     @local_apikey_required
-    def get(self) -> dict:
+    def get(self):
         queue: list[int] = get_queue()
         if len(queue) == 0:
             api.abort(400)
@@ -107,8 +108,8 @@ class FileCurrentRes(Resource):
 @ns.route("/<int:id>")
 @api.doc(responses={400: "Bad Request", 404: "Wallpaper ID not found"}, params={"id": "Wallpaper ID"})
 class Res(Resource):
-	@react_login_required
-	def delete(self, id: int) -> dict:
+	@login_required
+	def delete(self, id: int):
 		result: int = remove(id)
 
 		if result == 0:
@@ -118,8 +119,8 @@ class Res(Resource):
 		else:
 			return api.abort(400, "Bad Request")
 
-	@react_login_required
-	def patch(self, id: int) -> dict:
+	@login_required
+	def patch(self, id: int):
 		d: dict = request.get_json()
 		logger.info(f"{d=}")
 

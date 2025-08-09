@@ -10,7 +10,7 @@ class SleepModel(db.Model):
 	duration: int = db.Column(db.Integer, nullable=False)
 	enabled: bool = db.Column(db.Boolean, default=True)
 
-	def __init__(self, days: int, hour: int, minute: int, duration: int, enabled: bool = True):
+	def __init__(self, days: str, hour: int, minute: int, duration: int, enabled: bool = True):
 		self.days = days
 		self.hour = hour
 		self.minute = minute

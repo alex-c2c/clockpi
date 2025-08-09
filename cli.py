@@ -4,7 +4,7 @@ import logging
 from logging import Logger, getLogger
 
 from app import create_app, db
-from app.auth.model import UserModel
+from app.auth.models import UserModel
 from app.auth.logic import is_password_valid, is_username_valid
 
 from werkzeug.security import generate_password_hash

@@ -1,7 +1,7 @@
 import os
 
 # Dimensions
-if os.getenv("ORIENTATION").lower() == "vertical":
+if os.getenv("ORIENTATION", "").lower() == "vertical":
     EPD_ORIENTATION :int = 1
     EPD_WIDTH: int = 480
     EPD_HEIGHT: int = 800

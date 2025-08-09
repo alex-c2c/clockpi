@@ -4,15 +4,18 @@ import shutil
 import numpy as np
 
 from logging import Logger, getLogger
-from PIL import Image, ImageFilter
+from PIL.Image import Image
+from PIL import Image as Img
+from PIL import ImageFilter
 
 from flask.ctx import AppContext
 
 from app import db, queue
 from app.consts import *
 from app.epd.consts import *
+from app.queue.logic import append_to_queue, remove_from_queue
 
-from .model import WallpaperModel
+from .models import WallpaperModel
 
 logger: Logger = getLogger(__name__)
 
@@ -61,7 +64,7 @@ def fs_dither(img: Image, nc: int) -> Image:
 					arr[ir + 1, ic + 1] += err / 16
 
 	carr = np.array(arr / np.max(arr, axis=(0, 1)) * 255, dtype=np.uint8)
-	return Image.fromarray(carr)
+	return Img.fromarray(carr)
 
 
 # Simple palette reduction without dithering.
@@ -70,12 +73,12 @@ def palette_reduce(img: Image, nc: int) -> Image:
 	arr = get_new_val(arr, nc)
 
 	carr = np.array(arr / np.max(arr) * 255, dtype=np.uint8)
-	return Image.fromarray(carr)
+	return Img.fromarray(carr)
 
 
 def _validate_image(file_path: str) -> bool:
 	try:
-		img: Image = Image.open(file_path)
+		img: Image = Img.open(file_path)
 		img.verify()
 		return True
 	except (IOError, SyntaxError):
@@ -92,19 +95,19 @@ def process_image(
 	del_src: bool = True,
 ) -> bool:
 	try:
-		canvas: Image = Image.new("RGB", canvas_size)
-		bg: Image = Image.open(file_path)
-		fg: Image = Image.open(file_path)
+		canvas: Image = Img.new("RGB", canvas_size)
+		bg: Image = Img.open(file_path)
+		fg: Image = Img.open(file_path)
   
 		w: int = bg.width
 		h: int = bg.height
 
 		# Resize
 		bg_r: float = max(canvas_size[0] / w, canvas_size[1] / h)
-		bg.thumbnail((w * bg_r, h * bg_r), Image.Resampling.LANCZOS)
+		bg.thumbnail((w * bg_r, h * bg_r), Img.Resampling.LANCZOS)
   
 		fg_r: float = max(image_size[0] / w, image_size[1] / h)
-		fg.thumbnail((w * fg_r, h * fg_r), Image.Resampling.LANCZOS)
+		fg.thumbnail((w * fg_r, h * fg_r), Img.Resampling.LANCZOS)
     
 		# Apply gaussian blur to bg
 		bg = bg.filter(ImageFilter.GaussianBlur(radius=5))
@@ -213,7 +216,7 @@ def add(app_context: AppContext, file_name: str) -> int:
 		db.session.commit()
 
 		# Append to image queue
-		queue.logic.append_to_queue(new_model.id)
+		append_to_queue(new_model.id)
 
 	except OSError as error:
 		return ERR_UPLOAD_SAVE
@@ -222,7 +225,7 @@ def add(app_context: AppContext, file_name: str) -> int:
 
 
 def remove(id: int) -> int:
-	model: WallpaperModel = WallpaperModel.query.get(id)
+	model: WallpaperModel | None = WallpaperModel.query.get(id)
 
 	if model is None:
 		return ERR_WALLPAPER_INVALID_ID
@@ -237,13 +240,13 @@ def remove(id: int) -> int:
 	db.session.delete(model)
 	db.session.commit()
 
-	queue.logic.remove_id(id)
+	remove_from_queue(id)
 
 	return 0
 
 
 def update(id: int, mode: int | None, color: int | None, shadow: int | None) -> int:
-	model: WallpaperModel = WallpaperModel.query.get(id)
+	model: WallpaperModel | None = WallpaperModel.query.get(id)
 	logger.info(f"update {id=} {mode=} {color=} {shadow=}")
 	if model is None:
 		return ERR_WALLPAPER_INVALID_ID
