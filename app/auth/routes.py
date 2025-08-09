@@ -21,7 +21,6 @@ class LoginRes(Resource):
 	@ns.expect(login_field)
 	def post(self):
 		data = ns.payload
-		
 		login_user(data)
 		
 		return "", 204

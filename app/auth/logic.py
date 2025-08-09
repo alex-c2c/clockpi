@@ -2,10 +2,11 @@ import functools
 import os
 from logging import Logger, getLogger
 
-from flask import request, session
+from flask import request
 from werkzeug.security import check_password_hash
 
-from app.session_pkg.logic import init_session
+from app.session_pkg.logic import get_user_from_session, init_session
+from app.user.consts import UserRole
 from app.user.models import UserModel
 
 from . import ns
@@ -19,14 +20,32 @@ LOGIC
 def login_required(func):
 	@functools.wraps(func)
 	def decorator(*args, **kwargs):
-		if session.get("user") is None:
-			res: dict = {}
-			res["message"] = "Invalid session data"
-			return res, 401
-
+		user: UserModel | None = get_user_from_session()
+		if user is None:
+			ns.abort(401, "Authentication Error")
+			return
+			
 		return func(*args, **kwargs)
 
 	return decorator
+
+	
+def admin_required(func):
+	@functools.wraps(func)
+	def decorator(*args, **kwargs):
+		user: UserModel | None = get_user_from_session()
+		if user is None:
+			ns.abort(401, "Authentication Error")
+			return
+		
+		if user.role != UserRole.ADMIN:
+			ns.abort(403, "Authorization Error")
+			return
+			
+		return func(*args, **kwargs)
+
+	return decorator
+	
 
 
 def local_apikey_required(func):
@@ -34,16 +53,19 @@ def local_apikey_required(func):
 	def decorator(*args, **kwargs):
 		local_apikey: str | None = os.environ.get("LOCAL_API_KEY")
 		if os.environ.get("LOCAL_API_KEY") is None:
-			return {"error": "Internal Server Error"}, 500
-
+			ns.abort(500, "API key not set")
+			return
+			
   		# header keys cannot contain '_'
 		api_key: str | None = request.headers.get("api-key")
 		if api_key is None:
-			return {"error": "Please provide an API key"}, 400		
-
+			ns.abort(401, "API key not found")
+			return
+			
 		if local_apikey != api_key:
-			return {"error": "Invalid API key"}, 400
-
+			ns.abort(401, "Invalid API key")
+			return
+			
 		return func(*args, **kwargs)
 
 	return decorator

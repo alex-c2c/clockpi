@@ -22,14 +22,9 @@ class SessionRes(Resource):
 	@ns.response(401, "Authentication Error")
 	def get(self):
 		logger.debug(f"{session=}")
-		user_id: int | None = session.get("userId")
-		if user_id is None:
-			ns.abort(401, "Authentication Error")
-			return
-			
-		user: UserModel | None = db.session.get(UserModel, user_id)
+		user: UserModel | None = get_user_from_session()
 		if user is None:
-			ns.abort(404, "User not found")
+			ns.abort(401, "Authentication Error")
 			return
 		
 		clear_session()
