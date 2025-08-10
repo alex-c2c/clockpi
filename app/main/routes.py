@@ -33,7 +33,6 @@ class TickRes(Resource):
 	def get(self):
 		sleep_status: int = get_status()
 		is_sleep: bool = should_sleep_now()
-		logger.debug(f"tick {sleep_status=} {is_sleep=}")
 
 		if is_sleep:
 			if sleep_status == SLEEP_STATUS_AWAKE:
@@ -45,34 +44,6 @@ class TickRes(Resource):
 				set_status(SLEEP_STATUS_AWAKE)
 
 		return "", 204
-
-
-@ns.route("/test")
-class TestRes(Resource):
-	@local_apikey_required
-	def get(self):
-		d: dict = {}
-
-		# Get settings from Redis
-		d["draw_grids"] = redis_controller.get_draw_grids()
-		d["epd_busy"] = get_busy()
-
-		# Get all wallpapers
-		wallpapers: list = WallpaperModel.query.all()
-		d["wallpapers"] = []
-		for wallpaper in wallpapers:
-			d["wallpapers"].append(wallpaper.to_dict())
-
-		# Get wallpaper queue
-		d["queue"] = get_queue()
-
-		# Text Color
-		# text_color: dict[str, int] = TEXT_COLOR_DICT
-
-		# Time Modes
-		# mode: dict[str, int] = TIME_MODE_DICT
-
-		return d, 200
 
 
 @ns.route("/draw_grids")

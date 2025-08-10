@@ -3,6 +3,7 @@ from flask_restx import fields
 from . import ns
 
 user_field = ns.model("User", {
+	"id":		fields.Integer(required=True),
 	"username": fields.String(required=True),
 	"dispName": fields.String(required=True),
 	"role": 	fields.String(required=True)

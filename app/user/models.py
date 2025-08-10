@@ -1,6 +1,5 @@
 from sqlalchemy.dialects.postgresql import ENUM
 from sqlalchemy.orm import Mapped
-from sqlalchemy.orm import mapped_column
 
 from app import db
 

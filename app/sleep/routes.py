@@ -1,15 +1,12 @@
-import time
-
-from flask import request
 from flask_restx import Resource
 from logging import Logger, getLogger
 
-from app import api
-from app.auth.logic import login_required
+from app.auth.logic import admin_required, login_required
 from app.consts import *
 
 from . import ns
-from .logic import SleepSchedule, add, get_schedules, get_status, remove, update
+from .fields import *
+from .logic import *
 
 logger: Logger = getLogger(__name__)
 
@@ -21,73 +18,76 @@ API
 @ns.route("/")
 class SleepListRes(Resource):
 	@login_required
+	@ns.response(200, "List of sleep schedules")
+	@ns.response(401, "Authentication Error")
+	@ns.marshal_list_with(sleep_model)
 	def get(self):
-		schedules: list[SleepSchedule] = get_schedules()
-		return [sch.to_dict() for sch in schedules], 200
+		schedules: list[dict] = get_schedules()
+		return schedules, 200
 
 
 @ns.route("/status")
 class SleepStatusRes(Resource):
 	@login_required
-	def get(self):
-		is_sleep: bool = True if get_status() == SLEEP_STATUS_SLEEP else False
-		
-		return {"isSleep": is_sleep}, 200
+	@ns.response(200, "Is sleeping now")
+	@ns.response(400, "Bad Request")
+	@ns.response(401, "Authentication Error")
+	@ns.response(500, "server error occured")
+	@ns.marshal_with(sleep_status_model)
+	def get(self):		
+		sleep_status: int = get_status()
+		is_sleep: bool = should_sleep_now()
 
+		if is_sleep:
+			if sleep_status == SLEEP_STATUS_AWAKE:
+				set_status(SLEEP_STATUS_SLEEP)
+				
+		else:
+			if sleep_status == SLEEP_STATUS_SLEEP:
+				set_status(SLEEP_STATUS_AWAKE)
+		
+		sleep_status = get_status()
+		return { "isSleep": True if sleep_status == SLEEP_STATUS_SLEEP else False}, 200
+	
 
 @ns.route("/create")
 class SleepCreateRes(Resource):
-	@login_required
+	@admin_required
+	@ns.response(204, "")
+	@ns.response(400, "Bad Request")
+	@ns.response(401, "Authentication Error")
+	@ns.response(403, "Authorization Error")
+	@ns.response(500, "Server error occured")
+	@ns.expect(sleep_create_model, validate=True)
 	def post(self):
-		d: dict = request.get_json()
-		logger.info(f"{d=}")
-
-		start_time: str | None = d.get("startTime")
-		duration: int | None = d.get("duration")
-		days: tuple[str] | None = d.get("days")
-  
-		if start_time is None or duration is None or days is None:
-			api.abort(400, "Invalid or missing data")
-			return
+		data: dict = ns.payload
+		
+		create_schedule(data)
    
-		res: int = add(start_time, duration, days)
-		if res != 0:
-			api.abort(400, "Invalid or missing data")
-			return
-   
-		return {}, 200
+		return "", 204
 
 
 @ns.route("/<int:id>")
-@api.doc(responses={404: "Invalid or missing ID"}, params={"id": "Schedule ID"})
 class SleepRes(Resource):
-	@login_required
+	@admin_required
+	@ns.response(204, "")
+	@ns.response(401, "Authentication Error")
+	@ns.response(403, "Authorization Error")
+	@ns.response(404, "Missing or invalid ID")
+	@ns.response(500, "Server error occured")
 	def delete(self, id: int):
-		result: int = remove(id)
-		if result == ERR_SLEEP_INVALID_ID:
-			api.abort(404, "Invalid or missing ID")
+		delete_schedule(id)
 		return "", 204
 
-	@login_required
+	@admin_required
+	@ns.response(204, "")
+	@ns.response(400, "Bad Request")
+	@ns.response(401, "Authentication Error")
+	@ns.response(403, "Authorization Error")
+	@ns.response(404, "Missing or invalid ID")
+	@ns.response(500, "Server error occured")
+	@ns.expect(sleep_update_model, validate=True)
 	def patch(self, id: int):
-		d: dict = request.get_json()
-		logger.info(f"{d=}")
-
-		start_time: str | None = d.get("startTime")
-		duration: int | None = d.get("duration")
-		days: tuple[str] | None = d.get("days")
-		enabled: bool | None = d.get("isEnabled")
-  
-		res: int = update(id, start_time, duration, days, enabled)
-  
-		if res == 0:
-			return "", 204
-
-		elif res == ERR_SLEEP_INVALID_ID:
-			api.abort(404, "Invalid or missing ID")
-
-		elif res == ERR_SLEEP_INVALID_DATA:
-			api.abort(400, "Invalid data")
-
-		else:
-			api.abort(400, "Bad request")
+		data = ns.payload
+		update_schedule(id, data)
+		return "", 204

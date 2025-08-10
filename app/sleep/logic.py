@@ -1,11 +1,13 @@
 from dataclasses import dataclass
 from datetime import datetime
+from faulthandler import is_enabled
 from logging import Logger, getLogger
 
 
 from app import db, redis_controller
 from app.consts import *
 
+from . import ns
 from .consts import DAYS_OF_WEEK
 from .models import SleepModel
 
@@ -42,10 +44,10 @@ class SleepSchedule:
 
 
 def split_time(time: str) -> tuple[bool, int, int]:
-    if len(time) != 5:
-        return True, 0, 0
-    
-    return True, int(time[0:2]), int(time[3:5])
+	if len(time) != 5:
+		return True, 0, 0
+	
+	return True, int(time[0:2]), int(time[3:5])
 
 
 def validate_hour(hour: int) -> bool:
@@ -56,135 +58,175 @@ def validate_minute(minute: int) -> bool:
 	return minute >= 0 and minute < 60
 
 
-def validate_duration(duration: int) -> bool:
+def validate_time(time: str | None) -> bool:
+	if time is None:
+		return False
+		
+	if len(time) != 5:
+		return False
+	
+	if time[2] != ":":
+		return False
+		
+	try:
+		hour: int = int(time[0:2])
+		if hour < 0 or hour > 23:
+			return False
+	except Exception as e:
+		return False
+	
+	try:
+		minute: int = int(time[3:5])
+		if minute < 0 or minute > 59:
+			return False
+	except Exception as e:
+		return False
+	
+	return True
+
+
+def validate_duration(duration: int | None) -> bool:
+	if duration is None:
+		return False
+		
 	return duration >= 1 and duration <= 1440
 
 
-def validate_days(days: tuple [str]) -> bool:
-    if len(days) > 7:
-        return False
-    
-    for day in days:
-        if day.lower() not in DAYS_OF_WEEK:
-            return False
-    
-    return True
+def validate_days_str(days_str: str | None) -> bool:
+	if days_str is None:
+		return False
+		
+	days: list[str] = days_str.split(",")
+	return validate_days(days)
 
 
-def get_schedules() -> list[SleepSchedule]:
-	schedules: list[SleepSchedule] = []
+def validate_days(days: list[str] | None) -> bool:
+	if days is None:
+		return False
+		
+	if len(days) > 7:
+		return False
+	
+	for day in days:
+		if day.lower() not in DAYS_OF_WEEK:
+			return False
+	
+	return True
+
+
+def get_schedules() -> list[dict]:
+	schedules: list[dict] = []
 	data: list = SleepModel.query.all()
 
 	for model in data:
-		sch = SleepSchedule()
-		sch.days = tuple(d for d in model.days.split(",") if len(d) != 0)
-		sch.id = model.id
-		sch.start_time = f"{model.hour:02}:{model.minute:02}"
-		sch.duration = model.duration
-		sch.enabled = model.enabled
-
-		schedules.append(sch)
+		schedules.append(model.to_dict())
 
 	return schedules
 
 
-def add(
-    start_time: str,
-	duration: int,
-	days: tuple[str],
-) -> int:
-	logger.info(f"Add {start_time=} {duration=} {days=}")
- 
-	# pre-validate start_time
-	res, hour, minute = split_time(start_time)
-	if not res:
-		return ERR_SLEEP_INVALID_DATA
-
-	# validate inputs
-	if (
-		not validate_hour(hour)
-		or not validate_minute(minute)
-		or not validate_duration(duration)
-		or not validate_days(days)
-	):
-		return ERR_SLEEP_INVALID_DATA
-
-	# Add to DB
-	new_model: SleepModel = SleepModel(
+def create_schedule(data: dict) -> None:
+	logger.info(f"Attempting to create new sleep schedule")
+	
+	days: list[str] = data.get("days", [])
+	if not validate_days(days):
+		ns.abort(400, "Invalid days")
+		return
+	
+	start_time: str = data.get("startTime", "")
+	if not validate_time(start_time):
+		ns.abort(400, "Invalid startTime")
+		return
+		
+	duration: int = data.get("duration", -1)
+	if not validate_duration(duration):
+		ns.abort(400, "Invalid duration")
+		return
+		
+	is_enabled: bool | None = data.get("isEnabled")
+	if is_enabled is None:
+		ns.abort(400, "Invalid isEnabled")
+		return
+	
+	new_schedule = SleepModel(
 		days=",".join(day.lower() for day in days),
-		hour=hour,
-		minute=minute,
+		start_time=start_time,
 		duration=duration,
-		enabled=True
+		is_enabled=is_enabled
 	)
-	db.session.add(new_model)
-	db.session.commit()
-
-	return 0
-
-
-def remove(id: int) -> int:
-	logger.info(f"Remove {id=}")
-
-	# Remove from DB
-	model: SleepModel | None = SleepModel.query.get(id)
-	if model is None:
-		return ERR_SLEEP_INVALID_ID
-
-	db.session.delete(model)
-	db.session.commit()
-
-	return 0
+	
+	try:
+		db.session.add(new_schedule)
+		db.session.commit()
+	except Exception as e:
+		logger.error(f"Unable to create new sleep schedule due to {e}")
+		ns.abort(500, "Server error occured")
+		return
+	
+	logger.info(f"Created new sleep schedule {new_schedule.id}")
 
 
-def update(
-    id: int | None,
-    start_time : str | None,
-	duration: int | None,
-	days: tuple[str] | None,
-	enabled: bool | None,
-) -> int:
-	logger.info(
-	logger.info(f"Update {id=} {start_time=} {duration=} {days=} {enabled=}")
-	)
+def delete_schedule(id: int) -> None:
+	logger.info(f"Attempting to delete schedule:{id}")
+	
+	schedule: SleepModel | None = db.session.get(SleepModel, id)
+	if schedule is None:
+		ns.abort(404, "Missing or invalid ID")
+		return
+	
+	try:
+		db.session.delete(schedule)
+		db.session.commit()
+	except Exception as e:
+		logger.error(f"Unable to delete sleep schedule {id} due to {e}")
+		ns.abort(500, "Server error occured")
+		return
+		
+	logger.info(f"Deleted sleep schedule:{id}")
 
-	if id is None:
-		return ERR_QUEUE_INVALID_ID
 
-	# Update DB
-	model: SleepModel | None = SleepModel.query.get(id)
-	if model is None:
-		return ERR_SLEEP_INVALID_ID
-
-	if start_time is not None:
-		res, hour, minute = split_time(start_time)
-		if not res:
-			return ERR_SLEEP_INVALID_DATA
-
-		if not validate_hour(hour) or not validate_minute(minute):
-			return ERR_SLEEP_INVALID_DATA
-
-		model.hour = hour
-		model.minute = minute
-  
-	if duration is not None:
-		if not validate_duration(duration):
-			return ERR_SLEEP_INVALID_DATA
-
-		model.duration = duration
-  
+def update_schedule(id: int, data: dict) -> None:
+	logger.info(f"Attempting to update sleep schedule")
+	
+	schedule: SleepModel | None = db.session.get(SleepModel, id)
+	if schedule is None:
+		ns.abort(404, "Missing or invalid ID")
+		return
+	
+	days: list[str] | None = data.get("days", None)
 	if days is not None:
 		if not validate_days(days):
-			return ERR_SLEEP_INVALID_DATA
+			ns.abort(400, "Invalid days")
+			return
+		schedule.days = ",".join(set(day.lower() for day in days))
+			
+	start_time: str | None = data.get("startTime")
+	if start_time is not None:
+		if not validate_time(start_time):
+			ns.abort(400, "Invalid startTime")
+			return
+		
+		schedule.start_time = start_time
+		
+	duration: int | None = data.get("duration")
+	if duration is not None:
+		if not validate_duration(duration):
+			ns.abort(400, "Invalid duration")
+			return
+			
+		schedule.duration = duration
+		
+	is_enabled: bool | None = data.get("isEnabled")
+	if is_enabled is not None:
+		schedule.is_enabled = is_enabled
 
-		model.days = ",".join(day.lower() for day in days)
+	try:
+		db.session.commit()
+	except Exception as e:
+		logger.error(f"Unable to update sleep schedule due to {e}")
+		ns.abort(500, "Server error occured")
+		return
 	
-	if enabled is not None:
-		model.enabled = enabled
-
-	db.session.commit()
-
-	return 0
+	logger.info(f"Updated sleep schedule {id}")
 
 
 def get_status() -> int:
@@ -198,14 +240,13 @@ def set_status(status: int) -> None:
 
 def should_sleep_now() -> bool:
 	minute_ranges: list = []
-	schedules: list[SleepSchedule] = get_schedules()
+	schedules: list[SleepModel] = SleepModel.query.all()
 
 	for sch in schedules:
-		if not sch.enabled:
+		if not sch.is_enabled:
 			continue
 		
-		hour: int = int(sch.start_time[0:2])
-		minute: int = int(sch.start_time[3:5])
+		hour, minute = sch.get_hour_minute()
 
 		for x in range(len(sch.days)):
 			if sch.days[x]:
@@ -223,7 +264,7 @@ def should_sleep_now() -> bool:
 		+ datetime.now().hour * 60
 		+ datetime.now().minute
 	)
- 
+
 	for minute_range in minute_ranges:
 		if minute_now < minute_range[0]:
 			return False

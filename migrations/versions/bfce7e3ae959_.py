@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 97cd88cf78a0
+Revision ID: bfce7e3ae959
 Revises: 
-Create Date: 2025-08-09 23:03:52.938942
+Create Date: 2025-08-10 20:46:21.385848
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '97cd88cf78a0'
+revision = 'bfce7e3ae959'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -21,10 +21,9 @@ def upgrade():
     op.create_table('sleep',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('days', sa.String(), nullable=False),
-    sa.Column('hour', sa.Integer(), nullable=False),
-    sa.Column('minute', sa.Integer(), nullable=False),
+    sa.Column('start_time', sa.String(), nullable=False),
     sa.Column('duration', sa.Integer(), nullable=False),
-    sa.Column('enabled', sa.Boolean(), nullable=True),
+    sa.Column('is_enabled', sa.Boolean(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('user',
