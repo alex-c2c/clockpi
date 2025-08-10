@@ -20,8 +20,8 @@ API
 @ns.route("/")
 class UserListRes(Resource):
 	@login_required
-	@ns.response(200, list[user_field])
-	@ns.marshal_with(user_field, as_list=True)
+	@ns.response(200, list[user_model])
+	@ns.marshal_with(user_model, as_list=True)
 	@ns.response(401, "Authentication Error")
 	@ns.response(403, "Authorization Error")
 	def get(self):
@@ -49,7 +49,7 @@ class UserRes(Resource):
 	@ns.response(403, "Authorization Error")
 	@ns.response(404, "User not found")
 	@ns.response(500, "Server error occured")
-	@ns.expect(user_update_field)
+	@ns.expect(user_update_model)
 	def patch(self, id: int):
 		data = ns.payload
 		update_user(id, data)
@@ -63,7 +63,7 @@ class UserCreateRes(Resource):
 	@ns.response(401, "Authentication Error")
 	@ns.response(415, "Username has already been taken")
 	@ns.response(500, "Server error occured")
-	@ns.expect(user_create_field, validate=True)
+	@ns.expect(user_create_model, validate=True)
 	def post(self):
 		data = ns.payload
 		create_user(data)

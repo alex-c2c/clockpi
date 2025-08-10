@@ -18,7 +18,7 @@ class LoginRes(Resource):
 	@ns.response(204, "")
 	@ns.response(400, "Bad Request")
 	@ns.response(401, "Authentication Error")
-	@ns.expect(login_field)
+	@ns.expect(login_model)
 	def post(self):
 		data = ns.payload
 		login_user(data)
