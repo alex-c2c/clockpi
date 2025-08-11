@@ -11,7 +11,7 @@ from app import api
 from app.auth.logic import local_apikey_required, login_required
 from app.consts import *
 from app.epd.consts import *
-from app.queue.logic import move_to_first, get_queue
+from app.queue.logic import move_to_first#, get_queue
 
 from . import ns
 from .consts import *
@@ -92,7 +92,7 @@ class FileRes(Resource):
 class FileCurrentRes(Resource):
     @local_apikey_required
     def get(self):
-        queue: list[int] = get_queue()
+        queue: list[int] = []#get_queue()
         if len(queue) == 0:
             api.abort(400)
         

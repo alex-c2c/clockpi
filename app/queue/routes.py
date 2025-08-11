@@ -1,11 +1,11 @@
 from flask_restx import Resource
 
 from app import api
-from app.auth.logic import local_apikey_required, login_required
-from app.consts import ERR_QUEUE_INVALID_ID
+from app.auth.logic import admin_required, local_apikey_required, login_required
 
 from . import ns
-from .logic import get_queue, shuffle_queue, move_to_first, shift_next
+from .fields import *
+from .logic import *
 
 
 """
@@ -15,15 +15,23 @@ API
 
 @ns.route("/")
 class QueueRes(Resource):
-	@local_apikey_required
+	@login_required
+	@ns.response(200, queue_model)
+	@ns.response(401, "Authentication Error")
+	@ns.marshal_with(queue_model)
 	def get(self):
-		queue: list[int] = get_queue()
+		queue: list[int] = get_queue_model().get_queue()
 		return {"queue": queue}, 200
 
 
 @ns.route("/shuffle")
 class ShuffleRes(Resource):
-	@local_apikey_required
+	@login_required
+	@ns.response(204, "")
+	@ns.response(400, "Bad Request")
+	@ns.response(401, "Authentication Error")
+	@ns.response(404, "Missing or invalid ID")
+	@ns.response(500, "Server error occured")
 	def get(self):
 		shuffle_queue()
 		return "", 204
@@ -31,22 +39,28 @@ class ShuffleRes(Resource):
 
 @ns.route("/next")
 class NextRes(Resource):
-	@local_apikey_required
+	@login_required
+	@ns.response(204, "")
+	@ns.response(400, "Bad Request")
+	@ns.response(401, "Authentication Error")
+	@ns.response(404, "Missing or invalid ID")
+	@ns.response(500, "Server error occured")
 	def get(self):
 		shift_next()
 		return "", 204
 
 
-@ns.route("/select/<int:id>")
-@api.doc(responses={400: "Wallpaper ID not found"}, params={"id": "Wallpaper ID"})
+@ns.route("/select")
 class SelectRes(Resource):
-	@api.doc(description="")
-	@login_required
-	def get(self, id):
-		result: int = move_to_first(id)
-		if result == 0:
-			return "", 204
-		elif result == ERR_QUEUE_INVALID_ID:
-			return {"error": "Invalid ID"}, 400
-		else:
-			return {"error": "Bad request"}, 400
+	@admin_required
+	@ns.response(204, "")
+	@ns.response(400, "Bad Request")
+	@ns.response(401, "Authentication Error")
+	@ns.response(403, "Authorization Error")
+	@ns.response(404, "Missing or invalid ID")
+	@ns.response(500, "Server error occured")
+	@ns.expect(queue_select_model, validate=True)
+	def patch(self):
+		data = ns.payload
+		move_to_first(data.get("id"))
+		return "", 204
