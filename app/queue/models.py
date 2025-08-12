@@ -19,7 +19,7 @@ class QueueModel(db.Model):
 		return f"<Queue - queue:{self.queue}>"
 		
 	def get_queue(self) -> list[int]:
-		return [int(id) for id in self.queue.split(",")]
+		return [int(id) for id in self.queue.split(",") if len(self.queue) > 0]
 
 	def to_dict(self) -> dict:
 		return {

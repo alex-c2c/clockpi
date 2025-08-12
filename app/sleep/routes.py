@@ -18,7 +18,7 @@ API
 @ns.route("/")
 class SleepListRes(Resource):
 	@login_required
-	@ns.response(200, "List of sleep schedules")
+	@ns.response(200, "List of sleep schedule fields")
 	@ns.response(401, "Authentication Error")
 	@ns.marshal_list_with(sleep_model)
 	def get(self):

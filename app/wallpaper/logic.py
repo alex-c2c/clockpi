@@ -1,6 +1,7 @@
 import hashlib
 import os
 import shutil
+from typing import Sequence
 import numpy as np
 
 from logging import Logger, getLogger
@@ -8,13 +9,15 @@ from PIL.Image import Image
 from PIL import Image as Img
 from PIL import ImageFilter
 
+from sqlalchemy import select
 from flask.ctx import AppContext
 
-from app import db, queue
+from app import db
 from app.consts import *
 from app.epd.consts import *
 from app.queue.logic import append_to_queue, remove_from_queue
 
+from . import ns
 from .models import WallpaperModel
 
 logger: Logger = getLogger(__name__)
@@ -22,9 +25,6 @@ logger: Logger = getLogger(__name__)
 """""
 LOGIC
 """""
-
-color_list: list[int] = [COLOR_EPD_BLACK, COLOR_EPD_WHITE, COLOR_EPD_YELLOW, COLOR_EPD_RED, COLOR_EPD_BLUE, COLOR_EPD_GREEN]
-
 
 def crop(img: Image, size: tuple[int, int]) -> Image:
 	l: float = (img.width - size[0]) * 0.5
@@ -81,7 +81,8 @@ def _validate_image(file_path: str) -> bool:
 		img: Image = Img.open(file_path)
 		img.verify()
 		return True
-	except (IOError, SyntaxError):
+	except Exception as e:
+		logger.error(f"_validate_image: {e}")
 		return False
 
 
@@ -98,24 +99,24 @@ def process_image(
 		canvas: Image = Img.new("RGB", canvas_size)
 		bg: Image = Img.open(file_path)
 		fg: Image = Img.open(file_path)
-  
+
 		w: int = bg.width
 		h: int = bg.height
 
 		# Resize
 		bg_r: float = max(canvas_size[0] / w, canvas_size[1] / h)
 		bg.thumbnail((w * bg_r, h * bg_r), Img.Resampling.LANCZOS)
-  
+
 		fg_r: float = max(image_size[0] / w, image_size[1] / h)
 		fg.thumbnail((w * fg_r, h * fg_r), Img.Resampling.LANCZOS)
-    
+	
 		# Apply gaussian blur to bg
 		bg = bg.filter(ImageFilter.GaussianBlur(radius=5))
 
 		# Crop
 		bg = crop(bg, canvas_size)
 		fg = crop(fg, image_size)
-  
+
 		# Paste bg & fg to canvas
 		canvas.paste(bg, (0, 0))
 		canvas.paste(fg, image_pos)
@@ -139,17 +140,20 @@ def process_image(
 		return False
 
 
-def add(app_context: AppContext, file_name: str) -> int:
+def create_wallpaper(app_context: AppContext, file_name: str) -> None:
+	logger.info(f"Attempting to process {file_name} and create new wallpaper")
+	
 	app_context.push()
 
-	logger.info(f"Processing {file_name=}")
 	temp_path: str = os.path.join(DIR_TMP_UPLOAD, file_name)
 
 	# validate image
 	if not _validate_image(temp_path):
 		os.remove(temp_path)
-		return ERR_UPLOAD_INVALID_IMAGE
-
+		logger.error(f"Uploaded file is invalid")
+		ns.abort(400, "Uploaded file is invalid")
+		return
+		
 	# process image
 	if not os.path.isdir(DIR_TMP_PROCESSED):
 		os.mkdir(DIR_TMP_PROCESSED)
@@ -160,10 +164,10 @@ def add(app_context: AppContext, file_name: str) -> int:
 	process_result: bool = process_image(
 		file_path=temp_path,
 		dest_path=processed_path,
-  		canvas_size=(EPD_WIDTH, EPD_WIDTH),
-    	image_size=(EPD_WIDTH, EPD_WIDTH),
-  		image_pos=(0, 0),
-  		nc=EPD_NC
+		canvas_size=(EPD_WIDTH, EPD_WIDTH),
+		image_size=(EPD_WIDTH, EPD_WIDTH),
+		image_pos=(0, 0),
+		nc=EPD_NC
 	)
 
 	if not process_result:
@@ -171,7 +175,9 @@ def add(app_context: AppContext, file_name: str) -> int:
 			os.remove(temp_path)
 		if os.path.isfile(processed_path):
 			os.remove(processed_path)
-		return ERR_UPLOAD_POST_PROC
+		logger.error(f"Unable to proccess image")
+		ns.abort(500, "Unable to process image")
+		return
 
 	# get hash of processed image
 	try:
@@ -189,7 +195,9 @@ def add(app_context: AppContext, file_name: str) -> int:
 			os.remove(temp_path)
 		if os.path.isfile(processed_path):
 			os.remove(processed_path)
-		return ERR_UPLOAD_HASH
+		logger.error(f"Unable to obtain file hash due to {error}")
+		ns.abort(500, "Unable to obtain file hash")
+		return
 
 	# copy processed image to upload dir
 	try:
@@ -203,7 +211,9 @@ def add(app_context: AppContext, file_name: str) -> int:
 			os.remove(temp_path)
 		if os.path.isfile(processed_path):
 			os.remove(processed_path)
-		return ERR_UPLOAD_COPY
+		logger.error(f"Unable to copy file due to {error}")
+		ns.abort(500, "Unable to copy file")
+		return
 
 	# Save upload entry to DB
 	try:
@@ -219,69 +229,103 @@ def add(app_context: AppContext, file_name: str) -> int:
 		append_to_queue(new_model.id)
 
 	except OSError as error:
-		return ERR_UPLOAD_SAVE
+		logger.error(f"Unable to create new wallpaper model due to {error}")
+		ns.abort(500, "Unable to create new wallpaper model")
+		return
+	
+	logger.info(f"Processed image and created new wallpaper model")
 
-	return 0
 
+def remove_wallpaper(id: int) -> None:
+	logger.info(msg=f"Attempting to delete wallpaper {id=}")
 
-def remove(id: int) -> int:
-	model: WallpaperModel | None = WallpaperModel.query.get(id)
-
+	model: WallpaperModel | None = db.session.get(WallpaperModel, id)
 	if model is None:
-		return ERR_WALLPAPER_INVALID_ID
-
+		ns.abort(404, "Invalid or missing ID")
+		return
+		
 	hash: str = model.hash
 	file_path: str = os.path.join(DIR_APP_UPLOAD, f"{hash}.bmp")
 
-	logger.info(msg=f"Deleting {file_path=}")
-	if os.path.isfile(file_path):
-		os.remove(file_path)
-
-	db.session.delete(model)
-	db.session.commit()
-
+	if not os.path.isfile(file_path):
+		ns.abort(404, "Invalid or missing file")
+		return
+			
+	try:
+		db.session.delete(model)
+		db.session.commit()
+	except Exception as e:
+		logger.error(f"Unable to delete wallpaper model due to {e}")
+		ns.abort(500, "Internal Server Error")
+		return
+		
 	remove_from_queue(id)
+		
+	os.remove(file_path)
 
-	return 0
+	logger.info(f"Deleted wallpaper {id=}")
 
 
-def update(id: int, mode: int | None, color: int | None, shadow: int | None) -> int:
-	model: WallpaperModel | None = WallpaperModel.query.get(id)
-	logger.info(f"update {id=} {mode=} {color=} {shadow=}")
-	if model is None:
-		return ERR_WALLPAPER_INVALID_ID
-
-	if mode is not None:
-		if TIMEMODE_OFF <= mode <= TIMEMODE_FULL_3:
-			model.mode = mode
-		else:
-			return ERR_WALLPAPER_INVALID_PARAMS
-
+def update_wallpaper(id: int, data: dict) -> None:
+	logger.info(f"Attempting to update wallpaper {id=}")
 	
+	model: WallpaperModel | None = db.session.get(WallpaperModel, id)
+	if model is None:
+		ns.abort(404, "Invalid or missing ID")
+		return
+	
+	mode: int | None = data.get("mode")
+	if mode is not None:
+		if mode < TIMEMODE_OFF or mode > TIMEMODE_FULL_3:
+			ns.abort(400, "Invalid mode")
+			return
+		model.mode = mode
+	
+	color: str | None = data.get("color")
 	if color is not None:
-		if color in color_list:
-			model.color = color
-		else:
-			return ERR_WALLPAPER_INVALID_PARAMS
-
+		if color.upper() not in Color:
+			logger.error(f"Invalid color {color}")
+			ns.abort(400, "Invalid color")
+			return
+		model.color = Color[color.upper()]
+		
+	shadow: int | None = data.get("shadow")
 	if shadow is not None:
-		if shadow in color_list:
-			model.shadow = shadow
-		else:
-			return ERR_WALLPAPER_INVALID_PARAMS
+		if shadow.upper() not in Color:
+			logger.error(f"Invalid shadow: {shadow}")
+			ns.abort(400, "Invalid shadow")
+			return
+		model.shadow = Color[shadow.upper()]
+		
+	try:
+		db.session.commit()
+	except Exception as e:
+		logger.error(f"Unable to update wallpaper due to {e}")
+		ns.abort(500, "Internal Server Error")
+		return
+	
+	logger.info(f"Wallpaper {id=} updated")
+	
 
-	db.session.commit()
+def get_wallpaper_name(id: int) -> str:
+	model: WallpaperModel | None = db.session.get(WallpaperModel, id)
+	if model is None:
+		ns.abort(404, "Invalid or missing ID")
+		return ""
+		
+	file_path: str = os.path.join(DIR_APP_UPLOAD, f"{model.hash}.bmp")
+	if not os.path.isfile(file_path):
+		ns.abort(404, "Invalid or missing file")
+		return ""
+		
+	return f"{model.hash}.bmp"
 
-	return 0
 
-
-def get_wallpaper_name(id: int) -> tuple[str, int]:
-    model: WallpaperModel | None = WallpaperModel.query.get(id)
-    if model is None:
-        return "", ERR_WALLPAPER_INVALID_ID
-        
-    file_path: str = os.path.join(DIR_APP_UPLOAD, f"{model.hash}.bmp")
-    if not os.path.isfile(file_path):
-        return "", ERR_WALLPAPER_INVALID_PARAMS
-
-    return f"{model.hash}.bmp", 0
+def get_wallpapers() -> list[dict]:
+	data: Sequence[WallpaperModel] = db.session.scalars(select(WallpaperModel)).all()
+	
+	wallpapers: list[dict] = []
+	for row in data:
+		wallpapers.append(row.to_dict())
+		
+	return wallpapers

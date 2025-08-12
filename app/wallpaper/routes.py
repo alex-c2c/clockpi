@@ -2,20 +2,20 @@ import os
 from logging import Logger, getLogger
 from threading import Thread
 
-from flask import current_app,request, send_from_directory
+from flask import current_app, request, send_from_directory
 from flask_restx import Resource
 from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
 
-from app import api
-from app.auth.logic import local_apikey_required, login_required
+from app.auth.logic import admin_required, local_apikey_required, login_required
 from app.consts import *
 from app.epd.consts import *
-from app.queue.logic import move_to_first#, get_queue
+from app.queue.logic import get_queue_model
 
 from . import ns
 from .consts import *
-from .logic import add, remove, update, get_wallpaper_name
+from .fields import *
+from .logic import *
 
 logger: Logger = getLogger(__name__)
 
@@ -27,11 +27,18 @@ API
 
 @ns.route("/upload")
 class UploadRes(Resource):
-	@login_required
+	@admin_required
+	@ns.response(204, "")
+	@ns.response(400, "Bad Request")
+	@ns.response(400, "Invalid file name")
+	@ns.response(400, "Invalid file extension")
+	@ns.response(401, "Authentication Error")
+	@ns.response(403, "Authorization Error")
+	@ns.response(413, "Content too large")
 	def post(self):
 		# Check for file in request.files
 		if "file" not in request.files:
-			api.abort(400, "Missing file(s)")
+			ns.abort(400, "Missing files")
 
 		files: list[FileStorage] = request.files.getlist("file")
 
@@ -39,14 +46,14 @@ class UploadRes(Resource):
 		for file in files:
 			file_name: str | None = file.filename
 			if file_name is None or len(file_name) == 0:
-				api.abort(400, "Invalid file name")
+				ns.abort(400, "Invalid file name")
 				return
 			
 			if (
 				"." not in file_name
 				or file_name.rsplit(".", 1)[1].lower() not in ALLOWED_EXTENSIONS
 			):
-				api.abort(400, "Invalid file extension")
+				ns.abort(400, "Invalid file extension")
 				return
 		
 			# secure file name
@@ -62,7 +69,7 @@ class UploadRes(Resource):
 			file.save(temp_path)
 
 			t: Thread = Thread(
-				target=add,
+				target=create_wallpaper,
 				args=(
 					current_app.app_context(),
 					secured_file_name,
@@ -74,89 +81,64 @@ class UploadRes(Resource):
 
 
 @ns.route("/file/<int:id>")
-@api.doc(responses={400: "Bad Request", 404: "Wallpaper ID not found"}, params={"id": "Wallpaper ID"})
 class FileRes(Resource):
-    @local_apikey_required
-    def get(self, id: int):
-        file_name, result = get_wallpaper_name(id)
-        if result == 0:
-            return send_from_directory(DIR_APP_UPLOAD, file_name)
-        elif result == ERR_WALLPAPER_INVALID_ID:
-            api.abort(404, "Invalid wallpaper ID")
-        else:
-            api.abort(400, "Bad Request")
+	@local_apikey_required
+	@ns.response(200, "Image file")
+	@ns.response(401, "Authentication Error")
+	@ns.response(404, "Invalid or missing ID")
+	@ns.response(404, "Invalid or missing file")
+	def get(self, id: int):
+		file_name: str = get_wallpaper_name(id)
+		return send_from_directory(DIR_APP_UPLOAD, file_name)
 
 
 @ns.route("/file/current")
-@api.doc(responses={400: "Bad Request", 404: "No wallpaper found"}, params={})
 class FileCurrentRes(Resource):
-    @local_apikey_required
-    def get(self):
-        queue: list[int] = []#get_queue()
-        if len(queue) == 0:
-            api.abort(400)
-        
-        file_name, result = get_wallpaper_name(queue[0])
-        if result == 0:
-            return send_from_directory(DIR_APP_UPLOAD, file_name)
-        elif result == ERR_WALLPAPER_INVALID_ID:
-            api.abort(404, "Invalid wallpaper ID")
-        else:
-            api.abort(400, "Bad Request")
-        
-        
+	@local_apikey_required
+	@ns.response(200, "Image file")
+	@ns.response(401, "Authentication Error")
+	@ns.response(404, "Invalid or missing ID")
+	@ns.response(404, "Invalid or missing file")
+	def get(self):
+		queue: list[int] = get_queue_model().get_queue()
+		logger.debug(f"current id: {queue}");
+		if len(queue) == 0:
+			ns.abort(404, "Invalid or missing ID")
+					
+		file_name: str= get_wallpaper_name(queue[0])
+		return send_from_directory(DIR_APP_UPLOAD, file_name)
+
+
+@ns.route("/")
+class WallpaperListRes(Resource):
+	@login_required
+	@ns.response(200, "List of wallpaper fields")
+	@ns.response(401, "Authentication Error")
+	@ns.marshal_list_with(wallpaper_model)
+	def get(self):
+		wallpapers: list[dict] = get_wallpapers()
+		return wallpapers, 200
+		
+		
 @ns.route("/<int:id>")
-@api.doc(responses={400: "Bad Request", 404: "Wallpaper ID not found"}, params={"id": "Wallpaper ID"})
-class Res(Resource):
-	@login_required
+class WallpaperRes(Resource):
+	@admin_required
+	@ns.response(204, "")
+	@ns.response(401, "Authentication Error")
+	@ns.response(403, "Authorization Error")
+	@ns.response(404, "Invalid or missing ID")
 	def delete(self, id: int):
-		result: int = remove(id)
+		remove_wallpaper(id)
+		return "", 204
 
-		if result == 0:
-			return "", 204
-		elif result == ERR_WALLPAPER_INVALID_ID:
-			api.abort(404, "Invalid wallpaper ID")
-		else:
-			return api.abort(400, "Bad Request")
-
-	@login_required
+	@admin_required
+	@ns.response(204, "")
+	@ns.response(401, "Authentication Error")
+	@ns.response(403, "Authorization Error")
+	@ns.response(404, "Invalid or missing ID")
+	@ns.response(500, "")
+	@ns.expect(wallpaper_update_model)
 	def patch(self, id: int):
-		d: dict = request.get_json()
-		logger.info(f"{d=}")
-
-		def try_get_bool(day: str) -> bool | None:
-			return (
-				d.get(day)
-				if d.get(day) is not None and type(d.get(day)) is bool
-				else None
-			)
-
-		def try_get_int(key: str) -> int | None:
-			return (
-				d.get(key)
-				if d.get(key) is not None and type(d.get(key)) is int
-				else None
-			)
-
-		is_select: bool | None = try_get_bool("select")
-		# is_delete: bool = request.form.get("delete") is not None
-		mode: int | None = try_get_int("mode")
-		color: int | None = try_get_int("color")
-		shadow: int | None = try_get_int("shadow")
-		logger.info(f"update {id=} {mode=} {color=} {shadow=} {is_select=}")
-
-		result: int = update(id, mode, color, shadow)
-		if result == 0:
-			if is_select is not None and is_select:
-				move_to_first(id)
-
-			return "", 204
-
-		elif result == ERR_WALLPAPER_INVALID_PARAMS:
-			api.abort(400, "Invalid wallpaper params")
-
-		elif result == ERR_WALLPAPER_INVALID_ID:
-			api.abort(400, "Invalid wallpaper ID")
-
-		else:
-			return api.abort(400, "Bad Request")
+		data: dict = ns.payload
+		update_wallpaper(id, data)
+		return "", 204

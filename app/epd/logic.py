@@ -119,20 +119,20 @@ def draw_grids(draw: ImageDraw) -> None:
 	# White every 10px
 	for x in range(80):
 		x_p: int = (x + 1) * 10
-		draw.line((x_p, 0, x_p, 480), COLOR_EPD_WHITE, 1)
+		draw.line((x_p, 0, x_p, 480), Color.WHITE.get_epd_color(), 1)
 	for y in range(48):
 		y_p: int = (y + 1) * 10
-		draw.line((0, y_p, 800, y_p), COLOR_EPD_WHITE, 1)
+		draw.line((0, y_p, 800, y_p), Color.WHITE.get_epd_color(), 1)
 
 	# Black 1/3
-	draw.line((266, 0, 266, 480), COLOR_EPD_BLACK, 1)
-	draw.line((532, 0, 532, 480), COLOR_EPD_BLACK, 1)
-	draw.line((0, 159, 800, 159), COLOR_EPD_BLACK, 1)
-	draw.line((0, 319, 800, 319), COLOR_EPD_BLACK, 1)
+	draw.line((266, 0, 266, 480), Color.BLACK.get_epd_color(), 1)
+	draw.line((532, 0, 532, 480), Color.BLACK.get_epd_color(), 1)
+	draw.line((0, 159, 800, 159), Color.BLACK.get_epd_color(), 1)
+	draw.line((0, 319, 800, 319), Color.BLACK.get_epd_color(), 1)
 
 	# Red 1/2
-	draw.line((400, 0, 400, 480), COLOR_EPD_RED, 1)
-	draw.line((0, 240, 800, 240), COLOR_EPD_RED, 1)
+	draw.line((400, 0, 400, 480), Color.RED.get_epd_color(), 1)
+	draw.line((0, 240, 800, 240), Color.RED.get_epd_color(), 1)
 
 
 # Copied from epd7in3e.py
@@ -205,13 +205,8 @@ def process_image(
 
 def prepare_image() -> tuple[str, str, int, int, int, bool] | None:
 	logger.info(f"prepare_image")
-
-	file_path: str = ""
-	image_queue: list[int] = get_queue()
-	if len(image_queue) == 0:
-		return None
 		
-	wallpaper: WallpaperModel | None = WallpaperModel.query.get(image_queue[0])
+	wallpaper: WallpaperModel | None = WallpaperModel.query.get(get_current_id())
 	if wallpaper is None:
 		return None
 	
@@ -225,8 +220,8 @@ def prepare_image() -> tuple[str, str, int, int, int, bool] | None:
 	
 	time: str = f"{datetime.now().hour:02d}:{datetime.now().minute:02d}"
 	mode: int = wallpaper.mode
-	color: int = wallpaper.color
-	shadow: int = wallpaper.shadow
+	color: int = wallpaper.color.get_epd_color()
+	shadow: int = wallpaper.shadow.get_epd_color()
 	draw_grids: bool = redis_controller.get_draw_grids()
 
 	return file_path, time, mode, color, shadow, draw_grids

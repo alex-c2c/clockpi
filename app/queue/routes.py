@@ -16,7 +16,7 @@ API
 @ns.route("/")
 class QueueRes(Resource):
 	@login_required
-	@ns.response(200, queue_model)
+	@ns.response(200, "List of wallpaper IDs")
 	@ns.response(401, "Authentication Error")
 	@ns.marshal_with(queue_model)
 	def get(self):
