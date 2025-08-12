@@ -16,8 +16,7 @@ API
 @ns.route("/login")
 class LoginRes(Resource):
 	@ns.response(204, "")
-	@ns.response(400, "Bad Request")
-	@ns.response(401, "Authentication Error")
+	@ns.response(401, "Invalid username or password")
 	@ns.expect(login_model)
 	def post(self):
 		data = ns.payload
@@ -28,9 +27,7 @@ class LoginRes(Resource):
 
 @ns.route("/logout")
 class LogoutRes(Resource):
-	@login_required
 	@ns.response(204, "")
-	@ns.response(401, "Authentication Error")
 	def post(self):
 		session.clear()
 
