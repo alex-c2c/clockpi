@@ -13,7 +13,7 @@ def init_session(user: UserModel) -> None:
 	session["id"] = user.id
 	session["username"] = user.username
 	session["dispName"] = user.disp_name
-	session["role"] = user.role
+	session["role"] = user.role.value
 	
 	
 def clear_session() -> None:
