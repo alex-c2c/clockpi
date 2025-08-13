@@ -2,7 +2,8 @@ import getpass
 import logging
 from logging import Logger, getLogger
 
-from app import create_app
+from app import create_app, db
+from app.queue.models import QueueModel
 from app.user.consts import UserRole
 from app.user.logic import create_user
 from app.user.models import UserModel
@@ -37,3 +38,9 @@ def cli_create_super_user() -> None:
 		logger.error(f"Exception occured: {e}")
 	
 	
+@app.cli.command("create-queue")
+def cli_create_queue() -> None:
+	queue: QueueModel = QueueModel(queue="")
+	db.session.add(queue)
+	db.session.commit()
+	logger.info("Created empty queue")

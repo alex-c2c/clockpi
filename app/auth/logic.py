@@ -77,11 +77,11 @@ def login_user(data: dict) -> None:
 	
 	user: UserModel | None = UserModel.query.filter_by(username=username).one_or_none()
 	if user is None:
-		ns.abort(401, "Invalid username or password")
+		ns.abort(400, "Invalid username or password")
 		return
 		
 	if not check_password_hash(user.password, password):
-		ns.abort(401, "Invalid username or password")
+		ns.abort(400, "Invalid username or password")
 		return
 	
 	init_session(user)

@@ -18,7 +18,7 @@ class QueueRes(Resource):
 	@login_required
 	@ns.response(200, "List of wallpaper IDs", model=queue_fields)
 	@ns.response(401, "Authentication Error")
-	@ns.marshal_with(queue_fields)
+	@ns.marshal_list_with(queue_fields)
 	def get(self):
 		queue: list[int] = get_queue_model().get_queue()
 		return {"queue": queue}, 200

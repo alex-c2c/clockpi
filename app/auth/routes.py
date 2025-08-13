@@ -16,7 +16,7 @@ API
 @ns.route("/login")
 class LoginRes(Resource):
 	@ns.response(204, "")
-	@ns.response(401, "Invalid username or password")
+	@ns.response(400, "Invalid username or password")
 	@ns.expect(login_model)
 	def post(self):
 		data = ns.payload

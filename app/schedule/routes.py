@@ -10,6 +10,7 @@ from .logic import *
 
 logger: Logger = getLogger(__name__)
 
+
 """
 API
 """
@@ -67,7 +68,7 @@ class scheduleCreateRes(Resource):
 
 
 @ns.route("/<int:id>")
-@ns.param("id", "Sleep schedule ID")
+@ns.param("id", "Schedule ID")
 class ScheduleRes(Resource):
 	@admin_required
 	@ns.response(204, "")
