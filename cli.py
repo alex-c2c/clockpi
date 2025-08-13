@@ -23,11 +23,12 @@ def cli_create_super_user() -> None:
 		"username": username,
 		"dispName": disp_name,
 		"password": password,
-		"confirmPassword": confirm_password
+		"confirmPassword": confirm_password,
+		"role": UserRole.ADMIN.value
 	}
 
 	try:
-		user: UserModel | None = create_user(data, UserRole.ADMIN)
+		user: UserModel | None = create_user(data)
 		if user is None:
 			logger.error("Unable to create superuser")
 		else:

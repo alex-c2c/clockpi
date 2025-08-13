@@ -159,7 +159,7 @@ def create_schedule(data: dict) -> None:
 		db.session.commit()
 	except Exception as e:
 		logger.error(f"Unable to create new sleep schedule due to {e}")
-		ns.abort(500, "Server error occured")
+		ns.abort(500, "Internal Server Error")
 		return
 	
 	logger.info(f"Created new sleep schedule {new_schedule.id}")
@@ -178,7 +178,7 @@ def delete_schedule(id: int) -> None:
 		db.session.commit()
 	except Exception as e:
 		logger.error(f"Unable to delete sleep schedule {id} due to {e}")
-		ns.abort(500, "Server error occured")
+		ns.abort(500, "Internal Server Error")
 		return
 		
 	logger.info(f"Deleted sleep schedule:{id}")
@@ -223,7 +223,7 @@ def update_schedule(id: int, data: dict) -> None:
 		db.session.commit()
 	except Exception as e:
 		logger.error(f"Unable to update sleep schedule due to {e}")
-		ns.abort(500, "Server error occured")
+		ns.abort(500, "Internal Server Error")
 		return
 	
 	logger.info(f"Updated sleep schedule {id}")

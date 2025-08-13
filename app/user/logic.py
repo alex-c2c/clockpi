@@ -37,7 +37,7 @@ def get_all_users() -> list[dict]:
 	return [user.to_dict() for user in data]
 
 
-def create_user(data: dict, role: UserRole = UserRole.VIEWER) -> UserModel | None:	
+def create_user(data: dict) -> UserModel | None:	
 	username: str = data.get("username", "")
 	if not is_username_valid(username):
 		ns.abort(400, "Invalid username")
@@ -60,14 +60,19 @@ def create_user(data: dict, role: UserRole = UserRole.VIEWER) -> UserModel | Non
 	if not is_password_valid(password):
 		ns.abort(400, "Invalid password")
 		return
-
+		
+	role_str: str | None = data.get("role")
+	if role_str is None or role_str not in UserRole:
+		ns.abort(400, "Invalid role")
+		return
+	
 	disp_name: str = data.get("dispName", "")
 
 	new_user: UserModel = UserModel(
 		username,
 		generate_password_hash(password),
 		disp_name,
-		role
+		UserRole[role_str]
 	)
 
 	try:
@@ -75,7 +80,7 @@ def create_user(data: dict, role: UserRole = UserRole.VIEWER) -> UserModel | Non
 		db.session.commit()
 	except Exception as e:
 		logger.error(f"Unable to create new user with {data=} due to {e=}")
-		ns.abort(500, "Server error occured")
+		ns.abort(500, "Internal Server Error")
 		return
 
 	logger.info(f"User {new_user.id}:{new_user.username} created")
@@ -135,7 +140,7 @@ def update_user(user_id: int, data: dict) -> None:
 		db.session.commit()
 	except Exception as e:
 		logger.error(f"Unable to save user update with {data=} due to {e=}")
-		ns.abort(500, "Server error occured")
+		ns.abort(500, "Internal Server Error")
 		return
 
 	logger.info(f"User {user.id}:{user.username} updated")
@@ -152,7 +157,7 @@ def delete_user(user_id: int) -> None:
 		db.session.commit()
 	except Exception as e:
 		logger.error(f"Unable to delete user {user_id=} due to {e=}")
-		ns.abort(500, "Server error occured")
+		ns.abort(500, "Internal Server Error")
 		return
 
 	logger.info(f"User {user_id} deleted")

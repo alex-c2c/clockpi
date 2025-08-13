@@ -35,22 +35,21 @@ def generate_initial_queue() -> None:
 	random.shuffle(queue)
 
 	#save_queue(queue)
-
-
-def save_queue(model: QueueModel, data: list[int]) -> None:
-	logger.debug(f"Attemping to save_queue {data=}")
 	
-	# Validata queue
+
+def validate_queue(data: list[int]) -> None:
 	for id in data:
 		if not isinstance(id, int):
 			ns.abort(400, "Invalid data in queue")
 			return
 		
-		"""
 		if not db.session.get(WallpaperModel, id):
 			ns.abort(404, "Invalid or missing wallpaper ID")
 			return
-		"""
+
+
+def save_queue(model: QueueModel, data: list[int]) -> None:
+	logger.debug(f"Attemping to save_queue {data=}")
 	
 	model.queue = ",".join(str(id) for id in data)
 	
@@ -58,7 +57,7 @@ def save_queue(model: QueueModel, data: list[int]) -> None:
 		db.session.commit()
 	except Exception as e:
 		logger.error(f"Unable to save queue {data} due to {e}")
-		ns.abort(500, "Server error occured")
+		ns.abort(500, "Internal Server Error")
 		return
 	
 	logger.info(f"Queue {data=} saved")
@@ -110,7 +109,7 @@ def append_to_queue(id: int) -> None:
 	queue: list[int] = model.get_queue()
 	
 	if id in queue:
-		logger.error(f"Unable to append duplicate id {id} to queue")
+		logger.error(f"Duplicate id: {id}")
 		ns.abort(415, "Duplicate ID found")
 		return
 
@@ -123,11 +122,6 @@ def append_to_queue(id: int) -> None:
 
 def move_to_first(id: int | None) -> None:
 	logger.info(f"Attempting to move {id} to front of queue")
-	
-	if id is None:
-		logger.error("Missing parameter 'id'")
-		ns.abort(400, "Bad Request")
-		return
 	
 	model: QueueModel = get_queue_model()
 	queue: list[int] = model.get_queue()

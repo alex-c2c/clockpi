@@ -20,24 +20,23 @@ API
 @ns.route("/")
 class UserListRes(Resource):
 	@login_required
-	@ns.response(200, "List of user fields")
+	@ns.response(200, "Success", model=user_list_model)
 	@ns.response(401, "Authentication Error")
-	@ns.response(403, "Authorization Error")
-	@ns.marshal_with(user_model, as_list=True)
+	@ns.marshal_list_with(user_list_model)
 	def get(self):
 		all_users: list[dict] = get_all_users()
-		return all_users, 200
+		return {"users": all_users}, 200
 
 
 @ns.route("/<int:id>")
+@ns.param("id", "User ID")
 class UserRes(Resource):
 	@admin_required
 	@ns.response(204, "")
-	@ns.response(400, "Bad Request")
 	@ns.response(401, "Authentication Error")
 	@ns.response(403, "Authorization Error")
 	@ns.response(404, "User not found")
-	@ns.response(500, "Server error occured")
+	@ns.response(500, "Internal Server ERror")
 	def delete(self, id: int):
 		delete_user(id)
 		return "", 204
@@ -48,8 +47,8 @@ class UserRes(Resource):
 	@ns.response(401, "Authentication Error")
 	@ns.response(403, "Authorization Error")
 	@ns.response(404, "User not found")
-	@ns.response(500, "Server error occured")
-	@ns.expect(user_update_model)
+	@ns.response(500, "Internal Server Error")
+	@ns.expect(user_update_model, validate=True)
 	def patch(self, id: int):
 		data = ns.payload
 		update_user(id, data)
@@ -62,7 +61,7 @@ class UserCreateRes(Resource):
 	@ns.response(400, "Bad Request")
 	@ns.response(401, "Authentication Error")
 	@ns.response(415, "Username has already been taken")
-	@ns.response(500, "Server error occured")
+	@ns.response(500, "Internal Server Error")
 	@ns.expect(user_create_model, validate=True)
 	def post(self):
 		data = ns.payload

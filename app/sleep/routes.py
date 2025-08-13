@@ -32,7 +32,7 @@ class SleepStatusRes(Resource):
 	@ns.response(200, "Is sleeping now")
 	@ns.response(400, "Bad Request")
 	@ns.response(401, "Authentication Error")
-	@ns.response(500, "server error occured")
+	@ns.response(500, "Internal Server Error")
 	@ns.marshal_with(sleep_status_model)
 	def get(self):		
 		sleep_status: int = get_status()
@@ -57,7 +57,7 @@ class SleepCreateRes(Resource):
 	@ns.response(400, "Bad Request")
 	@ns.response(401, "Authentication Error")
 	@ns.response(403, "Authorization Error")
-	@ns.response(500, "Server error occured")
+	@ns.response(500, "Internal Server Error")
 	@ns.expect(sleep_create_model, validate=True)
 	def post(self):
 		data: dict = ns.payload
@@ -74,7 +74,7 @@ class SleepRes(Resource):
 	@ns.response(401, "Authentication Error")
 	@ns.response(403, "Authorization Error")
 	@ns.response(404, "Missing or invalid ID")
-	@ns.response(500, "Server error occured")
+	@ns.response(500, "Internal Server Error")
 	def delete(self, id: int):
 		delete_schedule(id)
 		return "", 204
@@ -85,7 +85,7 @@ class SleepRes(Resource):
 	@ns.response(401, "Authentication Error")
 	@ns.response(403, "Authorization Error")
 	@ns.response(404, "Missing or invalid ID")
-	@ns.response(500, "Server error occured")
+	@ns.response(500, "Internal Server Error")
 	@ns.expect(sleep_update_model, validate=True)
 	def patch(self, id: int):
 		data = ns.payload
