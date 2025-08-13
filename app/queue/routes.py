@@ -16,9 +16,9 @@ API
 @ns.route("/")
 class QueueRes(Resource):
 	@login_required
-	@ns.response(200, "List of wallpaper IDs", model=queue_model)
+	@ns.response(200, "List of wallpaper IDs", model=queue_fields)
 	@ns.response(401, "Authentication Error")
-	@ns.marshal_with(queue_model)
+	@ns.marshal_with(queue_fields)
 	def get(self):
 		queue: list[int] = get_queue_model().get_queue()
 		return {"queue": queue}, 200
@@ -56,7 +56,7 @@ class SelectRes(Resource):
 	@ns.response(403, "Authorization Error")
 	@ns.response(404, "Missing or invalid ID")
 	@ns.response(500, "Internal Server Error")
-	@ns.expect(queue_select_model, validate=True)
+	@ns.expect(queue_select_fields, validate=True)
 	def patch(self):
 		data: dict = ns.payload
 		move_to_first(data.get("id"))

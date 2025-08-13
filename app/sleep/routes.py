@@ -18,9 +18,9 @@ API
 @ns.route("/")
 class SleepListRes(Resource):
 	@login_required
-	@ns.response(200, "List of sleep schedule fields")
+	@ns.response(200, "List of sleep schedule fields", model=sleep_list_fields)
 	@ns.response(401, "Authentication Error")
-	@ns.marshal_list_with(sleep_model)
+	@ns.marshal_with(sleep_list_fields)
 	def get(self):
 		schedules: list[dict] = get_schedules()
 		return schedules, 200
@@ -29,11 +29,10 @@ class SleepListRes(Resource):
 @ns.route("/status")
 class SleepStatusRes(Resource):
 	@login_required
-	@ns.response(200, "Is sleeping now")
-	@ns.response(400, "Bad Request")
+	@ns.response(200, "Is sleeping now", model=sleep_status_fields)
 	@ns.response(401, "Authentication Error")
 	@ns.response(500, "Internal Server Error")
-	@ns.marshal_with(sleep_status_model)
+	@ns.marshal_with(sleep_status_fields)
 	def get(self):		
 		sleep_status: int = get_status()
 		is_sleep: bool = should_sleep_now()
@@ -58,16 +57,17 @@ class SleepCreateRes(Resource):
 	@ns.response(401, "Authentication Error")
 	@ns.response(403, "Authorization Error")
 	@ns.response(500, "Internal Server Error")
-	@ns.expect(sleep_create_model, validate=True)
+	@ns.expect(sleep_create_fields, validate=True)
 	def post(self):
 		data: dict = ns.payload
 		
 		create_schedule(data)
-   
+
 		return "", 204
 
 
 @ns.route("/<int:id>")
+@ns.param("id", "Sleep schedule ID")
 class SleepRes(Resource):
 	@admin_required
 	@ns.response(204, "")
@@ -86,7 +86,7 @@ class SleepRes(Resource):
 	@ns.response(403, "Authorization Error")
 	@ns.response(404, "Missing or invalid ID")
 	@ns.response(500, "Internal Server Error")
-	@ns.expect(sleep_update_model, validate=True)
+	@ns.expect(sleep_update_fields, validate=True)
 	def patch(self, id: int):
 		data = ns.payload
 		update_schedule(id, data)
