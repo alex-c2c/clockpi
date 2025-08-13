@@ -109,7 +109,7 @@ class FileCurrentRes(Resource):
 		return send_from_directory(DIR_APP_UPLOAD, file_name)
 
 
-@ns.route("/")
+@ns.route("")
 class WallpaperListRes(Resource):
 	@login_required
 	@ns.response(200, "List of wallpaper fields")

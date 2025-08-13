@@ -15,7 +15,7 @@ API
 """
 
 
-@ns.route("/")
+@ns.route("")
 class ScheduleListRes(Resource):
 	@login_required
 	@ns.response(200, "List of schedule fields", model=schedule_list_fields)

@@ -13,7 +13,7 @@ API
 """
 
 
-@ns.route("/")
+@ns.route("")
 class QueueRes(Resource):
 	@login_required
 	@ns.response(200, "List of wallpaper IDs", model=queue_fields)

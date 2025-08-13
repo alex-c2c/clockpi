@@ -15,7 +15,7 @@ logger: Logger = getLogger(__name__)
 API
 """
 
-@ns.route("/")
+@ns.route("")
 class SessionRes(Resource):
 	@ns.response(200, "Success", model=session_model)
 	@ns.response(401, "Authentication Error")

@@ -17,7 +17,7 @@ logger: Logger = getLogger(__name__)
 API
 """
 
-@ns.route("/")
+@ns.route("")
 class UserListRes(Resource):
 	@login_required
 	@ns.response(200, "Success", model=user_list_model)
