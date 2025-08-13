@@ -3,7 +3,7 @@ import atexit
 from flask import Flask
 from flask_cors import CORS
 
-from app import api, api_bp, auth, epd, main, queue, session_pkg, sleep, user, wallpaper
+from app import api, api_bp, auth, epd, main, queue, session_pkg, schedule, user, wallpaper
 from app import create_app, redis_controller
 from logging import Logger, getLogger
 
@@ -26,7 +26,7 @@ epd.append_namespace(api)
 main.append_namespace(api)
 queue.append_namespace(api)
 session_pkg.append_namespace(api)
-sleep.append_namespace(api)
+schedule.append_namespace(api)
 user.append_namespace(api)
 wallpaper.append_namespace(api)
 

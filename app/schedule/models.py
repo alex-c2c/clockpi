@@ -2,8 +2,8 @@ from sqlalchemy.orm import Mapped
 
 from app import db
 
-class SleepModel(db.Model):
-	__tablename__: str = "sleep"
+class ScheduleModel(db.Model):
+	__tablename__: str = "schedule"
 
 	id: Mapped[int]				= db.Column(db.Integer, primary_key=True)
 	days: Mapped[str]			= db.Column(db.String(), nullable=False)
@@ -18,7 +18,7 @@ class SleepModel(db.Model):
 		self.is_enabled = is_enabled
 
 	def __repr__(self) -> str:
-		return f"<Sleep - days:{self.days} start_time:{self.start_time} duration:{self.duration} is_enabled:{self.is_enabled}>"
+		return f"<Schedule - id:{self.id} days:{self.days} start_time:{self.start_time} duration:{self.duration} is_enabled:{self.is_enabled}>"
 		
 	def get_hour_minute(self) -> tuple[int, int]:
 		return (int(self.start_time[0:2]), int(self.start_time[3:5]))

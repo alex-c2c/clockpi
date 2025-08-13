@@ -16,11 +16,11 @@ API
 
 
 @ns.route("/")
-class SleepListRes(Resource):
+class ScheduleListRes(Resource):
 	@login_required
-	@ns.response(200, "List of sleep schedule fields", model=sleep_list_fields)
+	@ns.response(200, "List of schedule fields", model=schedule_list_fields)
 	@ns.response(401, "Authentication Error")
-	@ns.marshal_with(sleep_list_fields)
+	@ns.marshal_with(schedule_list_fields)
 	def get(self):
 		schedules: list[dict] = get_schedules()
 		return schedules, 200
@@ -50,14 +50,14 @@ class SleepStatusRes(Resource):
 	
 
 @ns.route("/create")
-class SleepCreateRes(Resource):
+class scheduleCreateRes(Resource):
 	@admin_required
 	@ns.response(204, "")
 	@ns.response(400, "Bad Request")
 	@ns.response(401, "Authentication Error")
 	@ns.response(403, "Authorization Error")
 	@ns.response(500, "Internal Server Error")
-	@ns.expect(sleep_create_fields, validate=True)
+	@ns.expect(schedule_create_fields, validate=True)
 	def post(self):
 		data: dict = ns.payload
 		
@@ -68,7 +68,7 @@ class SleepCreateRes(Resource):
 
 @ns.route("/<int:id>")
 @ns.param("id", "Sleep schedule ID")
-class SleepRes(Resource):
+class ScheduleRes(Resource):
 	@admin_required
 	@ns.response(204, "")
 	@ns.response(401, "Authentication Error")
@@ -86,7 +86,7 @@ class SleepRes(Resource):
 	@ns.response(403, "Authorization Error")
 	@ns.response(404, "Missing or invalid ID")
 	@ns.response(500, "Internal Server Error")
-	@ns.expect(sleep_update_fields, validate=True)
+	@ns.expect(schedule_update_fields, validate=True)
 	def patch(self, id: int):
 		data = ns.payload
 		update_schedule(id, data)

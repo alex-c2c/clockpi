@@ -9,7 +9,7 @@ from app.consts import *
 
 from . import ns
 from .consts import DAYS_OF_WEEK
-from .models import SleepModel
+from .models import ScheduleModel
 
 logger: Logger = getLogger(__name__)
 
@@ -17,30 +17,6 @@ logger: Logger = getLogger(__name__)
 """""
 LOGIC
 """""
-
-@dataclass
-class SleepSchedule:
-	id: int
-	days: tuple[str]
-	start_time: str
-	duration: int
-	enabled: bool
-
-	def __init__(self):
-		self.id = 0
-		self.days = tuple()
-		self.start_time = "12:00"
-		self.duration = 1
-		self.enabled = False
-
-	def to_dict(self) -> dict:
-		d: dict = {}
-		d["id"] = self.id
-		d["days"] = self.days
-		d["startTime"] = self.start_time
-		d["duration"] = self.duration
-		d["isEnabled"] = self.enabled
-		return d
 
 
 def split_time(time: str) -> tuple[bool, int, int]:
@@ -116,7 +92,7 @@ def validate_days(days: list[str] | None) -> bool:
 
 def get_schedules() -> list[dict]:
 	schedules: list[dict] = []
-	data: list = SleepModel.query.all()
+	data: list = ScheduleModel.query.all()
 
 	for model in data:
 		schedules.append(model.to_dict())
@@ -125,7 +101,7 @@ def get_schedules() -> list[dict]:
 
 
 def create_schedule(data: dict) -> None:
-	logger.info(f"Attempting to create new sleep schedule")
+	logger.info(f"Attempting to create new schedule")
 	
 	days: list[str] = data.get("days", [])
 	if not validate_days(days):
@@ -147,7 +123,7 @@ def create_schedule(data: dict) -> None:
 		ns.abort(400, "Invalid isEnabled")
 		return
 	
-	new_schedule = SleepModel(
+	new_schedule = ScheduleModel(
 		days=",".join(day.lower() for day in days),
 		start_time=start_time,
 		duration=duration,
@@ -158,17 +134,17 @@ def create_schedule(data: dict) -> None:
 		db.session.add(new_schedule)
 		db.session.commit()
 	except Exception as e:
-		logger.error(f"Unable to create new sleep schedule due to {e}")
+		logger.error(f"Unable to create new schedule due to {e}")
 		ns.abort(500, "Internal Server Error")
 		return
 	
-	logger.info(f"Created new sleep schedule {new_schedule.id}")
+	logger.info(f"Created new schedule {new_schedule.id}")
 
 
 def delete_schedule(id: int) -> None:
 	logger.info(f"Attempting to delete schedule:{id}")
 	
-	schedule: SleepModel | None = db.session.get(SleepModel, id)
+	schedule: ScheduleModel | None = db.session.get(ScheduleModel, id)
 	if schedule is None:
 		ns.abort(404, "Missing or invalid ID")
 		return
@@ -177,17 +153,17 @@ def delete_schedule(id: int) -> None:
 		db.session.delete(schedule)
 		db.session.commit()
 	except Exception as e:
-		logger.error(f"Unable to delete sleep schedule {id} due to {e}")
+		logger.error(f"Unable to delete schedule {id} due to {e}")
 		ns.abort(500, "Internal Server Error")
 		return
 		
-	logger.info(f"Deleted sleep schedule:{id}")
+	logger.info(f"Deleted schedule:{id}")
 
 
 def update_schedule(id: int, data: dict) -> None:
-	logger.info(f"Attempting to update sleep schedule")
+	logger.info(f"Attempting to update schedule")
 	
-	schedule: SleepModel | None = db.session.get(SleepModel, id)
+	schedule: ScheduleModel | None = db.session.get(ScheduleModel, id)
 	if schedule is None:
 		ns.abort(404, "Missing or invalid ID")
 		return
@@ -222,11 +198,11 @@ def update_schedule(id: int, data: dict) -> None:
 	try:
 		db.session.commit()
 	except Exception as e:
-		logger.error(f"Unable to update sleep schedule due to {e}")
+		logger.error(f"Unable to update schedule due to {e}")
 		ns.abort(500, "Internal Server Error")
 		return
 	
-	logger.info(f"Updated sleep schedule {id}")
+	logger.info(f"Updated schedule {id}")
 
 
 def get_status() -> int:
@@ -240,7 +216,7 @@ def set_status(status: int) -> None:
 
 def should_sleep_now() -> bool:
 	minute_ranges: list = []
-	schedules: list[SleepModel] = SleepModel.query.all()
+	schedules: list[ScheduleModel] = ScheduleModel.query.all()
 
 	for sch in schedules:
 		if not sch.is_enabled:

@@ -4,12 +4,12 @@ from logging import Logger, getLogger
 from flask import request
 from flask_restx import Resource
 
-from app import epd, queue, redis_controller, sleep
+from app import epd, queue, redis_controller, schedule
 from app.auth.logic import local_apikey_required, login_required
 from app.consts import *
 from app.epd.consts import *
 from app.epd.logic import *
-from app.sleep.logic import *
+from app.schedule.logic import *
 from app.wallpaper.models import WallpaperModel
 
 from . import ns
