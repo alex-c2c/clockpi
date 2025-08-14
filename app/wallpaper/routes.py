@@ -3,7 +3,7 @@ from logging import Logger, getLogger
 from threading import Thread
 
 from flask import current_app, request, send_from_directory
-from flask_restx import Resource
+from flask_restx import Resource, reqparse
 from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
 
@@ -19,6 +19,8 @@ from .logic import *
 
 logger: Logger = getLogger(__name__)
 
+parser = reqparse.RequestParser()
+parser.add_argument("id", type=int, help="Wallpaper ID (0 == current)", default=0)
 
 """
 API
@@ -39,6 +41,7 @@ class UploadRes(Resource):
 		# Check for file in request.files
 		if "file" not in request.files:
 			ns.abort(400, "Missing files")
+			return
 
 		files: list[FileStorage] = request.files.getlist("file")
 
@@ -80,32 +83,22 @@ class UploadRes(Resource):
 		return "", 204
 
 
-@ns.route("/file/<int:id>")
+@ns.route("/file")
 class FileRes(Resource):
 	@local_apikey_required
-	@ns.response(200, "Image file")
+	@ns.response(200, "")
+	@ns.response(400, "Bad Request")
 	@ns.response(401, "Authentication Error")
-	@ns.response(404, "Invalid or missing ID")
-	@ns.response(404, "Invalid or missing file")
-	def get(self, id: int):
-		file_name: str = get_wallpaper_name(id)
-		return send_from_directory(DIR_APP_UPLOAD, file_name)
-
-
-@ns.route("/file/current")
-class FileCurrentRes(Resource):
-	@local_apikey_required
-	@ns.response(200, "Image file")
-	@ns.response(401, "Authentication Error")
-	@ns.response(404, "Invalid or missing ID")
-	@ns.response(404, "Invalid or missing file")
+	@ns.response(404, "Wallpaper resource not found")
+	@ns.response(404, "Wallpaper image not found")
+	@ns.expect(parser)
 	def get(self):
-		queue: list[int] = get_queue_model().get_queue()
-		logger.debug(f"current id: {queue}");
-		if len(queue) == 0:
-			ns.abort(404, "Invalid or missing ID")
-					
-		file_name: str= get_wallpaper_name(queue[0])
+		id: int | None = parser.parse_args().get("id")
+		
+		if id == 0 or id is None:
+			id = get_first_in_queue()
+		
+		file_name: str= get_wallpaper_name(id)
 		return send_from_directory(DIR_APP_UPLOAD, file_name)
 
 

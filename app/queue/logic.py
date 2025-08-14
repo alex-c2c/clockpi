@@ -17,10 +17,23 @@ logger: Logger = getLogger(__name__)
 LOGIC
 """""
 
+
+def get_first_in_queue() -> int | None:
+	models = db.session.scalars(select(QueueModel)).all()
+	if len(models) == 0:
+		return None
+	
+	queue: list[int] = models[0].get_queue()
+	if len(queue) == 0:
+		return None
+	else:
+		return queue[0]
+
+
 def get_queue_model() -> QueueModel:
 	models = db.session.scalars(select(QueueModel)).all()
 	if len(models) == 0:
-		ns.abort(500, "Queue not found!")
+		ns.abort(500, "Queue not found")
 	
 	return models[0]
 	

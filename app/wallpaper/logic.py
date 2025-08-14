@@ -15,7 +15,7 @@ from flask.ctx import AppContext
 from app import db
 from app.consts import *
 from app.epd.consts import *
-from app.queue.logic import append_to_queue, remove_from_queue
+from app.queue.logic import append_to_queue, remove_from_queue, get_first_in_queue
 
 from . import ns
 from .models import WallpaperModel
@@ -305,17 +305,17 @@ def update_wallpaper(id: int, data: dict) -> None:
 		return
 	
 	logger.info(f"Wallpaper {id=} updated")
-	
 
-def get_wallpaper_name(id: int) -> str:
+
+def get_wallpaper_name(id: int | None) -> str:
 	model: WallpaperModel | None = db.session.get(WallpaperModel, id)
 	if model is None:
-		ns.abort(404, "Invalid or missing ID")
+		ns.abort(404, "Wallpaper resource not found")
 		return ""
 		
 	file_path: str = os.path.join(DIR_APP_UPLOAD, f"{model.hash}.bmp")
 	if not os.path.isfile(file_path):
-		ns.abort(404, "Invalid or missing file")
+		ns.abort(404, "Wallpaper file not found")
 		return ""
 		
 	return f"{model.hash}.bmp"
