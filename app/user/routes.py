@@ -35,8 +35,8 @@ class UserRes(Resource):
 	@ns.response(204, "")
 	@ns.response(401, "Authentication Error")
 	@ns.response(403, "Authorization Error")
-	@ns.response(404, "User not found")
-	@ns.response(500, "Internal Server ERror")
+	@ns.response(404, "User resource not found")
+	@ns.response(500, "Internal Server Error")
 	def delete(self, id: int):
 		delete_user(id)
 		return "", 204
@@ -46,7 +46,7 @@ class UserRes(Resource):
 	@ns.response(400, "Bad Request")
 	@ns.response(401, "Authentication Error")
 	@ns.response(403, "Authorization Error")
-	@ns.response(404, "User not found")
+	@ns.response(404, "User resource not found")
 	@ns.response(500, "Internal Server Error")
 	@ns.expect(user_update_model, validate=True)
 	def patch(self, id: int):
@@ -60,7 +60,7 @@ class UserCreateRes(Resource):
 	@ns.response(204, "")
 	@ns.response(400, "Bad Request")
 	@ns.response(401, "Authentication Error")
-	@ns.response(415, "Username has already been taken")
+	@ns.response(409, "Duplicate username")
 	@ns.response(500, "Internal Server Error")
 	@ns.expect(user_create_model, validate=True)
 	def post(self):

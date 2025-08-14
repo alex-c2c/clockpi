@@ -146,7 +146,7 @@ def delete_schedule(id: int) -> None:
 	
 	schedule: ScheduleModel | None = db.session.get(ScheduleModel, id)
 	if schedule is None:
-		ns.abort(404, "Missing or invalid ID")
+		ns.abort(404, "Schedule resource not found")
 		return
 	
 	try:
@@ -165,7 +165,7 @@ def update_schedule(id: int, data: dict) -> None:
 	
 	schedule: ScheduleModel | None = db.session.get(ScheduleModel, id)
 	if schedule is None:
-		ns.abort(404, "Missing or invalid ID")
+		ns.abort(404, "Schedule resource not found")
 		return
 	
 	days: list[str] | None = data.get("days", None)

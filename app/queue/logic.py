@@ -33,7 +33,7 @@ def get_first_in_queue() -> int | None:
 def get_queue_model() -> QueueModel:
 	models = db.session.scalars(select(QueueModel)).all()
 	if len(models) == 0:
-		ns.abort(500, "Queue not found")
+		ns.abort(500, "Queue resource not found")
 	
 	return models[0]
 	
@@ -57,7 +57,7 @@ def validate_queue(data: list[int]) -> None:
 			return
 		
 		if not db.session.get(WallpaperModel, id):
-			ns.abort(404, "Invalid or missing wallpaper ID")
+			ns.abort(404, "Wallpaper resource not found")
 			return
 
 
@@ -123,7 +123,7 @@ def append_to_queue(id: int) -> None:
 	
 	if id in queue:
 		logger.error(f"Duplicate id: {id}")
-		ns.abort(415, "Duplicate ID found")
+		ns.abort(409, "Duplicate ID found")
 		return
 
 	queue.append(id)
@@ -141,7 +141,7 @@ def move_to_first(id: int | None) -> None:
 	
 	if id not in queue:
 		logger.error(f"Unable to find {id} in queue")
-		ns.abort(404, "Invalid or missing ID")
+		ns.abort(404, "ID not found")
 		return
 	
 	size: int = len(queue)
@@ -164,7 +164,7 @@ def remove_from_queue(id: int) -> None:
 
 	if id not in queue:
 		logger.error(f"Unable to find {id} in queue")
-		ns.abort(404, "Missing or invalid ID")
+		ns.abort(404, "ID not found")
 		return
 		
 	size: int = len(queue)

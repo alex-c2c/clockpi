@@ -95,7 +95,7 @@ def update_user(user_id: int, data: dict) -> None:
 
 	user: UserModel | None = db.session.get(UserModel, user_id)
 	if user is None:
-		ns.abort(404, "User not found")
+		ns.abort(404, "User resource not found")
 		return
 
 	current_password: str = data.get("currentPassword", "")
@@ -149,7 +149,7 @@ def update_user(user_id: int, data: dict) -> None:
 def delete_user(user_id: int) -> None:
 	user: UserModel | None = db.session.get(UserModel, user_id)
 	if user is None:
-		ns.abort(404, "User not found")
+		ns.abort(404, "User resource not found")
 		return
 
 	try:

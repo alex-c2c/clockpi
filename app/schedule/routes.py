@@ -19,7 +19,7 @@ API
 @ns.route("")
 class ScheduleListRes(Resource):
 	@login_required
-	@ns.response(200, "List of schedule fields", model=schedule_list_fields)
+	@ns.response(200, "", model=schedule_list_fields)
 	@ns.response(401, "Authentication Error")
 	@ns.marshal_with(schedule_list_fields)
 	def get(self):
@@ -30,7 +30,7 @@ class ScheduleListRes(Resource):
 @ns.route("/status")
 class SleepStatusRes(Resource):
 	@login_required
-	@ns.response(200, "Is sleeping now", model=sleep_status_fields)
+	@ns.response(200, "", model=sleep_status_fields)
 	@ns.response(401, "Authentication Error")
 	@ns.response(500, "Internal Server Error")
 	@ns.marshal_with(sleep_status_fields)
@@ -74,7 +74,7 @@ class ScheduleRes(Resource):
 	@ns.response(204, "")
 	@ns.response(401, "Authentication Error")
 	@ns.response(403, "Authorization Error")
-	@ns.response(404, "Missing or invalid ID")
+	@ns.response(404, "Schedule resource not found")
 	@ns.response(500, "Internal Server Error")
 	def delete(self, id: int):
 		delete_schedule(id)
@@ -85,7 +85,7 @@ class ScheduleRes(Resource):
 	@ns.response(400, "Bad Request")
 	@ns.response(401, "Authentication Error")
 	@ns.response(403, "Authorization Error")
-	@ns.response(404, "Missing or invalid ID")
+	@ns.response(404, "Schedule resource not found")
 	@ns.response(500, "Internal Server Error")
 	@ns.expect(schedule_update_fields, validate=True)
 	def patch(self, id: int):

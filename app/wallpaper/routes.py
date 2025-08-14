@@ -119,7 +119,7 @@ class WallpaperRes(Resource):
 	@ns.response(204, "")
 	@ns.response(401, "Authentication Error")
 	@ns.response(403, "Authorization Error")
-	@ns.response(404, "Invalid or missing ID")
+	@ns.response(404, "Wallpaper resource not found")
 	def delete(self, id: int):
 		remove_wallpaper(id)
 		return "", 204
@@ -128,7 +128,7 @@ class WallpaperRes(Resource):
 	@ns.response(204, "")
 	@ns.response(401, "Authentication Error")
 	@ns.response(403, "Authorization Error")
-	@ns.response(404, "Invalid or missing ID")
+	@ns.response(404, "Wallpaper resource not found")
 	@ns.response(500, "")
 	@ns.expect(wallpaper_update_model)
 	def patch(self, id: int):
