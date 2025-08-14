@@ -112,9 +112,9 @@ class FileCurrentRes(Resource):
 @ns.route("")
 class WallpaperListRes(Resource):
 	@login_required
-	@ns.response(200, "List of wallpaper fields")
+	@ns.response(200, "", wallpaper_model)
 	@ns.response(401, "Authentication Error")
-	@ns.marshal_list_with(wallpaper_model)
+	@ns.marshal_with(wallpaper_model, as_list=True)
 	def get(self):
 		wallpapers: list[dict] = get_wallpapers()
 		return wallpapers, 200

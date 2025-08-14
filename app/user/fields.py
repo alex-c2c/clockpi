@@ -11,10 +11,6 @@ user_model = ns.model("User", {
 	"role": 		fields.String(description="User's access role", enum=[f"{UserRole.ADMIN.value}, {UserRole.USER.value}, {UserRole.VIEWER.value}"])
 })
 
-user_list_model = ns.model("UserList", {
-	"users": fields.List(fields.Nested(user_model))
-})
-
 user_create_model = ns.model("UserCreate", {
 	"username":		 		fields.String(required=True, description="User name"),
 	"dispName": 			fields.String(required=True, description="User's display name"),

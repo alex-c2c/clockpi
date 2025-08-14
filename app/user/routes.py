@@ -20,12 +20,12 @@ API
 @ns.route("")
 class UserListRes(Resource):
 	@login_required
-	@ns.response(200, "Success", model=user_list_model)
+	@ns.response(200, "Success", model=user_model)
 	@ns.response(401, "Authentication Error")
-	@ns.marshal_list_with(user_list_model)
+	@ns.marshal_with(user_model, as_list=True)
 	def get(self):
 		all_users: list[dict] = get_all_users()
-		return {"users": all_users}, 200
+		return all_users, 200
 
 
 @ns.route("/<int:id>")

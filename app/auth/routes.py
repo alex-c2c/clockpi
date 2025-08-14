@@ -5,7 +5,7 @@ from flask_restx import Resource
 
 from . import ns
 from .fields import *
-from app.auth.logic import login_required, login_user
+from app.auth.logic import login_user
 
 logger: Logger = getLogger(__name__)
 
