@@ -10,10 +10,6 @@ schedule_fields = ns.model("schedule", {
 	"isEnabled":	fields.Boolean(description="Enable this schedule")
 })
 
-schedule_list_fields = ns.model("ScheduleList", {
-	"schedules":	fields.List(fields.Nested(schedule_fields), description="List of schedule fields")
-})
-
 sleep_status_fields = ns.model("SleepStatus", {
 	"isSleep": fields.Boolean(description="Is sleeping?")
 })

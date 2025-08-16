@@ -19,9 +19,9 @@ API
 @ns.route("")
 class ScheduleListRes(Resource):
 	@login_required
-	@ns.response(200, "", model=schedule_list_fields)
+	@ns.response(200, "", model=[schedule_fields])
 	@ns.response(401, "Authentication Error")
-	@ns.marshal_with(schedule_list_fields)
+	@ns.marshal_with(schedule_fields, as_list=True)
 	def get(self):
 		schedules: list[dict] = get_schedules()
 		return schedules, 200

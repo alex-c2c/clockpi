@@ -71,7 +71,7 @@ def local_apikey_required(func):
 	return decorator
 
 
-def login_user(data: dict) -> None:
+def login_user(data: dict) -> UserModel | None:
 	username: str = data.get("username", "")
 	password: str = data.get("password", "")
 	
@@ -85,3 +85,5 @@ def login_user(data: dict) -> None:
 		return
 	
 	init_session(user)
+	
+	return user

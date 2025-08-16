@@ -164,8 +164,8 @@ def create_wallpaper(app_context: AppContext, file_name: str) -> None:
 	process_result: bool = process_image(
 		file_path=temp_path,
 		dest_path=processed_path,
-		canvas_size=(EPD_WIDTH, EPD_WIDTH),
-		image_size=(EPD_WIDTH, EPD_WIDTH),
+		canvas_size=(EPD_WIDTH, EPD_HEIGHT),
+		image_size=(EPD_WIDTH, EPD_HEIGHT),
 		image_pos=(0, 0),
 		nc=EPD_NC
 	)
