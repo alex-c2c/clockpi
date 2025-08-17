@@ -16,12 +16,12 @@ API
 @ns.route("")
 class QueueRes(Resource):
 	@login_required
-	@ns.response(200, "", model=queue_fields)
+	@ns.response(200, "", model=[int])
 	@ns.response(401, "Authentication Error")
-	@ns.marshal_list_with(queue_fields)
+	@ns.marshal_list_with([int])
 	def get(self):
 		queue: list[int] = get_queue_model().get_queue()
-		return {"queue": queue}, 200
+		return queue, 200
 
 
 @ns.route("/shuffle")

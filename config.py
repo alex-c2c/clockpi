@@ -19,6 +19,6 @@ class DevConfig(Config):
 
 class ProdConfig(Config):
 	DEBUG: bool = False
-	SECRET_KEY: str = os.getenv("SECRET_KEY")
-	SQLALCHEMY_DATABASE_URI: str = os.getenv("DATABASE_URL")
-	REDIS_URL: str = os.getenv("REDIS_URL")
+	SECRET_KEY: str | None = os.getenv("SECRET_KEY")
+	SQLALCHEMY_DATABASE_URI: str | None = os.getenv("DATABASE_URL")
+	REDIS_URL: str | None = os.getenv("REDIS_URL")
