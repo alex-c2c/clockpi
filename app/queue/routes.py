@@ -18,7 +18,6 @@ class QueueRes(Resource):
 	@login_required
 	@ns.response(200, "", model=[int])
 	@ns.response(401, "Authentication Error")
-	@ns.marshal_list_with([int])
 	def get(self):
 		queue: list[int] = get_queue_model().get_queue()
 		return queue, 200
