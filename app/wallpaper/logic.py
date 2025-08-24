@@ -141,7 +141,7 @@ def process_image(
 
 
 def create_wallpaper(app_context: AppContext, file_name: str) -> None:
-	logger.info(f"Attempting to process {file_name} and create new wallpaper")
+	logger.info(f"Attempting to process {file_name} and create new wallpa")
 	
 	app_context.push()
 
@@ -274,13 +274,30 @@ def update_wallpaper(id: int, data: dict) -> None:
 		ns.abort(404, "Invalid or missing ID")
 		return
 	
-	mode: int | None = data.get("mode")
-	if mode is not None:
-		if mode < TIMEMODE_OFF or mode > TIMEMODE_FULL_3:
-			ns.abort(400, "Invalid mode")
-			return
-		model.mode = mode
+	x: int | None = data.get("x")
+	if x is not None:
+		if x < 0 or x > 100:
+			ns.abort(400, "Invalid x")
+		model.x = x
+
+	y: int | None = data.get("y")
+	if y is not None:
+		if y < 0 or y > 100:
+			ns.abort(400, "Invalid y")
+		model.y = y
+
+	w: int | None = data.get("w")
+	if w is not None:
+		if w <= 0 or w > 100:
+			ns.abort(400, "Invalid w")
+		model.w = w
 	
+	h: int | None = data.get("h")
+	if h is not None:
+		if h <= 0 or h > 100:
+			ns.abort(400, "Invalid h")
+		model.h = h
+			
 	color: str | None = data.get("color")
 	if color is not None:
 		if color.upper() not in Color:

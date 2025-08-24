@@ -3,16 +3,23 @@ from flask_restx import fields
 from . import ns
 
 wallpaper_model = ns.model("Wallpaper", {
-	"name": fields.String(required=True),
-	"hash": fields.String(required=True),
-	"size": fields.Integer(required=True),
-	"mode": fields.Integer(required=True),
-	"color": fields.String(required=True),
-	"shadow": fields.String(required=True)
+	"id":			fields.Integer(),
+	"name": 		fields.String(),
+	"hash": 		fields.String(),
+	"size": 		fields.Integer(),
+	"x":	 		fields.Integer(),
+	"y":			fields.Integer(),
+	"w":	 		fields.Integer(),
+	"h":			fields.Integer(),
+	"color": 		fields.String(),
+	"shadow": 		fields.String()
 })
 
 wallpaper_update_model = ns.model("WallpaperUpdate", {
-	"mode": fields.Integer(),
-	"color": fields.String(),
-	"shadow": fields.String()
+	"x":		fields.Integer(),
+	"y":		fields.Integer(),
+	"w":		fields.Integer(),
+	"h":		fields.Integer(),
+	"color": 	fields.String(),
+	"shadow": 	fields.String()
 })

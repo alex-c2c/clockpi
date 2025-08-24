@@ -51,14 +51,8 @@ class Color(Enum):
 
 
 # Offsets
-SHADOW_OFFSET_X: int = -5
-SHADOW_OFFSET_Y: int = 5
+TEXT_OFFSET_X: int = 10
+TEXT_OFFSET_Y: int = 0
 
-SECT_9_OFFSET_X: int = 33
-SECT_9_OFFSET_Y: int = 25
-
-SECT_6_OFFSET_X: int = 30
-SECT_6_OFFSET_Y: int = -10
-
-SECT_4_OFFSET_X: int = 30
-SECT_4_OFFSET_Y: int = 30
+SHADOW_OFFSET_X: int = -10
+SHADOW_OFFSET_Y: int = 10

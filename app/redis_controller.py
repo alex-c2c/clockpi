@@ -110,7 +110,7 @@ def rset(key: str, value: str) -> None:
 
 
 def rpublish(ch: str,id: str, msg: str) -> None:
-	logger.info(f"rpublish {ch=} {msg=}")
+	#logger.info(f"rpublish {ch=} {msg=}")
 
 	global redis_client
 	redis_client.publish(f"{ch}_{id}", msg)

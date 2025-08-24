@@ -22,99 +22,6 @@ logger: Logger = getLogger(__name__)
 LOGIC
 """""
 
-def get_time_pos(mode: int) -> tuple[int, int]:
-	# 9 Section
-	if mode == TIMEMODE_SECT_9_TOP_LEFT:
-		return 0 * int(int(EPD_WIDTH / 3)) + SECT_9_OFFSET_X, 0 * int(int(EPD_HEIGHT / 3)) + SECT_9_OFFSET_Y
-	elif mode == TIMEMODE_SECT_9_TOP_CENTER:
-		return 1 * int(EPD_WIDTH / 3) + SECT_9_OFFSET_X, 0 * int(EPD_HEIGHT / 3) + SECT_9_OFFSET_Y
-	elif mode == TIMEMODE_SECT_9_TOP_RIGHT:
-		return 2 * int(EPD_WIDTH / 3) + SECT_9_OFFSET_X, 0 * int(EPD_HEIGHT / 3) + SECT_9_OFFSET_Y
-	elif mode == TIMEMODE_SECT_9_MIDDLE_LEFT:
-		return 0 * int(EPD_WIDTH / 3) + SECT_9_OFFSET_X, 1 * int(EPD_HEIGHT / 3) + SECT_9_OFFSET_Y
-	elif mode == TIMEMODE_SECT_9_MIDDLE_CENTER:
-		return 1 * int(EPD_WIDTH / 3) + SECT_9_OFFSET_X, 1 * int(EPD_HEIGHT / 3) + SECT_9_OFFSET_Y
-	elif mode == TIMEMODE_SECT_9_MIDDLE_RIGHT:
-		return 2 * int(EPD_WIDTH / 3) + SECT_9_OFFSET_X, 1 * int(EPD_HEIGHT / 3) + SECT_9_OFFSET_Y
-	elif mode == TIMEMODE_SECT_9_BOTTOM_LEFT:
-		return 0 * int(EPD_WIDTH / 3) + SECT_9_OFFSET_X, 2 * int(EPD_HEIGHT / 3) + SECT_9_OFFSET_Y
-	elif mode == TIMEMODE_SECT_9_BOTTOM_CENTER:
-		return 1 * int(EPD_WIDTH / 3) + SECT_9_OFFSET_X, 2 * int(EPD_HEIGHT / 3) + SECT_9_OFFSET_Y
-	elif mode == TIMEMODE_SECT_9_BOTTOM_RIGHT:
-		return 2 * int(EPD_WIDTH / 3) + SECT_9_OFFSET_X, 2 * int(EPD_HEIGHT / 3) + SECT_9_OFFSET_Y
-
-	# 6 Section
-	elif mode == TIMEMODE_SECT_6_TOP_LEFT:
-		return 0 * int(EPD_WIDTH / 2) + SECT_6_OFFSET_X, 0 * int(EPD_HEIGHT / 3) + SECT_6_OFFSET_Y
-	elif mode == TIMEMODE_SECT_6_TOP_RIGHT:
-		return 1 * int(EPD_WIDTH / 2) + SECT_6_OFFSET_X, 0 * int(EPD_HEIGHT / 3) + SECT_6_OFFSET_Y
-	elif mode == TIMEMODE_SECT_6_MIDDLE_LEFT:
-		return 0 * int(EPD_WIDTH / 2) + SECT_6_OFFSET_X, 1 * int(EPD_HEIGHT / 3) + SECT_6_OFFSET_Y
-	elif mode == TIMEMODE_SECT_6_MIDDLE_RIGHT:
-		return 1 * int(EPD_WIDTH / 2) + SECT_6_OFFSET_X, 1 * int(EPD_HEIGHT / 3) + SECT_6_OFFSET_Y
-	elif mode == TIMEMODE_SECT_6_BOTTOM_LEFT:
-		return 0 * int(EPD_WIDTH / 2) + SECT_6_OFFSET_X, 2 * int(EPD_HEIGHT / 3) + SECT_6_OFFSET_Y
-	elif mode == TIMEMODE_SECT_6_BOTTOM_RIGHT:
-		return 1 * int(EPD_WIDTH / 2) + SECT_6_OFFSET_X, 2 * int(EPD_HEIGHT / 3) + SECT_6_OFFSET_Y
-
-	# 4 Section
-	elif mode == TIMEMODE_SECT_4_TOP_LEFT:
-		return 0 * int(EPD_WIDTH / 2) + SECT_4_OFFSET_X, 0 * int(int(EPD_HEIGHT / 2)) + SECT_4_OFFSET_Y
-	elif mode == TIMEMODE_SECT_4_TOP_RIGHT:
-		return (
-			1 * int(EPD_WIDTH / 2) + +SECT_4_OFFSET_X,
-			0 * int(EPD_HEIGHT / 2) + SECT_4_OFFSET_Y,
-		)
-	elif mode == TIMEMODE_SECT_4_BOTTOM_LEFT:
-		return (
-			0 * int(EPD_WIDTH / 2) + +SECT_4_OFFSET_X,
-			1 * int(EPD_HEIGHT / 2) + SECT_4_OFFSET_Y,
-		)
-	elif mode == TIMEMODE_SECT_4_BOTTOM_RIGHT:
-		return (
-			1 * int(EPD_WIDTH / 2) + +SECT_4_OFFSET_X,
-			1 * int(EPD_HEIGHT / 2) + SECT_4_OFFSET_Y,
-		)
-
-	# Full Screen
-	elif mode == TIMEMODE_FULL_1:
-		return 150, 100
-	elif mode == TIMEMODE_FULL_2:
-		return 88, 65
-	elif mode == TIMEMODE_FULL_3:
-		return 15, 30
-	else:
-		return 0, 0
-
-
-def get_font(mode: int) -> FreeTypeFont:
-	if mode == TIMEMODE_FULL_1:
-		return PImgFont.truetype(os.path.join(DIR_FONT, "Roboto-Bold.ttf"), 200)
-	elif mode == TIMEMODE_FULL_2:
-		return PImgFont.truetype(os.path.join(DIR_FONT, "Roboto-Bold.ttf"), 250)
-	elif mode == TIMEMODE_FULL_3:
-		return PImgFont.truetype(os.path.join(DIR_FONT, "Roboto-Bold.ttf"), 300)
-	elif (
-		mode == TIMEMODE_SECT_4_TOP_LEFT
-		or mode == TIMEMODE_SECT_4_TOP_RIGHT
-		or mode == TIMEMODE_SECT_4_BOTTOM_LEFT
-		or mode == TIMEMODE_SECT_4_BOTTOM_RIGHT
-	):
-		return PImgFont.truetype(os.path.join(DIR_FONT, "Roboto-Bold.ttf"), 130)
-
-	elif (
-		mode == TIMEMODE_SECT_6_TOP_LEFT
-		or mode == TIMEMODE_SECT_6_TOP_RIGHT
-		or mode == TIMEMODE_SECT_6_MIDDLE_LEFT
-		or mode == TIMEMODE_SECT_6_MIDDLE_RIGHT
-		or mode == TIMEMODE_SECT_6_BOTTOM_LEFT
-		or mode == TIMEMODE_SECT_6_BOTTOM_RIGHT
-	):
-		return PImgFont.truetype(os.path.join(DIR_FONT, "Roboto-Bold.ttf"), 130)
-	else:
-		return PImgFont.truetype(os.path.join(DIR_FONT, "Roboto-Bold.ttf"), 80)
-
-
 def draw_grids(draw: ImageDraw) -> None:
 	# White every 10px
 	for x in range(80):
@@ -169,13 +76,16 @@ def convert_image_to_buffer(image:Image) -> list[int]:
 def process_image(
 	file_path: str,
 	time: str,
-	mode: int,
+	x: int,
+	y: int,
+	w: float,
+	h: float,
 	color: int,
 	shadow: int,
 	draw_grid: bool
 ):
-	logger.info(f"process_image {file_path=} {time=} {mode=} {color=} {shadow=} {draw_grid=}")
-	
+	logger.info(f"process_image {file_path=} {time=} {x=} {y=} {w=} {h=} {color=} {shadow=} {draw_grid=}")
+
 	# Create image
 	if file_path == "" or not os.path.isfile(file_path):
 		image: Image = PImg.new("RGB", (EPD_WIDTH, EPD_HEIGHT))
@@ -189,42 +99,27 @@ def process_image(
 	if draw_grid:
 		draw_grids(draw)
 
-	# Draw time
-	if mode != TIMEMODE_OFF and time != "":
-		x, y = get_time_pos(mode)
-		font: FreeTypeFont = get_font(mode)
+	x_pos: int = int((x * 0.01) * EPD_WIDTH)
+	y_pos: int = int((y * 0.01) * EPD_HEIGHT)
+	width: float = (w * 0.01) * EPD_WIDTH
+	font_path: str = os.path.join(DIR_FONT, "RobotoMono-Bold.ttf")
+	font_size: int = 10
+	font: FreeTypeFont = PImgFont.truetype(font_path, font_size)
+	
+	# get the correct font size
+	text_width = draw.textlength(time, font=font)
+	while text_width < width:
+		font_size += 1
+		font = PImgFont.truetype(font_path, font_size)
+		text_width = draw.textlength(time, font=font)
+	
+	# draw shadow text first
+	draw.text((x_pos + TEXT_OFFSET_X + SHADOW_OFFSET_X * w * 0.01, y_pos + TEXT_OFFSET_Y + SHADOW_OFFSET_Y * w * 0.01), time, shadow, font, anchor="lt")
 
-		# draw shadow text first
-		draw.text((x + SHADOW_OFFSET_X, y + SHADOW_OFFSET_Y), time, shadow, font)
-
-		# draw text next
-		draw.text((x, y), time, color, font)
-
+	# draw text next
+	draw.text((x_pos + TEXT_OFFSET_X, y_pos + TEXT_OFFSET_Y), time, color, font, anchor="lt")
+	
 	return image
-
-
-def prepare_image() -> tuple[str, str, int, int, int, bool] | None:
-	logger.info(f"prepare_image")
-		
-	wallpaper: WallpaperModel | None = WallpaperModel.query.get(get_current_id())
-	if wallpaper is None:
-		return None
-	
-	hash: str = wallpaper.hash
-	if len(hash) == 0:
-		return None
-
-	file_path: str = os.path.join(DIR_APP_UPLOAD, f"{hash}.bmp")
-	if not os.path.isfile(file_path):
-		return None
-	
-	time: str = f"{datetime.now().hour:02d}:{datetime.now().minute:02d}"
-	mode: int = wallpaper.mode
-	color: int = wallpaper.color.get_epd_color()
-	shadow: int = wallpaper.shadow.get_epd_color()
-	draw_grids: bool = redis_controller.get_draw_grids()
-
-	return file_path, time, mode, color, shadow, draw_grids
 
 
 def get_busy() -> bool:
@@ -234,19 +129,29 @@ def get_busy() -> bool:
 def update_clock_display():
 	logger.info(f"update_clock_display")
 	
-	res: tuple[str, str, int, int, int, bool] | None = prepare_image()
-	if res is None:
+	wallpaper: WallpaperModel | None = WallpaperModel.query.get(get_current_id())
+	if wallpaper is None:
 		return
 
-	file_path: str = res[0]
-	time: str = res[1]
-	mode: int = res[2]
-	color: int = res[3]
-	shadow: int = res[4]
-	draw_grids: bool = res[5]
+	hash: str = wallpaper.hash
+	if len(hash) == 0:
+		return
+
+	file_path: str = os.path.join(DIR_APP_UPLOAD, f"{hash}.bmp")
+	if not os.path.isfile(file_path):
+		return
+
+	time: str = f"{datetime.now().hour:02d}:{datetime.now().minute:02d}"
+	x: int = wallpaper.x
+	y: int = wallpaper.y
+	w: float = wallpaper.w
+	h: float = wallpaper.h
+	color: int = wallpaper.color.get_epd_color()
+	shadow: int = wallpaper.shadow.get_epd_color()
+	draw_grids: bool = redis_controller.get_draw_grids()
 	
-	image = process_image(file_path, time, mode, color, shadow, draw_grids)
-	
+	image = process_image(file_path, time, x, y, w, h, color, shadow, draw_grids)
+		
 	buffer: list[int] = convert_image_to_buffer(image)
 	buffer_str: str = ":".join(str(e) for e in buffer)
 	
@@ -258,9 +163,30 @@ def clear_clock_display() -> None:
 	redis_controller.rpublish(R_CH_PUB, "1", R_MSG_CLEAR)
 
 
-def update_frame_display() -> None:
-	...
+def save_current_to_temp() -> None:
+	logger.info(f"save_current_to_temp")
 	
+	wallpaper: WallpaperModel | None = WallpaperModel.query.get(get_current_id())
+	if wallpaper is None:
+		return
 
-def clear_frame_display() -> None:
-	...
+	hash: str = wallpaper.hash
+	if len(hash) == 0:
+		return
+
+	file_path: str = os.path.join(DIR_APP_UPLOAD, f"{hash}.bmp")
+	if not os.path.isfile(file_path):
+		return
+
+	time: str = f"{datetime.now().hour:02d}:{datetime.now().minute:02d}"
+	x: int = wallpaper.x
+	y: int = wallpaper.y
+	w: float = wallpaper.w
+	h: float = wallpaper.h
+	color: int = wallpaper.color.get_epd_color()
+	shadow: int = wallpaper.shadow.get_epd_color()
+	draw_grids: bool = redis_controller.get_draw_grids()
+	
+	image = process_image(file_path, time, x, y, w, h, color, shadow, draw_grids)
+	
+	image.save(os.path.join(DIR_APP_UPLOAD, f"test.bmp"))
