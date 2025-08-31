@@ -4,27 +4,21 @@ from logging import Logger, getLogger
 from flask import request
 from flask_restx import Resource
 
-from app import epd, queue, redis_controller, schedule
-from app.auth.logic import local_apikey_required, login_required
-from app.consts import *
-from app.epd.consts import *
-from app.epd.logic import *
-from app.schedule.logic import *
-from app.wallpaper.models import WallpaperModel
+from app import redis_controller
+from app.auth.logic import local_apikey_required
+from app.consts import SLEEP_STATUS_AWAKE, SLEEP_STATUS_SLEEP, R_SETTINGS_DRAW_GRIDS
+from app.epd.logic import clear_clock_display, update_clock_display
+from app.schedule.logic import should_sleep_now, get_status, set_status
+from app.queue.logic import shuffle_queue, shift_next
 
 from . import ns
 
 logger: Logger = getLogger(__name__)
 
+
 """
 API
 """
-
-@ns.route("/time")
-class TimeRes(Resource):
-    @login_required
-    def get(self):
-        return {"time": time.time()}, 200
 
 
 @ns.route("/tick")
@@ -43,6 +37,30 @@ class TickRes(Resource):
 			if sleep_status == SLEEP_STATUS_SLEEP:
 				set_status(SLEEP_STATUS_AWAKE)
 
+		return "", 204
+
+
+@ns.route("/queue/shuffle")
+class QueueShuffleRes(Resource):
+	@local_apikey_required
+	@ns.response(204, "")
+	@ns.response(401, "Authentication Error")
+	@ns.response(403, "Authorization Error")
+	@ns.response(500, "Internal Server Error")
+	def get(self):
+		shuffle_queue()
+		return "", 204
+		
+
+@ns.route("/queue/next")
+class QueueNextRes(Resource):
+	@local_apikey_required
+	@ns.response(204, "")
+	@ns.response(401, "Authentication Error")
+	@ns.response(403, "Authorization Error")
+	@ns.response(500, "Internal Server Error")
+	def get(self):
+		shift_next()
 		return "", 204
 
 
