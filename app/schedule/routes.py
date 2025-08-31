@@ -37,7 +37,7 @@ class SleepStatusRes(Resource):
 	def get(self):		
 		sleep_status: int = get_status()
 		is_sleep: bool = should_sleep_now()
-
+		
 		if is_sleep:
 			if sleep_status == SLEEP_STATUS_AWAKE:
 				set_status(SLEEP_STATUS_SLEEP)

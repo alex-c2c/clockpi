@@ -1,6 +1,6 @@
 import os
 
-bind = "0.0.0.0:5001"
+bind = "127.0.0.1:5001"
 workers = 2
 threads = 2
 preload_app = True

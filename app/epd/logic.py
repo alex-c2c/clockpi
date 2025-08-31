@@ -155,12 +155,12 @@ def update_clock_display():
 	logger.debug(f"{len(buffer)=}")
 	#buffer_str: str = ":".join(str(e) for e in buffer)
 
-	redis_controller.rpublish(f"{R_CH_DRAW}_1", encoded_data)
+	redis_controller.rpublish(f"{R_CH_DRAW}_10.0.20.2", encoded_data)
 
 
 def clear_clock_display() -> None:
 	logger.debug(f"clear_clock_display")
-	redis_controller.rpublish(f"{R_CH_CLEAR}_1", "")
+	redis_controller.rpublish(f"{R_CH_CLEAR}_10.0.20.2", "")
 
 
 def save_current_to_temp() -> None:
