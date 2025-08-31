@@ -24,7 +24,15 @@ class ScheduleModel(db.Model):
 		self.is_enabled = is_enabled
 
 	def __repr__(self) -> str:
-		return f"<Schedule - id:{self.id} days:{self.days} start_time:{self.start_time} duration:{self.duration} is_enabled:{self.is_enabled} created_at:{self.created_at} updated_at:{self.updated_at}>"
+		return f"<Schedule - \
+			id:{self.id} \
+			days:{self.days} \
+			start_time:{self.start_time} \
+			duration:{self.duration} \
+			is_enabled:{self.is_enabled} \
+			created_at:{self.created_at} \
+			updated_at:{self.updated_at}\
+			>"
 		
 	def get_hour_minute(self) -> tuple[int, int]:
 		return (int(self.start_time[0:2]), int(self.start_time[3:5]))
@@ -36,4 +44,6 @@ class ScheduleModel(db.Model):
 			"startTime": self.start_time,
 			"duration": self.duration,
 			"isEnabled": self.is_enabled,
+			"createdAt": self.created_at,
+			"updatedAt": self.updated_at,
 		}

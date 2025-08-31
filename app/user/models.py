@@ -27,7 +27,13 @@ class UserModel(db.Model):
 		self.role = role
 
 	def __repr__(self) -> str:
-		return f"<User - username:{self.username} | disp_name:{self.disp_name} | role:{self.role} | created_at:{self.created_at} | updated_at:{self.updated_at}>"
+		return f"<User - \
+			username:{self.username} \
+			disp_name:{self.disp_name} \
+			role:{self.role} \
+			created_at:{self.created_at} \
+			updated_at:{self.updated_at}\
+			>"
 
 	def to_dict(self) -> dict:
 		d: dict = {}
@@ -35,5 +41,7 @@ class UserModel(db.Model):
 		d["username"] = self.username
 		d["dispName"] = self.disp_name
 		d["role"] = self.role.value
+		d["createdAt"] = self.created_at
+		d["updatedAt"] = self.updated_at
 		
 		return d

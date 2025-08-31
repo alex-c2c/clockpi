@@ -22,8 +22,8 @@ class WallpaperModel(db.Model):
 	size: 		Mapped[int] 		= mapped_column(Integer, nullable=False)
 	x:	 		Mapped[int] 		= mapped_column(Integer, nullable=False, default=0)
 	y: 			Mapped[int] 		= mapped_column(Integer, nullable=False, default=0)
-	w: 			Mapped[float] 		= mapped_column(Float(precision=1), nullable=False, default=9)
-	h:			Mapped[float] 		= mapped_column(Float(precision=1), nullable=False, default=5)
+	w: 			Mapped[float] 		= mapped_column(Float(precision=1), nullable=False, default=30.0)
+	h:			Mapped[float] 		= mapped_column(Float(precision=1), nullable=False, default=12.9)
 	color: 		Mapped[Color] 		= mapped_column(ENUM(Color), nullable=False, default=Color.WHITE)
 	shadow: 	Mapped[Color]		= mapped_column(ENUM(Color), nullable=False, default=Color.BLACK)
 	created_at:	Mapped[datetime] 	= mapped_column(DateTime, nullable=False, default=datetime.now(timezone("Asia/Singapore")))
@@ -37,8 +37,8 @@ class WallpaperModel(db.Model):
 		size: int,
 		x: int = 0,
 		y: int = 0,
-		w: float = 9,
-		h: float = 5,
+		w: float = 30.0,
+		h: float = 12.9,
 		color: Color = Color.WHITE,
 		shadow: Color = Color.BLACK,
 	):
@@ -66,7 +66,22 @@ class WallpaperModel(db.Model):
 		d["h"] = self.h
 		d["color"] = self.color.value
 		d["shadow"] = self.shadow.value
+		d["createdAt"] = self.created_at
+		d["updatedAt"] = self.updated_at
 		return d
 
 	def __repr__(self):
-		return f"<Wallpaper - name:{self.name} hash:{self.hash} size:{self.size} file_name:{self.file_name} x:{self.x} y:{self.y} w:{self.w} h:{self.h} color:{self.color} shadow:{self.shadow}>"
+		return f"<Wallpaper - \
+			name:{self.name} \
+			hash:{self.hash} \
+			size:{self.size} \
+			file_name:{self.file_name} \
+			x:{self.x} \
+			y:{self.y} \
+			w:{self.w} \
+			h:{self.h} \
+			color:{self.color} \
+			shadow:{self.shadow} \
+			created_at:{self.created_at} \
+			updated_at:{self.updated_at}\
+			>"
