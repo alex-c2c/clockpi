@@ -160,7 +160,7 @@ def update_clock_display():
 
 def clear_clock_display() -> None:
 	logger.debug(f"clear_clock_display")
-	redis_controller.rpublish(f"{R_CH_CLEAR}_10.0.20.2", "")
+	redis_controller.rpublish(f"{R_CH_CLEAR}_10.0.20.2", "clear")
 
 
 def save_current_to_temp() -> None:
