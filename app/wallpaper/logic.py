@@ -338,7 +338,7 @@ def update_wallpaper(id: int, data: dict) -> None:
 	if shadow is not None:
 		if sys.version_info < (3, 13):
 			colors: list[str] = [str(c.value) for c in Color]
-			if shadowx.upper() not in colors:
+			if shadow.upper() not in colors:
 				logger.error(f"Invalid shadow: {shadow}")
 				ns.abort(400, "Invalid shadow")
 				return				
