@@ -1,10 +1,12 @@
 import hashlib
 import os
-import shutil
 import numpy as np
+import shutil
+import sys
 
 from datetime import datetime
 from logging import Logger, getLogger
+
 from PIL.Image import Image
 from PIL import Image as Img
 from PIL import ImageFilter
@@ -319,18 +321,32 @@ def update_wallpaper(id: int, data: dict) -> None:
 
 	color: str | None = data.get("color")
 	if color is not None:
-		if color.upper() not in Color:
-			logger.error(f"Invalid color {color}")
-			ns.abort(400, "Invalid color")
-			return
+		if sys.version_info < (3, 13):
+			colors: list[str] = [str(c.value) for c in Color]
+			if color.upper() not in colors:
+				logger.error(f"Invalid color {color}")
+				ns.abort(400, "Invalid color")
+				return
+		else:
+			if color.upper() not in Color:
+				logger.error(f"Invalid color {color}")
+				ns.abort(400, "Invalid color")
+				return
 		model.color = Color[color.upper()]
 
 	shadow: int | None = data.get("shadow")
 	if shadow is not None:
-		if shadow.upper() not in Color:
-			logger.error(f"Invalid shadow: {shadow}")
-			ns.abort(400, "Invalid shadow")
-			return
+		if sys.version_info < (3, 13):
+			colors: list[str] = [str(c.value) for c in Color]
+			if shadowx.upper() not in colors:
+				logger.error(f"Invalid shadow: {shadow}")
+				ns.abort(400, "Invalid shadow")
+				return				
+		else:
+			if shadow.upper() not in Color:
+				logger.error(f"Invalid shadow: {shadow}")
+				ns.abort(400, "Invalid shadow")
+				return
 		model.shadow = Color[shadow.upper()]
 
 	model.updated_at = datetime.now(timezone("Asia/Singapore"))

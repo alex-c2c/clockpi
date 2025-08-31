@@ -134,9 +134,15 @@ def update_user(user_id: int, data: dict) -> None:
 
 	role_str: str = data.get("role", "")
 	if len(role_str) > 0:
-		if role_str not in UserRole:
-			ns.abort(400, "Invalid role")
-			return
+		if sys.version_info < (3, 13):
+			roles: list[str] = [str(ur.value) for ur in UserRole]
+			if role_str not in roles:
+				ns.abort(400, "Invalid role")
+				return
+		else:
+			if role_str not in UserRole:
+				ns.abort(400, "Invalid role")
+				return
 
 		if myself.role != UserRole.ADMIN:
 			ns.abort(403, "Authorization Error")
