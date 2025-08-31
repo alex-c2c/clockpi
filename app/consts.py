@@ -14,6 +14,8 @@ REDIS CONSTS
 """
 R_CH_SUB: str = "clockpi"
 R_CH_PUB: str = "epdpi"
+R_CH_DRAW: str = "epdpi_draw"
+R_CH_CLEAR: str = "epdpi_clear"
 
 R_MSG_CLEAR: str = "clear"
 R_MSG_DRAW: str = "draw"

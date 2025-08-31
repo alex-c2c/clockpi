@@ -11,6 +11,7 @@ from logging import Logger, getLogger
 logger: Logger = getLogger(__name__)
 logger.info("running clockpi.py")
 
+
 def on_app_exit() -> None:
 	logger.info(f"on_app_exit")
 	redis_controller.unsub_from_channel()
@@ -42,21 +43,3 @@ CORS(app, supports_credentials=True, origins=['http://localhost:3000'])
 
 # Register exit callback
 atexit.register(on_app_exit)
-
-
-# TODO set queue in DB instead
-# Generate randomized image queue
-with app.app_context():
-	...
-	#from app.queue.logic import generate_initial_queue
-	#generate_initial_queue()
- 
-logger.info("URLS")
-logger.info(app.url_map)
-
-
-'''
-if __name__ == "__main__":
-	logger.warning("TEST TEST")
-	app.run()
-'''

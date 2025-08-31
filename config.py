@@ -1,12 +1,10 @@
 import os
 
-from redis import Redis
-
 class Config:
 	MAX_CONTENT_LENGTH: int = 16 * 1024 * 1024 # 16 MB
 	SCHEDULER_API_ENABLED: bool = True
 	SQLALCHEMY_TRACK_MODIFICATIONS: bool = False
-	SESSION_TYPE = "redis"
+	SESSION_TYPE:str = "sqlalchemy"
 	
 
 class DevConfig(Config):
@@ -14,7 +12,6 @@ class DevConfig(Config):
 	SECRET_KEY: str = "dev"
 	SQLALCHEMY_DATABASE_URI: str = os.getenv("DATABASE_URL", "postgresql://localhost/clockpi")
 	REDIS_URL: str = os.getenv("REDIS_URL", "redis://:@localhost/0")
-	SESSION_REDIS = Redis(host='localhost', port=6379)
 
 
 class ProdConfig(Config):

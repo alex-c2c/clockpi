@@ -1,3 +1,4 @@
+import base64
 import os
 
 from datetime import datetime
@@ -133,11 +134,7 @@ def update_clock_display():
 	if wallpaper is None:
 		return
 
-	hash: str = wallpaper.hash
-	if len(hash) == 0:
-		return
-
-	file_path: str = os.path.join(DIR_APP_UPLOAD, f"{hash}.bmp")
+	file_path: str = os.path.join(DIR_APP_UPLOAD, wallpaper.file_name)
 	if not os.path.isfile(file_path):
 		return
 
@@ -153,14 +150,17 @@ def update_clock_display():
 	image = process_image(file_path, time, x, y, w, h, color, shadow, draw_grids)
 		
 	buffer: list[int] = convert_image_to_buffer(image)
-	buffer_str: str = ":".join(str(e) for e in buffer)
-	
-	redis_controller.rpublish(R_CH_PUB, "1", f"{R_MSG_DRAW}^{buffer_str}")
+	encoded_data: str = base64.b64encode(bytes(buffer)).decode("utf-8")
+	#logger.debug(f"{encoded_data=}")
+	logger.debug(f"{len(buffer)=}")
+	#buffer_str: str = ":".join(str(e) for e in buffer)
+
+	redis_controller.rpublish(f"{R_CH_DRAW}_1", encoded_data)
 
 
 def clear_clock_display() -> None:
 	logger.debug(f"clear_clock_display")
-	redis_controller.rpublish(R_CH_PUB, "1", R_MSG_CLEAR)
+	redis_controller.rpublish(f"{R_CH_CLEAR}_1", "")
 
 
 def save_current_to_temp() -> None:
