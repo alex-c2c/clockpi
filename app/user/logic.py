@@ -65,7 +65,7 @@ def create_user(data: dict) -> UserModel | None:
 		
 	role_str: str | None = data.get("role")
 	if sys.version_info < (3, 13):
-		roles: list[str] = [str(ur.value) for ur in UserRole()]
+		roles: list[str] = [str(ur.value) for ur in UserRole]
 		if role_str is None or role_str not in roles:
 			ns.abort(400, "Invalid role")
 			return
