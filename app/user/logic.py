@@ -1,4 +1,6 @@
 import re
+import sys
+
 from logging import Logger, getLogger
 
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -62,9 +64,15 @@ def create_user(data: dict) -> UserModel | None:
 		return
 		
 	role_str: str | None = data.get("role")
-	if role_str is None or role_str not in UserRole:
-		ns.abort(400, "Invalid role")
-		return
+	if sys.version_info < (3, 13):
+		roles: list[str] = [str(ur.value) for ur in UserRole()]
+		if role_str is None or role_str not in roles:
+			ns.abort(400, "Invalid role")
+			return
+	else:
+		if role_str is None or role_str not in UserRole:
+			ns.abort(400, "Invalid role")
+			return
 	
 	disp_name: str = data.get("dispName", "")
 
