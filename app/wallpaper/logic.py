@@ -1,14 +1,16 @@
 import hashlib
 import os
 import shutil
-from typing import Sequence
 import numpy as np
 
+from datetime import datetime
 from logging import Logger, getLogger
 from PIL.Image import Image
 from PIL import Image as Img
 from PIL import ImageFilter
+from typing import Sequence
 
+from pytz import timezone
 from sqlalchemy import select
 from flask.ctx import AppContext
 
@@ -24,7 +26,8 @@ logger: Logger = getLogger(__name__)
 
 """""
 LOGIC
-"""""
+""" ""
+
 
 def crop(img: Image, size: tuple[int, int]) -> Image:
 	l: float = (img.width - size[0]) * 0.5
@@ -90,8 +93,8 @@ def process_image(
 	file_path: str,
 	dest_path: str,
 	canvas_size: tuple[int, int],
-	image_size: tuple[int, int],
-	image_pos: tuple[int, int],
+	image_scale: float,
+	image_offset: tuple[int, int],
 	nc: int,
 	del_src: bool = True,
 ) -> bool:
@@ -103,23 +106,37 @@ def process_image(
 		w: int = bg.width
 		h: int = bg.height
 
-		# Resize
+		# Resize bg to fill the entire canvas
+		# According to orientation
 		bg_r: float = max(canvas_size[0] / w, canvas_size[1] / h)
 		bg.thumbnail((w * bg_r, h * bg_r), Img.Resampling.LANCZOS)
 
-		fg_r: float = max(image_size[0] / w, image_size[1] / h)
-		fg.thumbnail((w * fg_r, h * fg_r), Img.Resampling.LANCZOS)
-	
+		# Resize foreground image to user specified percentage scale
+		# image_scale represents the the image width as a percent of canvas width (fixed size)
+		true_scale: float = (canvas_size[0] * image_scale) / fg.width
+		
+		fg.thumbnail(
+			(int(fg.width * true_scale), int(fg.height * true_scale)),
+			Img.Resampling.LANCZOS,
+		)
+
 		# Apply gaussian blur to bg
-		bg = bg.filter(ImageFilter.GaussianBlur(radius=5))
+		bg = bg.filter(ImageFilter.GaussianBlur(radius=4))
 
-		# Crop
-		bg = crop(bg, canvas_size)
-		fg = crop(fg, image_size)
+		# Paste bg to canvas
+		# Centralize it vertically or horizontally depending on orientation
+		if canvas.width < canvas.height:
+			# vertical
+			bg_offset_y: int = int((bg.height - canvas.height) * 0.5)
+			canvas.paste(bg, (0, -bg_offset_y))
+		else:
+			# horizontal
+			bg_offset_x: int = int((bg.width - canvas.width) * 0.5)
+			canvas.paste(bg, (-bg_offset_x, 0))
 
-		# Paste bg & fg to canvas
-		canvas.paste(bg, (0, 0))
-		canvas.paste(fg, image_pos)
+		# Paste fg to canvas
+		# Use user specified offsets
+		canvas.paste(fg, image_offset)
 
 		# Apply fyold steinburg dithering
 		canvas = fs_dither(canvas, nc)
@@ -140,9 +157,13 @@ def process_image(
 		return False
 
 
-def create_wallpaper(app_context: AppContext, file_name: str) -> None:
-	logger.info(f"Attempting to process {file_name} and create new wallpa")
-	
+def create_wallpaper(
+	app_context: AppContext, file_name: str, scale: float, x_per: float, y_per: float
+) -> None:
+	logger.info(
+		f"Attempting to process {file_name} and create new wallpaper with {scale=} and {x_per=} and {y_per=}"
+	)
+
 	app_context.push()
 
 	temp_path: str = os.path.join(DIR_TMP_UPLOAD, file_name)
@@ -153,21 +174,19 @@ def create_wallpaper(app_context: AppContext, file_name: str) -> None:
 		logger.error(f"Uploaded file is invalid")
 		ns.abort(400, "Uploaded file is invalid")
 		return
-		
+
 	# process image
 	if not os.path.isdir(DIR_TMP_PROCESSED):
 		os.mkdir(DIR_TMP_PROCESSED)
 
-	processed_path: str = os.path.join(
-		DIR_TMP_PROCESSED, file_name
-	)
+	processed_path: str = os.path.join(DIR_TMP_PROCESSED, file_name)
 	process_result: bool = process_image(
 		file_path=temp_path,
 		dest_path=processed_path,
 		canvas_size=(EPD_WIDTH, EPD_HEIGHT),
-		image_size=(EPD_WIDTH, EPD_HEIGHT),
-		image_pos=(0, 0),
-		nc=EPD_NC
+		image_scale=scale,
+		image_offset=(int(EPD_WIDTH * x_per), int(EPD_HEIGHT * y_per)),
+		nc=EPD_NC,
 	)
 
 	if not process_result:
@@ -201,8 +220,8 @@ def create_wallpaper(app_context: AppContext, file_name: str) -> None:
 
 	# copy processed image to upload dir
 	try:
-		hashname: str = f"{hash}.bmp"
-		dest_path: str = os.path.join(DIR_APP_UPLOAD, hashname)
+		new_file_name: str = f"{hash[0:8]}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.bmp"
+		dest_path: str = os.path.join(DIR_APP_UPLOAD, new_file_name)
 		shutil.copy2(processed_path, dest_path)
 		os.remove(processed_path)
 
@@ -217,11 +236,11 @@ def create_wallpaper(app_context: AppContext, file_name: str) -> None:
 
 	# Save upload entry to DB
 	try:
-		filename_no_ext: str = file_name.rsplit(".", 1)[0]
+		name: str = file_name.rsplit(".", 1)[0]
 		filesize: int = os.path.getsize(dest_path)
 
 		# Insert to DB
-		new_model: WallpaperModel = WallpaperModel(filename_no_ext, hash, filesize)
+		new_model: WallpaperModel = WallpaperModel(name, hash, new_file_name, filesize)
 		db.session.add(new_model)
 		db.session.commit()
 
@@ -232,7 +251,7 @@ def create_wallpaper(app_context: AppContext, file_name: str) -> None:
 		logger.error(f"Unable to create new wallpaper model due to {error}")
 		ns.abort(500, "Unable to create new wallpaper model")
 		return
-	
+
 	logger.info(f"Processed image and created new wallpaper model")
 
 
@@ -243,14 +262,14 @@ def remove_wallpaper(id: int) -> None:
 	if model is None:
 		ns.abort(404, "Invalid or missing ID")
 		return
-		
-	hash: str = model.hash
-	file_path: str = os.path.join(DIR_APP_UPLOAD, f"{hash}.bmp")
+
+	file_name: str = model.file_name
+	file_path: str = os.path.join(DIR_APP_UPLOAD, file_name)
 
 	if not os.path.isfile(file_path):
 		ns.abort(404, "Invalid or missing file")
 		return
-			
+
 	try:
 		db.session.delete(model)
 		db.session.commit()
@@ -258,9 +277,9 @@ def remove_wallpaper(id: int) -> None:
 		logger.error(f"Unable to delete wallpaper model due to {e}")
 		ns.abort(500, "Internal Server Error")
 		return
-		
+
 	remove_from_queue(id)
-		
+
 	os.remove(file_path)
 
 	logger.info(f"Deleted wallpaper {id=}")
@@ -268,12 +287,12 @@ def remove_wallpaper(id: int) -> None:
 
 def update_wallpaper(id: int, data: dict) -> None:
 	logger.info(f"Attempting to update wallpaper {id=}")
-	
+
 	model: WallpaperModel | None = db.session.get(WallpaperModel, id)
 	if model is None:
 		ns.abort(404, "Invalid or missing ID")
 		return
-	
+
 	x: int | None = data.get("x")
 	if x is not None:
 		if x < 0 or x > 100:
@@ -291,13 +310,13 @@ def update_wallpaper(id: int, data: dict) -> None:
 		if w <= 0 or w > 100:
 			ns.abort(400, "Invalid w")
 		model.w = w
-	
+
 	h: int | None = data.get("h")
 	if h is not None:
 		if h <= 0 or h > 100:
 			ns.abort(400, "Invalid h")
 		model.h = h
-			
+
 	color: str | None = data.get("color")
 	if color is not None:
 		if color.upper() not in Color:
@@ -305,7 +324,7 @@ def update_wallpaper(id: int, data: dict) -> None:
 			ns.abort(400, "Invalid color")
 			return
 		model.color = Color[color.upper()]
-		
+
 	shadow: int | None = data.get("shadow")
 	if shadow is not None:
 		if shadow.upper() not in Color:
@@ -313,14 +332,16 @@ def update_wallpaper(id: int, data: dict) -> None:
 			ns.abort(400, "Invalid shadow")
 			return
 		model.shadow = Color[shadow.upper()]
-		
+
+	model.updated_at = datetime.now(timezone("Asia/Singapore"))
+
 	try:
 		db.session.commit()
 	except Exception as e:
 		logger.error(f"Unable to update wallpaper due to {e}")
 		ns.abort(500, "Internal Server Error")
 		return
-	
+
 	logger.info(f"Wallpaper {id=} updated")
 
 
@@ -329,20 +350,21 @@ def get_wallpaper_name(id: int | None) -> str:
 	if model is None:
 		ns.abort(404, "Wallpaper resource not found")
 		return ""
-		
-	file_path: str = os.path.join(DIR_APP_UPLOAD, f"{model.hash}.bmp")
+
+	file_name: str = model.file_name
+	file_path: str = os.path.join(DIR_APP_UPLOAD, f"{file_name}")
 	if not os.path.isfile(file_path):
 		ns.abort(404, "Wallpaper file not found")
 		return ""
-		
-	return f"{model.hash}.bmp"
+
+	return file_name
 
 
 def get_wallpapers() -> list[dict]:
 	data: Sequence[WallpaperModel] = db.session.scalars(select(WallpaperModel)).all()
-	
+
 	wallpapers: list[dict] = []
 	for row in data:
 		wallpapers.append(row.to_dict())
-		
+
 	return wallpapers

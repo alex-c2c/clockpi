@@ -1,6 +1,7 @@
 import os
 from logging import Logger, getLogger
 from threading import Thread
+from xml.etree.ElementTree import ParseError
 
 from flask import current_app, request, send_from_directory
 from flask_restx import Resource, reqparse
@@ -27,6 +28,58 @@ API
 """
 
 
+@ns.route("/upload-test")
+class UploadTestRes(Resource):
+	@admin_required
+	def post(self):
+		if "file" not in request.files:
+			return
+		
+		files: list[FileStorage] = request.files.getlist("file")
+		
+		#logger.debug(request.form)
+		logger.debug(request.form.get("offsetX"))
+		logger.debug(request.form.get("offsetY"))
+		logger.debug(request.form.get("scale"))
+		
+		scale_str: str | None = request.form.get("scale")
+		offset_x_str: str | None = request.form.get(key="offsetX")
+		offset_y_str: str | None = request.form.get(key="offsetY")
+
+		if scale_str is None:
+			ns.abort(400, "Invalid scale")
+			return
+		
+		if offset_x_str is None:
+			ns.abort(400, "Invalid offsetX")
+			return
+		
+		if offset_y_str is None:
+			ns.abort(400, "Invalid offsetY")
+			return
+		
+		try:
+			scale: float = float(scale_str)
+		except ValueError as e:
+			ns.abort(400, "Invalid scale")
+			return
+			
+		try:
+			offset_x: int = int(offset_x_str)
+		except ValueError as e:
+			ns.abort(400, "Invalid offsetX")
+			return
+		
+		try:
+			offset_y: int = int(offset_y_str)
+		except ValueError as e:
+			ns.abort(400, "Invalid offsetY")
+			return
+			
+		
+		return "", 204
+
+
 @ns.route("/upload")
 class UploadRes(Resource):
 	@admin_required
@@ -40,45 +93,89 @@ class UploadRes(Resource):
 	def post(self):
 		# Check for file in request.files
 		if "file" not in request.files:
-			ns.abort(400, "Missing files")
+			ns.abort(400, "Missing file")
 			return
 
 		files: list[FileStorage] = request.files.getlist("file")
-
-		# Validate files first
-		for file in files:
-			file_name: str | None = file.filename
-			if file_name is None or len(file_name) == 0:
-				ns.abort(400, "Invalid file name")
-				return
-			
-			if (
-				"." not in file_name
-				or file_name.rsplit(".", 1)[1].lower() not in ALLOWED_EXTENSIONS
-			):
-				ns.abort(400, "Invalid file extension")
-				return
+		if len(files) == 0:
+			ns.abort(400, "Missing file")
+			return
 		
-			# secure file name
-			secured_file_name: str = secure_filename(file_name)
+		file: FileStorage = files[0]
 
-			# save file to temp dir
-			# TODO: improve location of "uploaded" files so that it doesn't get
-			# overwritten by someone else uploading the files with same file name at the same time
-			if not os.path.isdir(DIR_TMP_UPLOAD):
-				os.mkdir(DIR_TMP_UPLOAD)
+		# Validate file first
+		file_name: str | None = file.filename
+		if file_name is None or len(file_name) == 0:
+			ns.abort(400, "Invalid file name")
+			return
+		
+		if (
+			"." not in file_name
+			or file_name.rsplit(".", 1)[1].lower() not in ALLOWED_EXTENSIONS
+		):
+			ns.abort(400, "Invalid file extension")
+			return
+		
+		# retrieve additional parameters required to scale / crop the uploaded file
+		scale_str: str | None = request.form.get("scale")
+		x_per_str: str | None = request.form.get(key="xPercent")
+		y_per_str: str | None = request.form.get(key="yPercent")
+		
+		logger.debug(f"Upload: {scale_str=} {x_per_str=} {y_per_str=}")
+		
+		if scale_str is None:
+			ns.abort(400, "Invalid scale")
+			return
+		
+		if x_per_str is None:
+			ns.abort(400, "Invalid xPercent")
+			return
+		
+		if y_per_str is None:
+			ns.abort(400, "Invalid yPercent")
+			return
+		
+		try:
+			scale: float = float(scale_str)
+		except ValueError as e:
+			ns.abort(400, "Invalid scale")
+			return
+			
+		try:
+			x_per: float = float(x_per_str)
+		except ValueError as e:
+			ns.abort(400, "Invalid offsetX")
+			return
+		
+		try:
+			y_per: float = float(y_per_str)
+		except ValueError as e:
+			ns.abort(400, "Invalid offsetY")
+			return
+	
+		# secure file name
+		secured_file_name: str = secure_filename(file_name)
 
-			temp_path: str = os.path.join(DIR_TMP_UPLOAD, secured_file_name)
-			file.save(temp_path)
+		# save file to temp dir
+		# TODO: improve location of "uploaded" files so that it doesn't get
+		# overwritten by someone else uploading the files with same file name at the same time
+		if not os.path.isdir(DIR_TMP_UPLOAD):
+			os.mkdir(DIR_TMP_UPLOAD)
 
-			t: Thread = Thread(
-				target=create_wallpaper,
-				args=(
-					current_app.app_context(),
-					secured_file_name,
-				),
-			)
-			t.start()
+		temp_path: str = os.path.join(DIR_TMP_UPLOAD, secured_file_name)
+		file.save(temp_path)
+
+		t: Thread = Thread(
+			target=create_wallpaper,
+			args=(
+				current_app.app_context(),
+				secured_file_name,
+				scale,
+				x_per,
+				y_per
+			),
+		)
+		t.start()
 
 		return "", 204
 

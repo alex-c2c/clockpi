@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 79bc05b243b8
+Revision ID: f89b4264a39e
 Revises: 
-Create Date: 2025-08-23 21:00:42.912363
+Create Date: 2025-08-31 16:11:33.789046
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '79bc05b243b8'
+revision = 'f89b4264a39e'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -28,7 +28,9 @@ def upgrade():
     sa.Column('days', sa.String(), nullable=False),
     sa.Column('start_time', sa.String(), nullable=False),
     sa.Column('duration', sa.Integer(), nullable=False),
-    sa.Column('is_enabled', sa.Boolean(), nullable=True),
+    sa.Column('is_enabled', sa.Boolean(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('user',
@@ -37,6 +39,8 @@ def upgrade():
     sa.Column('password', sa.String(), nullable=False),
     sa.Column('disp_name', sa.String(), nullable=False),
     sa.Column('role', postgresql.ENUM('ADMIN', 'USER', 'VIEWER', name='userrole'), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('username')
     )
@@ -44,13 +48,16 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('hash', sa.String(), nullable=False),
+    sa.Column('file_name', sa.String(), nullable=False),
     sa.Column('size', sa.Integer(), nullable=False),
     sa.Column('x', sa.Integer(), nullable=False),
     sa.Column('y', sa.Integer(), nullable=False),
-    sa.Column('w', sa.Integer(), nullable=False),
-    sa.Column('h', sa.Integer(), nullable=False),
+    sa.Column('w', sa.Float(precision=1), nullable=False),
+    sa.Column('h', sa.Float(precision=1), nullable=False),
     sa.Column('color', postgresql.ENUM('BLACK', 'WHITE', 'YELLOW', 'RED', 'BLUE', 'GREEN', name='color'), nullable=False),
     sa.Column('shadow', postgresql.ENUM('BLACK', 'WHITE', 'YELLOW', 'RED', 'BLUE', 'GREEN', name='color'), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     # ### end Alembic commands ###

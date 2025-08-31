@@ -1,6 +1,8 @@
-from sqlalchemy import Float
+from datetime import datetime
+from pytz import timezone
+from sqlalchemy import Float, String, DateTime, Integer
 from sqlalchemy.dialects.postgresql import ENUM
-from sqlalchemy.orm import Mapped
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app import db
 from app.consts import *
@@ -9,31 +11,40 @@ from app.epd.consts import *
 class WallpaperModel(db.Model):
 	__tablename__: str = "wallpaper"
 
-	id: 			Mapped[int] = db.Column(db.Integer, primary_key=True)
-	name:			Mapped[str] = db.Column(db.String(), nullable=False)
-	hash: 			Mapped[str] = db.Column(db.String(), nullable=False)
-	size: 			Mapped[int] = db.Column(db.Integer, nullable=False)
-	x:	 			Mapped[int] = db.Column(db.Integer, nullable=False, default=0)
-	y: 				Mapped[int] = db.Column(db.Integer, nullable=False, default=0)
-	w: 				Mapped[float] = db.Column(Float(precision=1), nullable=False, default=9)
-	h:				Mapped[float] = db.Column(Float(precision=1), nullable=False, default=5)
-	color: 			Mapped[Color] = db.Column(ENUM(Color), nullable=False, default=Color.WHITE)
-	shadow: 		Mapped[Color] = db.Column(ENUM(Color), nullable=False, default=Color.BLACK)
+	'''
+	xy: pixel position of label
+	wh: width/height of label in percentage with respect to width/height of canvas
+	'''
+	id: 		Mapped[int] 		= mapped_column(Integer, primary_key=True)
+	name:		Mapped[str] 		= mapped_column(String(), nullable=False)
+	hash: 		Mapped[str] 		= mapped_column(String(), nullable=False)
+	file_name:	Mapped[str] 		= mapped_column(String(), nullable=False)
+	size: 		Mapped[int] 		= mapped_column(Integer, nullable=False)
+	x:	 		Mapped[int] 		= mapped_column(Integer, nullable=False, default=0)
+	y: 			Mapped[int] 		= mapped_column(Integer, nullable=False, default=0)
+	w: 			Mapped[float] 		= mapped_column(Float(precision=1), nullable=False, default=9)
+	h:			Mapped[float] 		= mapped_column(Float(precision=1), nullable=False, default=5)
+	color: 		Mapped[Color] 		= mapped_column(ENUM(Color), nullable=False, default=Color.WHITE)
+	shadow: 	Mapped[Color]		= mapped_column(ENUM(Color), nullable=False, default=Color.BLACK)
+	created_at:	Mapped[datetime] 	= mapped_column(DateTime, nullable=False, default=datetime.now(timezone("Asia/Singapore")))
+	updated_at:	Mapped[datetime] 	= mapped_column(DateTime, nullable=False, default=datetime.now(timezone("Asia/Singapore")))
 
 	def __init__(
 		self,
 		name: str,
 		hash: str,
+		file_name: str,
 		size: int,
 		x: int = 0,
 		y: int = 0,
 		w: float = 9,
 		h: float = 5,
-		color: Color | None = None,
-		shadow: Color | None = None,
+		color: Color = Color.WHITE,
+		shadow: Color = Color.BLACK,
 	):
 		self.name = name
 		self.hash = hash
+		self.file_name = file_name
 		self.size = size
 		self.x = x
 		self.y = y
@@ -41,12 +52,13 @@ class WallpaperModel(db.Model):
 		self.h = h
 		self.color = Color.WHITE if color is None else color
 		self.shadow = Color.BLACK if shadow is None else shadow
-  
+
 	def to_dict(self) -> dict:
 		d: dict = {}
 		d["id"] = self.id
 		d["name"] = self.name
 		d["hash"] = self.hash
+		d["fileName"] = self.file_name
 		d["size"] = self.size
 		d["x"] = self.x
 		d["y"] = self.y
@@ -57,4 +69,4 @@ class WallpaperModel(db.Model):
 		return d
 
 	def __repr__(self):
-		return f"<Wallpaper - name:{self.name} hash:{self.hash} size:{self.size} x:{self.x} y:{self.y} w:{self.w} h:{self.h} color:{self.color} shadow:{self.shadow}>"
+		return f"<Wallpaper - name:{self.name} hash:{self.hash} size:{self.size} file_name:{self.file_name} x:{self.x} y:{self.y} w:{self.w} h:{self.h} color:{self.color} shadow:{self.shadow}>"

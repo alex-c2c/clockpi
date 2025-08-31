@@ -1,15 +1,21 @@
-from sqlalchemy.orm import Mapped
+from datetime import datetime
+from pytz import timezone
+
+from sqlalchemy import Boolean, String, DateTime, Integer
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app import db
 
 class ScheduleModel(db.Model):
 	__tablename__: str = "schedule"
 
-	id: Mapped[int]				= db.Column(db.Integer, primary_key=True)
-	days: Mapped[str]			= db.Column(db.String(), nullable=False)
-	start_time: Mapped[str] 	= db.Column(db.String(), nullable=False)
-	duration: Mapped[int] 		= db.Column(db.Integer, nullable=False)
-	is_enabled: Mapped[bool] 	= db.Column(db.Boolean, default=True)
+	id: 		Mapped[int]			= mapped_column(Integer, primary_key=True)
+	days: 		Mapped[str]			= mapped_column(String(), nullable=False)
+	start_time: Mapped[str] 		= mapped_column(String(), nullable=False)
+	duration: 	Mapped[int] 		= mapped_column(Integer, nullable=False)
+	is_enabled: Mapped[bool] 		= mapped_column(Boolean, nullable=False, default=True)
+	created_at:	Mapped[datetime]	= mapped_column(DateTime, nullable=False, default=datetime.now(timezone("Asia/Singapore")))
+	updated_at:	Mapped[datetime] 	= mapped_column(DateTime, nullable=False, default=datetime.now(timezone("Asia/Singapore")))
 
 	def __init__(self, days: str, start_time: str, duration: int, is_enabled: bool = True):
 		self.days		= days
@@ -18,7 +24,7 @@ class ScheduleModel(db.Model):
 		self.is_enabled = is_enabled
 
 	def __repr__(self) -> str:
-		return f"<Schedule - id:{self.id} days:{self.days} start_time:{self.start_time} duration:{self.duration} is_enabled:{self.is_enabled}>"
+		return f"<Schedule - id:{self.id} days:{self.days} start_time:{self.start_time} duration:{self.duration} is_enabled:{self.is_enabled} created_at:{self.created_at} updated_at:{self.updated_at}>"
 		
 	def get_hour_minute(self) -> tuple[int, int]:
 		return (int(self.start_time[0:2]), int(self.start_time[3:5]))
