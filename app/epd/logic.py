@@ -1,5 +1,6 @@
 import base64
 import os
+import zlib
 
 from datetime import datetime
 from logging import Logger, getLogger
@@ -150,12 +151,9 @@ def update_clock_display():
 	image = process_image(file_path, time, x, y, w, h, color, shadow, draw_grids)
 		
 	buffer: list[int] = convert_image_to_buffer(image)
-	encoded_data: str = base64.b64encode(bytes(buffer)).decode("utf-8")
-	#logger.debug(f"{encoded_data=}")
-	logger.debug(f"{len(buffer)=}")
-	#buffer_str: str = ":".join(str(e) for e in buffer)
+	compressed_bytes: bytes = zlib.compress(bytes(buffer))
 
-	redis_controller.rpublish(f"{R_CH_DRAW}_10.0.20.2", encoded_data)
+	redis_controller.rpublish_bytes(f"{R_CH_DRAW}_10.0.20.2", compressed_bytes)
 
 
 def clear_clock_display() -> None:

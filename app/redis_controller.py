@@ -105,8 +105,12 @@ def rset(key: str, value: str) -> None:
 
 
 def rpublish(ch: str, msg: str) -> None:
-	# logger.info(f"rpublish {ch=} {msg=}")
+	rpublish_bytes(ch, msg.encode("utf-8"))
 
+
+def rpublish_bytes(ch: str, msg: bytes) -> None:
+	logger.info(f"[rpublish_bytes] {ch=} {len(msg)=}")
+	
 	global redis_client
 	redis_client.publish(ch, msg)
 
