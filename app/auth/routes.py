@@ -3,13 +3,13 @@ from logging import Logger, getLogger
 from flask import session
 from flask_restx import Resource
 
+from app.auth.logic import login_user
+from app.session_pkg.logic import clear_session
+from app.user.fields import user_model
 from app.user.models import UserModel
 
 from . import ns
 from .fields import *
-
-from app.auth.logic import login_user
-from app.user.fields import user_model
 
 logger: Logger = getLogger(__name__)
 
@@ -38,6 +38,6 @@ class LoginRes(Resource):
 class LogoutRes(Resource):
 	@ns.response(204, "")
 	def post(self):
-		session.clear()
+		clear_session()
 
 		return "", 204

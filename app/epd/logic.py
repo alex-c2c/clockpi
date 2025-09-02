@@ -152,8 +152,11 @@ def update_clock_display():
 		
 	buffer: list[int] = convert_image_to_buffer(image)
 	compressed_bytes: bytes = zlib.compress(bytes(buffer))
+	data: str = base64.b64encode(compressed_bytes).decode("utf-8")
+	
+	#logger.debug(f"{len(buffer)=} {len(compressed_bytes)=} {len(data)=}")
 
-	redis_controller.rpublish_bytes(f"{R_CH_DRAW}_10.0.20.2", compressed_bytes)
+	redis_controller.rpublish(f"{R_CH_DRAW}_10.0.20.2", data)
 
 
 def clear_clock_display() -> None:

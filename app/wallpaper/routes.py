@@ -1,17 +1,16 @@
 import os
 from logging import Logger, getLogger
 from threading import Thread
-from xml.etree.ElementTree import ParseError
 
 from flask import current_app, request, send_from_directory
 from flask_restx import Resource, reqparse
 from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
 
-from app.auth.logic import admin_required, local_apikey_required, login_required
 from app.consts import *
 from app.epd.consts import *
-from app.queue.logic import get_queue_model
+from app.lib.decorators import admin_required, local_apikey_required, login_required
+from app.queue.logic import get_first_in_queue
 
 from . import ns
 from .consts import *

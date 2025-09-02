@@ -5,8 +5,8 @@ from flask import request
 from flask_restx import Resource
 
 from app import redis_controller
-from app.auth.logic import local_apikey_required
 from app.consts import SLEEP_STATUS_AWAKE, SLEEP_STATUS_SLEEP, R_SETTINGS_DRAW_GRIDS
+from app.lib.decorators import local_apikey_required
 from app.epd.logic import clear_clock_display, update_clock_display
 from app.schedule.logic import should_sleep_now, get_status, set_status
 from app.queue.logic import shuffle_queue, shift_next

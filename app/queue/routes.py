@@ -1,7 +1,7 @@
 from flask_restx import Resource
 
 from app import api
-from app.auth.logic import admin_required, local_apikey_required, login_required
+from app.lib.decorators import admin_required, login_required
 
 from . import ns
 from .fields import *

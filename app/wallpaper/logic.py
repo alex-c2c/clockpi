@@ -19,7 +19,7 @@ from flask.ctx import AppContext
 from app import db
 from app.consts import *
 from app.epd.consts import *
-from app.queue.logic import append_to_queue, remove_from_queue, get_first_in_queue
+from app.queue.logic import append_to_queue, remove_from_queue
 
 from . import ns
 from .models import WallpaperModel

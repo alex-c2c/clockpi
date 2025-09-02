@@ -1,6 +1,4 @@
-from dataclasses import dataclass
 from datetime import datetime
-from faulthandler import is_enabled
 from logging import Logger, getLogger
 
 

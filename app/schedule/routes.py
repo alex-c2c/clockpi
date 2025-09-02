@@ -1,7 +1,7 @@
 from flask_restx import Resource
 from logging import Logger, getLogger
 
-from app.auth.logic import admin_required, login_required
+from app.lib.decorators import admin_required, login_required
 from app.consts import *
 
 from . import ns
@@ -37,6 +37,8 @@ class SleepStatusRes(Resource):
 	def get(self):		
 		sleep_status: int = get_status()
 		is_sleep: bool = should_sleep_now()
+		
+		logger.debug(f"{sleep_status=} {is_sleep=}")
 		
 		if is_sleep:
 			if sleep_status == SLEEP_STATUS_AWAKE:

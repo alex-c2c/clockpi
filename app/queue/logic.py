@@ -3,12 +3,12 @@ from logging import Logger, getLogger
 
 from sqlalchemy import select
 
-from . import ns
-
 from app import db
 from app.consts import *
 from app.queue.models import QueueModel
 from app.wallpaper.models import WallpaperModel
+
+from . import ns
 
 
 logger: Logger = getLogger(__name__)

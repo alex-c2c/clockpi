@@ -2,7 +2,7 @@ from logging import Logger, getLogger
 
 from flask_restx import Resource
 
-from app.auth.logic import login_required
+from app.lib.decorators import login_required
 
 from . import ns
 from .logic import clear_clock_display, save_current_to_temp, update_clock_display

@@ -3,13 +3,13 @@ from typing import Any
 
 from flask_restx import Resource
 
+from app.lib.decorators import admin_required, login_required
 from app.user.logic import create_user, delete_user, get_all_users, update_user
 
 from . import ns
 from .fields import *
 from .models import *
 
-from app.auth.logic import admin_required, login_required
 
 logger: Logger = getLogger(__name__)
 

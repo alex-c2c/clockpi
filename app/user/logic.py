@@ -2,17 +2,18 @@ import re
 import sys
 
 from logging import Logger, getLogger
-
 from werkzeug.security import generate_password_hash, check_password_hash
-
-from . import ns
-from .consts import *
 
 from app import db
 from app.session_pkg.logic import get_user_from_session
 from app.user.models import UserModel
 
+from . import ns
+from .consts import *
+
+
 logger: Logger = getLogger(__name__)
+
 
 """""
 LOGIC

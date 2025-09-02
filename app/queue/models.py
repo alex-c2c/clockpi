@@ -1,6 +1,7 @@
 from logging import Logger, getLogger
 
-from sqlalchemy.orm import Mapped
+from sqlalchemy import Integer, String, DateTime
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app import db
 
@@ -9,8 +10,8 @@ logger: Logger = getLogger(__name__)
 class QueueModel(db.Model):
 	__tablename__: str = "queue"
 
-	id: Mapped[int]		= db.Column(db.Integer, primary_key=True)
-	queue: Mapped[str]	= db.Column(db.String(), nullable=False)
+	id:		Mapped[int]		= mapped_column(Integer, primary_key=True)
+	queue:	Mapped[str]		= mapped_column(String(), nullable=False)
 
 	def __init__(self, queue: str):
 		self.queue = queue
