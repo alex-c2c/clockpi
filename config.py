@@ -5,6 +5,7 @@ class Config:
 	SCHEDULER_API_ENABLED: bool = True
 	SQLALCHEMY_TRACK_MODIFICATIONS: bool = False
 	SESSION_TYPE:str = "sqlalchemy"
+	PROPAGATE_EXCEPTIONS=True
 	
 
 class DevConfig(Config):

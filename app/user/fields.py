@@ -4,7 +4,7 @@ from app.user.consts import UserRole
 
 from . import ns
 
-user_model = ns.model("User", {
+user_fields = ns.model("User", {
 	"id":			fields.Integer(description="User ID"),
 	"username": 	fields.String(description="User name"),
 	"dispName": 	fields.String(description="User's display name"),

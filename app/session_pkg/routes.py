@@ -3,6 +3,7 @@ from logging import Logger, getLogger
 from flask import session
 from flask_restx import Resource
 
+from app.lib.errors import api_abort, ErrorCode
 from app.user.models import UserModel
 
 from . import ns
@@ -23,8 +24,7 @@ class SessionRes(Resource):
 	def get(self):
 		user: UserModel | None = get_user_from_session()
 		if user is None:
-			ns.abort(401, "Authentication Error")
-			return
+			api_abort(ErrorCode.AUTHENTICATION_FAILED)
 		
 		clear_session()
 		init_session(user)

@@ -1,7 +1,9 @@
 from datetime import datetime
 from pytz import timezone
 
-from sqlalchemy import Boolean, String, DateTime, Integer
+from sqlalchemy import Boolean, ForeignKey, String, DateTime, Integer
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.ext.mutable import MutableList
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app import db
@@ -10,22 +12,18 @@ class ScheduleModel(db.Model):
 	__tablename__: str = "schedule"
 
 	id: 		Mapped[int]			= mapped_column(Integer, primary_key=True)
-	days: 		Mapped[str]			= mapped_column(String(), nullable=False)
+	device_id:	Mapped[int]			= mapped_column(ForeignKey("device.id"), nullable=False)
+	days: 		Mapped[list[str]]	= mapped_column(MutableList.as_mutable(JSONB), default=list, nullable=False, server_default="[]")
 	start_time: Mapped[str] 		= mapped_column(String(), nullable=False)
 	duration: 	Mapped[int] 		= mapped_column(Integer, nullable=False)
 	is_enabled: Mapped[bool] 		= mapped_column(Boolean, nullable=False, default=True)
 	created_at:	Mapped[datetime]	= mapped_column(DateTime, nullable=False, default=datetime.now(timezone("Asia/Singapore")))
 	updated_at:	Mapped[datetime] 	= mapped_column(DateTime, nullable=False, default=datetime.now(timezone("Asia/Singapore")))
 
-	def __init__(self, days: str, start_time: str, duration: int, is_enabled: bool = True):
-		self.days		= days
-		self.start_time = start_time
-		self.duration 	= duration
-		self.is_enabled = is_enabled
-
 	def __repr__(self) -> str:
 		return f"<Schedule - \
 			id:{self.id} \
+			device_id:{self.device_id} \
 			days:{self.days} \
 			start_time:{self.start_time} \
 			duration:{self.duration} \
@@ -40,10 +38,8 @@ class ScheduleModel(db.Model):
 	def to_dict(self) -> dict:
 		return {
 			"id": self.id,
-			"days": [day.lower() for day in self.days.split(",") if len(self.days) > 0],
+			"days": self.days,
 			"startTime": self.start_time,
 			"duration": self.duration,
 			"isEnabled": self.is_enabled,
-			"createdAt": self.created_at,
-			"updatedAt": self.updated_at,
 		}

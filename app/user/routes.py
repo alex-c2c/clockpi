@@ -20,9 +20,9 @@ API
 @ns.route("")
 class UserListRes(Resource):
 	@login_required
-	@ns.response(200, "Success", model=user_model)
+	@ns.response(200, "Success", model=user_fields)
 	@ns.response(401, "Authentication Error")
-	@ns.marshal_with(user_model, as_list=True)
+	@ns.marshal_with(user_fields, as_list=True)
 	def get(self):
 		all_users: list[dict] = get_all_users()
 		return all_users, 200
@@ -57,6 +57,7 @@ class UserRes(Resource):
 
 @ns.route("/create")
 class UserCreateRes(Resource):
+	@admin_required
 	@ns.response(204, "")
 	@ns.response(400, "Bad Request")
 	@ns.response(401, "Authentication Error")

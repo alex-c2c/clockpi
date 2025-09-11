@@ -1,13 +1,16 @@
 from datetime import datetime
 from logging import Logger, getLogger
 
+from sqlalchemy import delete, select
 
 from app import db, redis_controller
 from app.consts import *
+from app.device.logic import can_access_device
+from app.device.models import DeviceModel
+from app.lib.errors import api_abort, ErrorCode
 
-from . import ns
-from .consts import DAYS_OF_WEEK
 from .models import ScheduleModel
+from .utils import *
 
 logger: Logger = getLogger(__name__)
 
@@ -17,204 +20,167 @@ LOGIC
 """""
 
 
-def split_time(time: str) -> tuple[bool, int, int]:
-	if len(time) != 5:
-		return True, 0, 0
+def get_schedules(user_id: int, device_id: int) -> list[dict]:
+	if not can_access_device(user_id, device_id):
+		api_abort(ErrorCode.DEVICE_NOT_FOUND)
 	
-	return True, int(time[0:2]), int(time[3:5])
+	stmt = select(ScheduleModel).where(ScheduleModel.device_id == device_id)
+	models: list[ScheduleModel] = list(db.session.scalars(stmt).all())
+
+	return [model.to_dict() for model in models]
 
 
-def validate_hour(hour: int) -> bool:
-	return hour >= 0 and hour < 24
-
-
-def validate_minute(minute: int) -> bool:
-	return minute >= 0 and minute < 60
-
-
-def validate_time(time: str | None) -> bool:
-	if time is None:
-		return False
-		
-	if len(time) != 5:
-		return False
-	
-	if time[2] != ":":
-		return False
-		
-	try:
-		hour: int = int(time[0:2])
-		if hour < 0 or hour > 23:
-			return False
-	except Exception as e:
-		return False
-	
-	try:
-		minute: int = int(time[3:5])
-		if minute < 0 or minute > 59:
-			return False
-	except Exception as e:
-		return False
-	
-	return True
-
-
-def validate_duration(duration: int | None) -> bool:
-	if duration is None:
-		return False
-		
-	return duration >= 1 and duration <= 1440
-
-
-def validate_days_str(days_str: str | None) -> bool:
-	if days_str is None:
-		return False
-		
-	days: list[str] = days_str.split(",")
-	return validate_days(days)
-
-
-def validate_days(days: list[str] | None) -> bool:
-	if days is None:
-		return False
-		
-	if len(days) > 7:
-		return False
-	
-	for day in days:
-		if day.lower() not in DAYS_OF_WEEK:
-			return False
-	
-	return True
-
-
-def get_schedules() -> list[dict]:
-	schedules: list[dict] = []
-	data: list = ScheduleModel.query.all()
-
-	for model in data:
-		schedules.append(model.to_dict())
-
-	return schedules
-
-
-def create_schedule(data: dict) -> None:
+def create_schedule(user_id:int, device_id:int, payload: dict) -> None:
 	logger.info(f"Attempting to create new schedule")
-	
-	days: list[str] = data.get("days", [])
-	if not validate_days(days):
-		ns.abort(400, "Invalid days")
-		return
-	
-	start_time: str = data.get("startTime", "")
-	if not validate_time(start_time):
-		ns.abort(400, "Invalid startTime")
-		return
 		
-	duration: int = data.get("duration", -1)
-	if not validate_duration(duration):
-		ns.abort(400, "Invalid duration")
-		return
+	device: DeviceModel | None = db.session.get(DeviceModel, device_id)
+	if device is None:
+		api_abort(ErrorCode.DEVICE_NOT_FOUND)
+	
+	if not can_access_device(user_id, device_id):
+		api_abort(ErrorCode.FORBIDDEN)
 		
-	is_enabled: bool | None = data.get("isEnabled")
+	failed_validations: dict = {}
+			
+	days: list[str] = payload.get("days", [])
+	if  (err := validate_days(days)) is not None:
+		failed_validations["days"] = err
+	
+	start_time: str = payload.get("startTime", "")
+	if (err := not validate_time(start_time)) is not None:
+		failed_validations["startTime"] = err
+		
+	duration: int = payload.get("duration", -1)
+	if (err := validate_duration(duration)) is not None:
+		failed_validations["duration"] = err
+		
+	is_enabled: bool | None = payload.get("isEnabled")
 	if is_enabled is None:
-		ns.abort(400, "Invalid isEnabled")
-		return
+		failed_validations["isEnabled"] = "This is a required field"
 	
-	new_schedule = ScheduleModel(
-		days=",".join(day.lower() for day in days),
-		start_time=start_time,
-		duration=duration,
-		is_enabled=is_enabled
-	)
+	if len(failed_validations.values()) > 0:
+		api_abort(ErrorCode.VALIDATION_ERROR, fields=failed_validations)
+	
+	new_sch = ScheduleModel()
+	new_sch.device_id = device_id
+	new_sch.days = days
+	new_sch.start_time = start_time
+	new_sch.duration = duration
+	new_sch.is_enabled = is_enabled # type: ignore
 	
 	try:
-		db.session.add(new_schedule)
+		db.session.add(new_sch)
 		db.session.commit()
 	except Exception as e:
 		logger.error(f"Unable to create new schedule due to {e}")
-		ns.abort(500, "Internal Server Error")
-		return
+		api_abort(ErrorCode.DATABASE_ERROR)
 	
-	logger.info(f"Created new schedule {new_schedule.id}")
+	logger.info(f"Created new schedule {new_sch.id}")
 
 
-def delete_schedule(id: int) -> None:
-	logger.info(f"Attempting to delete schedule:{id}")
+def delete_schedule(user_id:int, schedule_id: int) -> None:
+	logger.info(f"Attempting to delete schedule:{schedule_id}")
 	
-	schedule: ScheduleModel | None = db.session.get(ScheduleModel, id)
+	schedule: ScheduleModel | None = db.session.get(ScheduleModel, schedule_id)
 	if schedule is None:
-		ns.abort(404, "Schedule resource not found")
-		return
+		api_abort(ErrorCode.SCHEDULE_NOT_FOUND)
+	
+	if not can_access_device(user_id, schedule.device_id):
+		api_abort(ErrorCode.FORBIDDEN)
 	
 	try:
 		db.session.delete(schedule)
 		db.session.commit()
 	except Exception as e:
-		logger.error(f"Unable to delete schedule {id} due to {e}")
-		ns.abort(500, "Internal Server Error")
-		return
+		db.session.rollback()
+		logger.error(f"Unable to delete schedule {schedule_id} due to {e}")
+		api_abort(ErrorCode.DATABASE_ERROR)
 		
-	logger.info(f"Deleted schedule:{id}")
+	logger.info(f"Deleted schedule:{schedule_id}")
 
 
-def update_schedule(id: int, data: dict) -> None:
+def update_schedule(user_id:int, schedule_id: int, payload: dict) -> None:
 	logger.info(f"Attempting to update schedule")
 	
-	schedule: ScheduleModel | None = db.session.get(ScheduleModel, id)
+	schedule: ScheduleModel | None = db.session.get(ScheduleModel, schedule_id)
 	if schedule is None:
-		ns.abort(404, "Schedule resource not found")
-		return
-	
-	days: list[str] | None = data.get("days", None)
-	if days is not None:
-		if not validate_days(days):
-			ns.abort(400, "Invalid days")
-			return
-		schedule.days = ",".join(set(day.lower() for day in days))
-			
-	start_time: str | None = data.get("startTime")
-	if start_time is not None:
-		if not validate_time(start_time):
-			ns.abort(400, "Invalid startTime")
-			return
+		api_abort(ErrorCode.SCHEDULE_NOT_FOUND)
 		
+	if not can_access_device(user_id, schedule.device_id):
+		api_abort(ErrorCode.FORBIDDEN)
+		
+	failed_validations: dict = {}
+	
+	days: list[str] | None = payload.get("days", None)
+	if days is not None:
+		if (err := validate_days(days)) is not None:
+			failed_validations["days"] = err
+		schedule.days = days
+			
+	start_time: str | None = payload.get("startTime")
+	if start_time is not None:
+		if  (err := validate_time(start_time)) is not None:
+			failed_validations["startTime"] = err		
 		schedule.start_time = start_time
 		
-	duration: int | None = data.get("duration")
+	duration: int | None = payload.get("duration")
 	if duration is not None:
-		if not validate_duration(duration):
-			ns.abort(400, "Invalid duration")
-			return
-			
+		if (err := validate_duration(duration)) is not None:
+			failed_validations["duration"] = err			
 		schedule.duration = duration
 		
-	is_enabled: bool | None = data.get("isEnabled")
+	is_enabled: bool | None = payload.get("isEnabled")
 	if is_enabled is not None:
 		schedule.is_enabled = is_enabled
+		
+	if len(failed_validations.values()) > 0:
+		api_abort(ErrorCode.VALIDATION_ERROR, fields=failed_validations)
 
 	try:
 		db.session.commit()
 	except Exception as e:
 		logger.error(f"Unable to update schedule due to {e}")
-		ns.abort(500, "Internal Server Error")
-		return
+		api_abort(ErrorCode.DATABASE_ERROR)
 	
-	logger.info(f"Updated schedule {id}")
+	logger.info(f"Updated schedule {schedule_id}")
 
 
-def get_status() -> int:
-	return int(redis_controller.rget(R_SLEEP_STATUS, str(SLEEP_STATUS_AWAKE)))
+def get_status(user_id:int, device_id: int, skip_user_check: bool = False) -> SleepStatus:
+	device: DeviceModel | None = db.session.get(DeviceModel, device_id)
+	if device is None:
+		api_abort(ErrorCode.DEVICE_NOT_FOUND)
+		
+	if not skip_user_check and  not can_access_device(user_id, device_id):
+		api_abort(ErrorCode.FORBIDDEN)
+
+	key: str = f"{R_SLEEP_STATUS}_{device.ipv4}"
+	value: str = redis_controller.rget(key, SleepStatus.AWAKE.value)
+	
+	return SleepStatus[value]
 
 
-def set_status(status: int) -> None:
+def set_status(user_id:int, device_id:int, status: SleepStatus, skip_user_check: bool = False) -> None:
 	logger.debug(f"set_status:{status=}")
-	redis_controller.rset(R_SLEEP_STATUS, value=str(status))
+
+	device: DeviceModel | None = db.session.get(DeviceModel, device_id)
+	if device is None:
+		api_abort(ErrorCode.DEVICE_NOT_FOUND)
+		
+	if not skip_user_check and  not can_access_device(user_id, device_id):
+		api_abort(ErrorCode.FORBIDDEN)
+	
+	key:str = f"{R_SLEEP_STATUS}_{device.ipv4}"
+	
+	redis_controller.rset(key, value=status.value)
 
 
-def should_sleep_now() -> bool:
+def should_sleep_now(user_id:int, device_id: int, skip_user_check: bool = False) -> bool:
+	if not skip_user_check and not can_access_device(user_id, device_id):
+		api_abort(ErrorCode.FORBIDDEN)
+
+	stmt = select(ScheduleModel).where(ScheduleModel.device_id == device_id)
+	schedules: list[ScheduleModel] = list(db.session.scalars(stmt).all())
 	minute_ranges: list = []
-	schedules: list[ScheduleModel] = ScheduleModel.query.all()
 
 	for sch in schedules:
 		if not sch.is_enabled:

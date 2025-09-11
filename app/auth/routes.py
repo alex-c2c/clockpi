@@ -1,12 +1,11 @@
 from logging import Logger, getLogger
 
-from flask import session
 from flask_restx import Resource
 
 from app.auth.logic import login_user
+from app.lib.errors import error_fields
 from app.session_pkg.logic import clear_session
-from app.user.fields import user_model
-from app.user.models import UserModel
+from app.user.fields import user_fields
 
 from . import ns
 from .fields import *
@@ -19,19 +18,16 @@ API
 
 @ns.route("/login")
 class LoginRes(Resource):
-	@ns.response(200, "", user_model)
-	@ns.response(400, "Invalid username or password")
-	@ns.expect(login_model)
-	@ns.marshal_with(user_model)
+	@ns.expect(login_fields)
+	@ns.response(200, "Success", user_fields)
+	@ns.response(400, "Bad Request", error_fields)
+	@ns.marshal_with(user_fields)
 	def post(self):
 		data = ns.payload
-		user: UserModel | None = login_user(data)
 		
-		if user is None:
-			ns.abort(400, "Invalid username or password")
-			return
-			
-		return user.to_dict(), 200
+		user: dict = login_user(data)
+		
+		return user, 200
 
 
 @ns.route("/logout")

@@ -2,7 +2,6 @@ import hashlib
 import os
 import numpy as np
 import shutil
-import sys
 
 from datetime import datetime
 from logging import Logger, getLogger
@@ -10,28 +9,29 @@ from logging import Logger, getLogger
 from PIL.Image import Image
 from PIL import Image as Img
 from PIL import ImageFilter
-from typing import Sequence
 
 from pytz import timezone
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from flask.ctx import AppContext
 
 from app import db
 from app.consts import *
-from app.epd.consts import *
-from app.queue.logic import append_to_queue, remove_from_queue
+from app.device.logic import can_access_device
+from app.device.models import DeviceModel
+from app.epd7in3e.consts import *
+from app.device.logic.queue import append_to_queue, remove_from_queue
+from app.lib.errors import api_abort, ErrorCode
 
-from . import ns
 from .models import WallpaperModel
 
 logger: Logger = getLogger(__name__)
 
 """""
 LOGIC
-""" ""
+"""""
 
 
-def crop(img: Image, size: tuple[int, int]) -> Image:
+def _crop(img: Image, size: tuple[int, int]) -> Image:
 	l: float = (img.width - size[0]) * 0.5
 	r: float = l + size[0]
 	t: float = (img.height - size[1]) * 0.5
@@ -40,13 +40,13 @@ def crop(img: Image, size: tuple[int, int]) -> Image:
 	return img.crop((l, t, r, b))
 
 
-def get_new_val(old_val, nc):
+def _get_new_val(old_val, nc):
 	return np.round(old_val * (nc - 1)) / (nc - 1)
 
 
 # Floyd-Steinberg dither the image img into a palette with nc colours per channel.
 # https://scipython.com/blog/floyd-steinberg-dithering/
-def fs_dither(img: Image, nc: int) -> Image:
+def _fs_dither(img: Image, nc: int) -> Image:
 	h: int = img.height
 	w: int = img.width
 	arr = np.array(img, dtype=float) / 255
@@ -55,7 +55,7 @@ def fs_dither(img: Image, nc: int) -> Image:
 		for ic in range(w):
 			# NB need to copy here for RGB arrays otherwise err will be (0,0,0)!
 			old_val = arr[ir, ic].copy()
-			new_val = get_new_val(old_val, nc)
+			new_val = _get_new_val(old_val, nc)
 			arr[ir, ic] = new_val
 			err = old_val - new_val
 			# In this simple example, we will just ignore the border pixels.
@@ -73,9 +73,9 @@ def fs_dither(img: Image, nc: int) -> Image:
 
 
 # Simple palette reduction without dithering.
-def palette_reduce(img: Image, nc: int) -> Image:
+def _palette_reduce(img: Image, nc: int) -> Image:
 	arr = np.array(img, dtype=float) / 255
-	arr = get_new_val(arr, nc)
+	arr = _get_new_val(arr, nc)
 
 	carr = np.array(arr / np.max(arr) * 255, dtype=np.uint8)
 	return Img.fromarray(carr)
@@ -141,10 +141,10 @@ def process_image(
 		canvas.paste(fg, image_offset)
 
 		# Apply fyold steinburg dithering
-		canvas = fs_dither(canvas, nc)
+		canvas = _fs_dither(canvas, nc)
 
 		# Reduce palette color
-		canvas = palette_reduce(canvas, nc)
+		canvas = _palette_reduce(canvas, nc)
 
 		# Save file
 		canvas.save(dest_path)
@@ -160,22 +160,36 @@ def process_image(
 
 
 def create_wallpaper(
-	app_context: AppContext, file_name: str, scale: float, x_per: float, y_per: float
+	app_context: AppContext,
+	file_name: str,
+	user_id:int,
+	device_id: int,
+	img_scale_per: float,
+	x_pos_per: float,
+	y_pos_per: float
 ) -> None:
-	logger.info(
-		f"Attempting to process {file_name} and create new wallpaper with {scale=} and {x_per=} and {y_per=}"
+	logger.info(f"Attempting to process \
+		{file_name} for \
+		{user_id=} {device_id=} - \
+		{img_scale_per=} {x_pos_per=} {y_pos_per=}"
 	)
 
 	app_context.push()
+	
+	device: DeviceModel | None = db.session.get(DeviceModel, device_id)
+	if device is None:
+		api_abort(ErrorCode.INVALID_DEPENDENCY, detail="Device not found")
+
+	if not can_access_device(user_id, device_id):
+		api_abort(ErrorCode.INVALID_DEPENDENCY, detail="Unable to access device")
 
 	temp_path: str = os.path.join(DIR_TMP_UPLOAD, file_name)
 
 	# validate image
 	if not _validate_image(temp_path):
 		os.remove(temp_path)
-		logger.error(f"Uploaded file is invalid")
-		ns.abort(400, "Uploaded file is invalid")
-		return
+		logger.error(f"Invalid image file")
+		api_abort(ErrorCode.UNPROCESSABLE_ENTITY)
 
 	# process image
 	if not os.path.isdir(DIR_TMP_PROCESSED):
@@ -185,9 +199,9 @@ def create_wallpaper(
 	process_result: bool = process_image(
 		file_path=temp_path,
 		dest_path=processed_path,
-		canvas_size=(EPD_WIDTH, EPD_HEIGHT),
-		image_scale=scale,
-		image_offset=(int(EPD_WIDTH * x_per), int(EPD_HEIGHT * y_per)),
+		canvas_size=(device.width, device.height),
+		image_scale=img_scale_per,
+		image_offset=(int(device.width * x_pos_per), int(device.height * y_pos_per)),
 		nc=EPD_NC,
 	)
 
@@ -197,8 +211,7 @@ def create_wallpaper(
 		if os.path.isfile(processed_path):
 			os.remove(processed_path)
 		logger.error(f"Unable to proccess image")
-		ns.abort(500, "Unable to process image")
-		return
+		api_abort(ErrorCode.INTERNAL_SERVER_ERROR)
 
 	# get hash of processed image
 	try:
@@ -216,9 +229,8 @@ def create_wallpaper(
 			os.remove(temp_path)
 		if os.path.isfile(processed_path):
 			os.remove(processed_path)
-		logger.error(f"Unable to obtain file hash due to {error}")
-		ns.abort(500, "Unable to obtain file hash")
-		return
+		logger.error(f"Unable to obtain file hash: {error}")
+		api_abort(ErrorCode.INTERNAL_SERVER_ERROR)
 
 	# copy processed image to upload dir
 	try:
@@ -233,154 +245,163 @@ def create_wallpaper(
 		if os.path.isfile(processed_path):
 			os.remove(processed_path)
 		logger.error(f"Unable to copy file due to {error}")
-		ns.abort(500, "Unable to copy file")
+		api_abort(ErrorCode.INTERNAL_SERVER_ERROR)
 		return
 
 	# Save upload entry to DB
 	try:
 		name: str = file_name.rsplit(".", 1)[0]
-		filesize: int = os.path.getsize(dest_path)
+		file_size: int = os.path.getsize(dest_path)
 
 		# Insert to DB
-		new_model: WallpaperModel = WallpaperModel(name, hash, new_file_name, filesize)
-		db.session.add(new_model)
-		db.session.commit()
+		wm: WallpaperModel = WallpaperModel()
+		wm.device_id = device_id
+		wm.name = name
+		wm.hash = hash
+		wm.file_name = new_file_name
+		wm.size = file_size
+		wm.color = device.default_label_color
+		wm.shadow = device.default_label_shadow
+		
+		db.session.add(wm)
+		db.session.flush()
 
 		# Append to image queue
-		append_to_queue(new_model.id)
+		append_to_queue(user_id, device_id, wm.id)
 
 	except OSError as error:
 		logger.error(f"Unable to create new wallpaper model due to {error}")
-		ns.abort(500, "Unable to create new wallpaper model")
-		return
+		api_abort(ErrorCode.DATABASE_ERROR)
 
 	logger.info(f"Processed image and created new wallpaper model")
 
 
-def remove_wallpaper(id: int) -> None:
-	logger.info(msg=f"Attempting to delete wallpaper {id=}")
+def delete_wallpaper(user_id: int, wallpaper_id: int) -> None:
+	logger.info(msg=f"Attempting to delete wallpaper {wallpaper_id=}")
 
-	model: WallpaperModel | None = db.session.get(WallpaperModel, id)
+	model: WallpaperModel | None = db.session.get(WallpaperModel, wallpaper_id)
 	if model is None:
-		ns.abort(404, "Invalid or missing ID")
-		return
+		api_abort(ErrorCode.WALLPAPER_NOT_FOUND)
+		
+	if not can_access_device(user_id, model.device_id):
+		api_abort(ErrorCode.FORBIDDEN)
 
 	file_name: str = model.file_name
 	file_path: str = os.path.join(DIR_APP_UPLOAD, file_name)
 
-	if not os.path.isfile(file_path):
-		ns.abort(404, "Invalid or missing file")
-		return
-
+	if os.path.isfile(file_path):
+		os.remove(file_path)
+	else:
+		logger.error(f"Unable to find wallpaper file {file_path}")
+		
 	try:
 		db.session.delete(model)
 		db.session.commit()
 	except Exception as e:
 		logger.error(f"Unable to delete wallpaper model due to {e}")
-		ns.abort(500, "Internal Server Error")
-		return
+		api_abort(ErrorCode.INTERNAL_SERVER_ERROR)
 
-	remove_from_queue(id)
+	remove_from_queue(user_id, model.device_id, wallpaper_id)
 
 	os.remove(file_path)
 
-	logger.info(f"Deleted wallpaper {id=}")
+	logger.info(f"Deleted wallpaper {wallpaper_id=}")
+	
 
+def update_wallpaper(user_id: int, wallpaper_id: int, payload: dict) -> None:
+	logger.info(f"Attempting to update wallpaper {wallpaper_id=}")
 
-def update_wallpaper(id: int, data: dict) -> None:
-	logger.info(f"Attempting to update wallpaper {id=}")
+	wallpaper: WallpaperModel | None = db.session.get(WallpaperModel, wallpaper_id)
+	if wallpaper is None:
+		api_abort(ErrorCode.WALLPAPER_NOT_FOUND)
+		
+	if not can_access_device(user_id, wallpaper.device_id):
+		api_abort(ErrorCode.FORBIDDEN, details="Unable to access device")
+		
+	device: DeviceModel | None = db.session.get(DeviceModel, wallpaper.device_id)
+	if device is None:
+		api_abort(ErrorCode.INVALID_DEPENDENCY, detail="Device not found")
+	
+	if not can_access_device(user_id, wallpaper.device_id):
+		api_abort(ErrorCode.FORBIDDEN, detail="Unable to access device")
 
-	model: WallpaperModel | None = db.session.get(WallpaperModel, id)
-	if model is None:
-		ns.abort(404, "Invalid or missing ID")
-		return
-
-	x: int | None = data.get("x")
+	failed_validations: dict = {}
+	
+	x: int | None = payload.get("x")
 	if x is not None:
 		if x < 0 or x > 100:
-			ns.abort(400, "Invalid x")
-		model.x = x
+			failed_validations["x"] = "Invalid input (0 >= x <= 100)"
+		wallpaper.label_x_per = x
 
-	y: int | None = data.get("y")
+	y: int | None = payload.get("y")
 	if y is not None:
 		if y < 0 or y > 100:
-			ns.abort(400, "Invalid y")
-		model.y = y
+			failed_validations["y"] = "Invalid input (0 >= y <= 100)"
+		wallpaper.label_y_per = y
 
-	w: int | None = data.get("w")
+	w: int | None = payload.get("w")
 	if w is not None:
 		if w <= 0 or w > 100:
-			ns.abort(400, "Invalid w")
-		model.w = w
+			failed_validations["w"] = "Invalid input (0 > w <= 100)"
+		wallpaper.label_w_per = w
 
-	h: int | None = data.get("h")
+	h: int | None = payload.get("h")
 	if h is not None:
 		if h <= 0 or h > 100:
-			ns.abort(400, "Invalid h")
-		model.h = h
+			failed_validations["h"] = "Invalid input (0 > h <= 100)"
+		wallpaper.label_h_per = h
 
-	color: str | None = data.get("color")
+	color: str | None = payload.get("color")
 	if color is not None:
-		if sys.version_info < (3, 13):
-			colors: list[str] = [str(c.value) for c in Color]
-			if color.upper() not in colors:
-				logger.error(f"Invalid color {color}")
-				ns.abort(400, "Invalid color")
-				return
-		else:
-			if color.upper() not in Color:
-				logger.error(f"Invalid color {color}")
-				ns.abort(400, "Invalid color")
-				return
-		model.color = Color[color.upper()]
+		if color.upper() not in device.supported_colors:
+			failed_validations["color"] = "Invalid input (Unsupported color)"
+		wallpaper.color = color.upper()
 
-	shadow: int | None = data.get("shadow")
+	shadow: int | None = payload.get("shadow")
 	if shadow is not None:
-		if sys.version_info < (3, 13):
-			colors: list[str] = [str(c.value) for c in Color]
-			if shadow.upper() not in colors:
-				logger.error(f"Invalid shadow: {shadow}")
-				ns.abort(400, "Invalid shadow")
-				return				
-		else:
-			if shadow.upper() not in Color:
-				logger.error(f"Invalid shadow: {shadow}")
-				ns.abort(400, "Invalid shadow")
-				return
-		model.shadow = Color[shadow.upper()]
+		if shadow.upper() not in device.supported_colors:
+			failed_validations["shadow"] = "Invalid input (Unsupported color)"
+		wallpaper.shadow = shadow.upper()
 
-	model.updated_at = datetime.now(timezone("Asia/Singapore"))
+	if len(failed_validations.values()) > 0:
+		api_abort(ErrorCode.VALIDATION_ERROR, fields=failed_validations)
+
+	wallpaper.updated_at = datetime.now(timezone("Asia/Singapore"))
 
 	try:
 		db.session.commit()
 	except Exception as e:
 		logger.error(f"Unable to update wallpaper due to {e}")
-		ns.abort(500, "Internal Server Error")
-		return
+		api_abort(ErrorCode.DATABASE_ERROR)
 
-	logger.info(f"Wallpaper {id=} updated")
+	logger.info(f"Wallpaper {wallpaper_id=} updated")
 
 
-def get_wallpaper_name(id: int | None) -> str:
-	model: WallpaperModel | None = db.session.get(WallpaperModel, id)
+def get_wallpaper_name(user_id: int, wallpaper_id: int | None) -> str:
+	model: WallpaperModel | None = db.session.get(WallpaperModel, wallpaper_id)
 	if model is None:
-		ns.abort(404, "Wallpaper resource not found")
-		return ""
-
+		api_abort(ErrorCode.WALLPAPER_NOT_FOUND)
+	
+	if not can_access_device(user_id, model.device_id):
+		api_abort(ErrorCode.FORBIDDEN, detail="Unable to access device")
+		
 	file_name: str = model.file_name
 	file_path: str = os.path.join(DIR_APP_UPLOAD, f"{file_name}")
 	if not os.path.isfile(file_path):
-		ns.abort(404, "Wallpaper file not found")
-		return ""
+		api_abort(ErrorCode.WALLPAPER_NOT_FOUND, detail="Wallpaper image file not found")
 
 	return file_name
 
 
-def get_wallpapers() -> list[dict]:
-	data: Sequence[WallpaperModel] = db.session.scalars(select(WallpaperModel)).all()
-
+def get_wallpapers(user_id: int, device_id:int) -> list[dict]:
+	if not can_access_device(user_id, device_id):
+		api_abort(ErrorCode.FORBIDDEN, detail="Unable to access device")
+	
+	stmt = select(WallpaperModel).where(WallpaperModel.device_id == device_id)
+	models: list[WallpaperModel] = list(db.session.scalars(stmt).all())
+	
 	wallpapers: list[dict] = []
-	for row in data:
-		wallpapers.append(row.to_dict())
+	for model in models:
+		wallpapers.append(model.to_dict())
 
 	return wallpapers

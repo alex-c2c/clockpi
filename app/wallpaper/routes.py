@@ -2,15 +2,15 @@ import os
 from logging import Logger, getLogger
 from threading import Thread
 
-from flask import current_app, request, send_from_directory
+from flask import current_app, request, send_from_directory, session
 from flask_restx import Resource, reqparse
 from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
 
 from app.consts import *
-from app.epd.consts import *
-from app.lib.decorators import admin_required, local_apikey_required, login_required
-from app.queue.logic import get_first_in_queue
+from app.epd7in3e.consts import *
+from app.lib.decorators import admin_required, local_apikey_required
+from app.lib.errors import api_abort, ErrorCode
 
 from . import ns
 from .consts import *
@@ -19,70 +19,21 @@ from .logic import *
 
 logger: Logger = getLogger(__name__)
 
-parser = reqparse.RequestParser()
-parser.add_argument("id", type=int, help="Wallpaper ID (0 == current)", default=0)
+file_parser = reqparse.RequestParser()
+file_parser.add_argument("id", type=int, help="Get by wallpaper ID", required=True)
+
+list_parser = reqparse.RequestParser()
+list_parser.add_argument("id", type=int, help="Filter by wallpaper ID", required=True, action="append")
+
 
 """
 API
 """
 
-
-@ns.route("/upload-test")
-class UploadTestRes(Resource):
-	@admin_required
-	def post(self):
-		if "file" not in request.files:
-			return
-		
-		files: list[FileStorage] = request.files.getlist("file")
-		
-		#logger.debug(request.form)
-		logger.debug(request.form.get("offsetX"))
-		logger.debug(request.form.get("offsetY"))
-		logger.debug(request.form.get("scale"))
-		
-		scale_str: str | None = request.form.get("scale")
-		offset_x_str: str | None = request.form.get(key="offsetX")
-		offset_y_str: str | None = request.form.get(key="offsetY")
-
-		if scale_str is None:
-			ns.abort(400, "Invalid scale")
-			return
-		
-		if offset_x_str is None:
-			ns.abort(400, "Invalid offsetX")
-			return
-		
-		if offset_y_str is None:
-			ns.abort(400, "Invalid offsetY")
-			return
-		
-		try:
-			scale: float = float(scale_str)
-		except ValueError as e:
-			ns.abort(400, "Invalid scale")
-			return
-			
-		try:
-			offset_x: int = int(offset_x_str)
-		except ValueError as e:
-			ns.abort(400, "Invalid offsetX")
-			return
-		
-		try:
-			offset_y: int = int(offset_y_str)
-		except ValueError as e:
-			ns.abort(400, "Invalid offsetY")
-			return
-			
-		
-		return "", 204
-
-
 @ns.route("/upload")
 class UploadRes(Resource):
 	@admin_required
-	@ns.response(204, "")
+	@ns.response(204, "Success")
 	@ns.response(400, "Bad Request")
 	@ns.response(400, "Invalid file name")
 	@ns.response(400, "Invalid file extension")
@@ -90,68 +41,73 @@ class UploadRes(Resource):
 	@ns.response(403, "Authorization Error")
 	@ns.response(413, "Content too large")
 	def post(self):
-		# Check for file in request.files
-		if "file" not in request.files:
-			ns.abort(400, "Missing file")
-			return
+		user_id: int = session.get("id", 0)
 
+
+		# Check for file in request.files
 		files: list[FileStorage] = request.files.getlist("file")
 		if len(files) == 0:
-			ns.abort(400, "Missing file")
-			return
+			api_abort(ErrorCode.INVALID_INPUT, fields={"file":"This is a required field"})
 		
 		file: FileStorage = files[0]
 
 		# Validate file first
 		file_name: str | None = file.filename
 		if file_name is None or len(file_name) == 0:
-			ns.abort(400, "Invalid file name")
-			return
+			api_abort(ErrorCode.INVALID_INPUT, fields={"file":"Invalid input"})
 		
 		if (
 			"." not in file_name
 			or file_name.rsplit(".", 1)[1].lower() not in ALLOWED_EXTENSIONS
 		):
-			ns.abort(400, "Invalid file extension")
-			return
+			api_abort(ErrorCode.UNSUPPORTED_MEDIA_TYPE, detail="Invalid file extension")
+
 		
 		# retrieve additional parameters required to scale / crop the uploaded file
-		scale_str: str | None = request.form.get("scale")
-		x_per_str: str | None = request.form.get(key="xPercent")
-		y_per_str: str | None = request.form.get(key="yPercent")
+		img_scale_per_str: str | None = request.form.get("imgScalePer")
+		x_pos_per_str: str | None = request.form.get("xPosPer")
+		y_pos_per_str: str | None = request.form.get("yPosPer")
+		device_id_str: str | None = request.form.get("deviceId")
 		
-		logger.debug(f"Upload: {scale_str=} {x_per_str=} {y_per_str=}")
+		logger.debug(f"Upload: {device_id_str=} {img_scale_per_str=} {x_pos_per_str=} {y_pos_per_str=}")
 		
-		if scale_str is None:
-			ns.abort(400, "Invalid scale")
-			return
+		if img_scale_per_str is None:
+			api_abort(ErrorCode.INVALID_INPUT, fields={"imgScalePer":"This is a required field"})
 		
-		if x_per_str is None:
-			ns.abort(400, "Invalid xPercent")
-			return
+		if x_pos_per_str is None:
+			api_abort(ErrorCode.INVALID_INPUT, fields={"xPosPer":"This is a required field"})
 		
-		if y_per_str is None:
-			ns.abort(400, "Invalid yPercent")
-			return
+		if y_pos_per_str is None:
+			api_abort(ErrorCode.INVALID_INPUT, fields={"yPosPer":"This is a required field"})
+		
+		if device_id_str is None:
+			api_abort(ErrorCode.INVALID_INPUT, fields={"deviceId":"This is a required field"})
+					
+		failed_validations: dict = {}
 		
 		try:
-			scale: float = float(scale_str)
+			img_scale_per: float = float(img_scale_per_str)
 		except ValueError as e:
-			ns.abort(400, "Invalid scale")
-			return
+			failed_validations["imgScalePer"] = "Invalid input (float required)"
 			
 		try:
-			x_per: float = float(x_per_str)
+			x_pos_per: float = float(x_pos_per_str)
 		except ValueError as e:
-			ns.abort(400, "Invalid offsetX")
-			return
+			failed_validations["xPosPer"] = "Invalid input (float required)"
 		
 		try:
-			y_per: float = float(y_per_str)
+			y_pos_per: float = float(y_pos_per_str)
 		except ValueError as e:
-			ns.abort(400, "Invalid offsetY")
-			return
-	
+			failed_validations["yPosPer"] = "Invalid input (float required)"
+
+		try:
+			device_id: int = int(device_id_str)
+		except ValueError as e:
+			failed_validations["deviceId"] = "Invalid input (integer required)"
+
+		if len(failed_validations.values()) > 0:
+			api_abort(ErrorCode.VALIDATION_ERROR, fields= failed_validations)
+
 		# secure file name
 		secured_file_name: str = secure_filename(file_name)
 
@@ -169,9 +125,11 @@ class UploadRes(Resource):
 			args=(
 				current_app.app_context(),
 				secured_file_name,
-				scale,
-				x_per,
-				y_per
+				user_id,
+				device_id,
+				img_scale_per,
+				x_pos_per,
+				y_pos_per
 			),
 		)
 		t.start()
@@ -187,37 +145,27 @@ class FileRes(Resource):
 	@ns.response(401, "Authentication Error")
 	@ns.response(404, "Wallpaper resource not found")
 	@ns.response(404, "Wallpaper image not found")
-	@ns.expect(parser)
+	@ns.expect(file_parser)
 	def get(self):
-		id: int | None = parser.parse_args().get("id")
+		user_id: int = session.get("id", 0)
+		wallpaper_id: int | None = file_parser.parse_args().get("id")
+		file_name: str= get_wallpaper_name(user_id, wallpaper_id)
 		
-		if id == 0 or id is None:
-			id = get_first_in_queue()
-		
-		file_name: str= get_wallpaper_name(id)
 		return send_from_directory(DIR_APP_UPLOAD, file_name)
 
 
-@ns.route("")
-class WallpaperListRes(Resource):
-	@login_required
-	@ns.response(200, "", wallpaper_model)
-	@ns.response(401, "Authentication Error")
-	@ns.marshal_with(wallpaper_model, as_list=True)
-	def get(self):
-		wallpapers: list[dict] = get_wallpapers()
-		return wallpapers, 200
-		
-		
-@ns.route("/<int:id>")
+@ns.route("/<int:wallpaper_id>")
 class WallpaperRes(Resource):
 	@admin_required
 	@ns.response(204, "")
 	@ns.response(401, "Authentication Error")
 	@ns.response(403, "Authorization Error")
 	@ns.response(404, "Wallpaper resource not found")
-	def delete(self, id: int):
-		remove_wallpaper(id)
+	def delete(self, wallpaper_id: int):
+		user_id: int = session.get("id", 0)
+
+		delete_wallpaper(user_id, wallpaper_id)
+
 		return "", 204
 
 	@admin_required
@@ -227,7 +175,10 @@ class WallpaperRes(Resource):
 	@ns.response(404, "Wallpaper resource not found")
 	@ns.response(500, "")
 	@ns.expect(wallpaper_update_model)
-	def patch(self, id: int):
-		data: dict = ns.payload
-		update_wallpaper(id, data)
+	def patch(self, wallpaper_id: int):
+		user_id: int = session.get("id", 0)
+		payload: dict = ns.payload
+		
+		update_wallpaper(user_id, wallpaper_id, payload)
+		
 		return "", 204

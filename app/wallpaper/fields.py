@@ -2,7 +2,7 @@ from flask_restx import fields
 
 from . import ns
 
-wallpaper_model = ns.model("Wallpaper", {
+wallpaper_fields = ns.model("Wallpaper", {
 	"id":			fields.Integer(),
 	"name": 		fields.String(),
 	"hash": 		fields.String(),

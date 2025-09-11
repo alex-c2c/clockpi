@@ -1,33 +1,35 @@
 import os
 import tempfile
 
+from enum import Enum
+
 
 """
 SLEEP STATUS
 """
-SLEEP_STATUS_AWAKE = 0
-SLEEP_STATUS_SLEEP = 1
-
+class SleepStatus(Enum):
+	AWAKE = "AWAKE"
+	SLEEP = "SLEEP"
 
 """
 REDIS CONSTS
 """
-R_CH_SUB: str = "clockpi"
-R_CH_PUB: str = "epdpi"
+#R_CH_SUB: str = "clockpi"
+#R_CH_PUB: str = "epdpi"
 R_CH_DRAW: str = "epdpi_draw"
 R_CH_CLEAR: str = "epdpi_clear"
 
-R_MSG_CLEAR: str = "clear"
-R_MSG_DRAW: str = "draw"
-R_MSG_BUSY: str = "busy"
-R_MSG_UPDATED: str = "updated"
-R_MSG_RESULT: str = "result"
+#R_MSG_CLEAR: str = "clear"
+#R_MSG_DRAW: str = "draw"
+#R_MSG_BUSY: str = "busy"
+#R_MSG_UPDATED: str = "updated"
+#R_MSG_RESULT: str = "result"
 
-R_IMAGE_QUEUE: str = "img_queue"
+#R_IMAGE_QUEUE: str = "img_queue"
 R_SLEEP_STATUS: str = "sleep_status"
 
-R_SETTINGS_EPD_BUSY: str = "epd_busy"
-R_SETTINGS_DRAW_GRIDS: str = "draw_grids"
+#R_SETTINGS_EPD_BUSY: str = "epd_busy"
+#R_SETTINGS_DRAW_GRIDS: str = "draw_grids"
 
 
 """

@@ -1,15 +1,13 @@
-import time
 from logging import Logger, getLogger
 
 from flask import request
 from flask_restx import Resource
 
-from app import redis_controller
-from app.consts import SLEEP_STATUS_AWAKE, SLEEP_STATUS_SLEEP, R_SETTINGS_DRAW_GRIDS
+from app.consts import SleepStatus
+from app.device.logic.display import clear_display, update_display
+from app.device.logic.queue import shift_next, shuffle_queue
 from app.lib.decorators import local_apikey_required
-from app.epd.logic import clear_clock_display, update_clock_display
-from app.schedule.logic import should_sleep_now, get_status, set_status
-from app.queue.logic import shuffle_queue, shift_next
+from app.schedule.logic import get_status, set_status, should_sleep_now
 
 from . import ns
 
@@ -21,61 +19,48 @@ API
 """
 
 
-@ns.route("/tick")
+@ns.route("/<int:device_id>/tick")
 class TickRes(Resource):
 	@local_apikey_required
-	def get(self):
-		sleep_status: int = get_status()
-		is_sleep: bool = should_sleep_now()
+	def get(self, device_id: int):
+		sleep_status: SleepStatus = get_status(0, device_id, True)
+		is_sleep: bool = should_sleep_now(0, device_id, True)
 
 		if is_sleep:
-			if sleep_status == SLEEP_STATUS_AWAKE:
-				clear_clock_display()
-				set_status(SLEEP_STATUS_SLEEP)
+			if sleep_status == SleepStatus.AWAKE:
+				clear_display(0, device_id, True)
+				set_status(0, device_id, SleepStatus.SLEEP, True)
 		else:
-			update_clock_display()
-			if sleep_status == SLEEP_STATUS_SLEEP:
-				set_status(SLEEP_STATUS_AWAKE)
-
+			update_display(0, device_id, True)
+			if sleep_status == SleepStatus.SLEEP:
+				set_status(0, device_id, SleepStatus.SLEEP, True)
+				
 		return "", 204
 
 
-@ns.route("/queue/shuffle")
+@ns.route("/<int:device_id>/queue/shuffle")
 class QueueShuffleRes(Resource):
 	@local_apikey_required
 	@ns.response(204, "")
 	@ns.response(401, "Authentication Error")
 	@ns.response(403, "Authorization Error")
 	@ns.response(500, "Internal Server Error")
-	def get(self):
-		shuffle_queue()
+	def get(self, device_id: int):
+		
+		shuffle_queue(0, device_id, True)
+		
 		return "", 204
 		
 
-@ns.route("/queue/next")
+@ns.route("/<int:device_id>/queue/next")
 class QueueNextRes(Resource):
 	@local_apikey_required
 	@ns.response(204, "")
 	@ns.response(401, "Authentication Error")
 	@ns.response(403, "Authorization Error")
 	@ns.response(500, "Internal Server Error")
-	def get(self):
-		shift_next()
-		return "", 204
-
-
-@ns.route("/draw_grids")
-class DrawGridsRes(Resource):
-	@local_apikey_required
-	def patch(self):
-		d: dict = request.get_json()
-		draw_grids: bool | None = d.get("draw_grids")
-		if draw_grids is None:
-			return {"error": "Missing argument"}, 400
-
-		logger.info(f"set draw grids {draw_grids=}")
-
-		# Update Redis
-		redis_controller.rset(R_SETTINGS_DRAW_GRIDS, "1" if draw_grids else "0")
-
+	def get(self, device_id: int):
+		
+		shift_next(0, device_id, True)
+		
 		return "", 204

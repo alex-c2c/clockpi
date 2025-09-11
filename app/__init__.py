@@ -1,6 +1,6 @@
 import os
 import logging
-from venv import logger
+
 from dotenv import load_dotenv
 from logging import Logger, getLogger
 
@@ -10,7 +10,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_session import Session
 from flask_migrate import Migrate
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(name)s.%(funcName)s: %(message)s")
 logger: Logger = getLogger(__name__)
 
 load_dotenv()
@@ -41,5 +41,5 @@ def create_app():
 	db.init_app(app)
 	migrate.init_app(app, db)
 	session.init_app(app)
-  
+
 	return app

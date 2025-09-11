@@ -8,28 +8,22 @@ from app.consts import *
 
 logger: Logger = getLogger(__name__)
 
-
+'''
 def exception_handler(ex, pubsub, thread):
 	logger.warning(f"exception_handler")
 	thread.stop()
 	thread.join(timeout=1.0)
 	pubsub.close()
+'''
 
-
+'''
 def unsub_from_channel() -> None:
 	global redis_client
 	redis_pubsub = redis_client.pubsub()
 	redis_pubsub.unsubscribe(R_CH_SUB)
+'''
 
-	"""
-	redis_thread.stop()
-	redis_thread.join(timeout=1.0)
-
-	redis_pubsub = redis_client.pubsub()
-	redis_pubsub.close()
-	"""
-
-
+'''
 def sub_to_channel() -> None:
 	logger.info(f"Subscribing to {R_CH_SUB}")
 
@@ -54,15 +48,15 @@ def sub_to_channel() -> None:
 		sleep_time=0.1, exception_handler=exception_handler
 	)
 	redis_thread.name = "redis pubsub thread"
-
+'''
 
 def init_app(app: Flask) -> None:
 	logger.info(f"Initializing redis client")
 	global redis_client
 	redis_client = FlaskRedis(app, decode_responses=True)
-	redis_client.set(R_SETTINGS_DRAW_GRIDS, "0")
 
 
+'''
 def event_handler(msg: dict) -> None:
 	logger.info(msg=f"event_handler {msg=}")
 
@@ -77,12 +71,7 @@ def event_handler(msg: dict) -> None:
 
 	elif id == 2:
 		...
-
-	if data[0] == R_MSG_BUSY:
-		...
-
-	elif data[0] == R_MSG_RESULT:
-		...
+'''
 
 
 def rdelete(key: str) -> None:
@@ -94,7 +83,7 @@ def rget(key: str, default: str) -> str:
 	global redis_client
 	value: Any = redis_client.get(key)
 	if value is None:
-		return default
+			return default
 	else:
 		return value
 
@@ -109,7 +98,3 @@ def rpublish(ch: str, msg: str) -> None:
 	
 	global redis_client
 	redis_client.publish(ch, msg)
-
-
-def get_draw_grids() -> bool:
-	return True if rget(R_SETTINGS_DRAW_GRIDS, "0") == "1" else False
