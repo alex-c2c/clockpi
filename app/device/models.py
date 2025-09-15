@@ -17,7 +17,7 @@ class DeviceModel(db.Model):
 	id:	Mapped[int]						= mapped_column(Integer, primary_key=True)
 	name: Mapped[str]					= mapped_column(String(), nullable=False)
 	desc: Mapped[str]					= mapped_column(String())
-	ipv4: Mapped[str]					= mapped_column(String(), nullable=False)
+	ipv4: Mapped[str]					= mapped_column(String(), nullable=False, unique=True)
 	type: Mapped[str]					= mapped_column(String(), nullable=False)
 	supported_colors: Mapped[list[str]] = mapped_column(MutableList.as_mutable(JSONB), default=list, nullable=False, server_default="[]")
 	default_label_color: Mapped[str]	= mapped_column(String(), nullable=False)

@@ -4,14 +4,15 @@ import traceback
 from typing import Any
 import uuid
 
+from logging import Logger, getLogger
+
 from flask import Flask, Response, g, jsonify, request
 from flask_cors import CORS
 import werkzeug
 import werkzeug.exceptions
 
-from app import api, api_bp, auth, device, main, session_pkg, schedule, user, wallpaper
+from app import api, api_bp, auth, device, main, session_pkg, user
 from app import create_app, redis_controller
-from logging import Logger, getLogger
 
 
 logger: Logger = getLogger(__name__)
@@ -31,9 +32,7 @@ auth.append_namespace(api)
 device.append_namespace(api)
 main.append_namespace(api)
 session_pkg.append_namespace(api)
-schedule.append_namespace(api)
 user.append_namespace(api)
-wallpaper.append_namespace(api)
 
 
 # Redis
@@ -47,6 +46,9 @@ CORS(app, supports_credentials=True, origins=['http://localhost:3000'])
 
 # Register exit callback
 atexit.register(on_app_exit)
+
+
+#logger.debug(app.url_map)
 	
 
 @app.before_request
@@ -70,9 +72,10 @@ def handle_generic_error(error: Exception) -> tuple[Response, int]:
 		
 		status_code = 500
 		message = "Internal server error"
-
+		
 	response: dict[str, Any] = {
 		"message": message,
+		"requestId": getattr(g, "request_id", None),
 	}
 	
 	return jsonify(response), status_code

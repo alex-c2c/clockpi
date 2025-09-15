@@ -42,30 +42,30 @@ def create_schedule(user_id:int, device_id:int, payload: dict) -> None:
 		
 	failed_validations: dict = {}
 			
-	days: list[str] = payload.get("days", [])
+	days: list[str] | None = payload.get("days")
 	if  (err := validate_days(days)) is not None:
 		failed_validations["days"] = err
 	
-	start_time: str = payload.get("startTime", "")
-	if (err := not validate_time(start_time)) is not None:
+	start_time: str | None = payload.get("startTime")
+	if (err := validate_time(start_time)) is not None:
 		failed_validations["startTime"] = err
 		
-	duration: int = payload.get("duration", -1)
+	duration: int | None = payload.get("duration")
 	if (err := validate_duration(duration)) is not None:
 		failed_validations["duration"] = err
 		
 	is_enabled: bool | None = payload.get("isEnabled")
 	if is_enabled is None:
-		failed_validations["isEnabled"] = "This is a required field"
+		failed_validations["isEnabled"] = "This is a required property"
 	
 	if len(failed_validations.values()) > 0:
-		api_abort(ErrorCode.VALIDATION_ERROR, fields=failed_validations)
+		api_abort(ErrorCode.VALIDATION_ERROR, errors=failed_validations)
 	
 	new_sch = ScheduleModel()
 	new_sch.device_id = device_id
-	new_sch.days = days
-	new_sch.start_time = start_time
-	new_sch.duration = duration
+	new_sch.days = days				# type: ignore
+	new_sch.start_time = start_time	# type: ignore
+	new_sch.duration = duration		# type: ignore
 	new_sch.is_enabled = is_enabled # type: ignore
 	
 	try:
@@ -115,26 +115,29 @@ def update_schedule(user_id:int, schedule_id: int, payload: dict) -> None:
 	if days is not None:
 		if (err := validate_days(days)) is not None:
 			failed_validations["days"] = err
-		schedule.days = days
+		else:
+			schedule.days = days
 			
 	start_time: str | None = payload.get("startTime")
 	if start_time is not None:
 		if  (err := validate_time(start_time)) is not None:
-			failed_validations["startTime"] = err		
-		schedule.start_time = start_time
+			failed_validations["startTime"] = err
+		else:
+			schedule.start_time = start_time
 		
 	duration: int | None = payload.get("duration")
 	if duration is not None:
 		if (err := validate_duration(duration)) is not None:
-			failed_validations["duration"] = err			
-		schedule.duration = duration
+			failed_validations["duration"] = err
+		else:
+			schedule.duration = duration
 		
 	is_enabled: bool | None = payload.get("isEnabled")
 	if is_enabled is not None:
 		schedule.is_enabled = is_enabled
 		
 	if len(failed_validations.values()) > 0:
-		api_abort(ErrorCode.VALIDATION_ERROR, fields=failed_validations)
+		api_abort(ErrorCode.VALIDATION_ERROR, errors=failed_validations)
 
 	try:
 		db.session.commit()

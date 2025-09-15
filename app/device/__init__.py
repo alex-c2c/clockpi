@@ -5,5 +5,6 @@ ns: Namespace = Namespace("device_v1", description="Device operations (Ver 1)", 
 def append_namespace(api: Api) -> None:
 	# This is to trigger the import of routes
 	from . import routes
+	from .routes import display, queue, schedule, wallpaper
  
 	api.add_namespace(ns)

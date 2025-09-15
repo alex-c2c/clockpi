@@ -76,6 +76,10 @@ def create_device(user_id: int, payload: dict) -> dict:
 	ipv4: str | None = payload.get("ipv4")
 	if  (err := is_ipv4_valid(ipv4)) is not None:
 		failed_validations["ipv4"] = err
+	else:
+		select_ip_stmt = select(DeviceModel).where(DeviceModel.ipv4 == ipv4)
+		if db.session.execute(select_ip_stmt).scalar_one_or_none() is not None:
+			failed_validations["ipv4"] = "'ipv4' already taken."
 
 	type_str: str | None = payload.get("type")
 	if (err := is_type_valid(type_str)) is not None:
@@ -86,7 +90,7 @@ def create_device(user_id: int, payload: dict) -> dict:
 		failed_validations["orientation"] = err
 	
 	if len(failed_validations.values()) > 0:
-		api_abort(ErrorCode.VALIDATION_ERROR, fields=failed_validations)
+		api_abort(ErrorCode.VALIDATION_ERROR, errors=failed_validations)
 	
 	device_model: DeviceModel = DeviceModel(
 		name, 									# type: ignore
@@ -129,32 +133,38 @@ def update_device(user_id: int, device_id: int, payload: dict) -> dict:
 	if name is not None:
 		if (err := is_name_valid(name)) is not None:
 			failed_validations["name"] = err
-			
-		model.name = name
+		else:
+			model.name = name
 
 	desc: str | None = payload.get("desc")
 	if desc is not None:
 		if (err := is_desc_valid(desc)) is not None:
 			failed_validations["desc"] = err
-		model.desc = desc
+		else:
+			model.desc = desc
 	
 	ipv4: str | None = payload.get("ipv4")
 	if ipv4 is not None:
 		if (err := is_ipv4_valid(ipv4)) is not None:
 			failed_validations["ipv4"] = err
-		model.ipv4 = ipv4
+		else:
+			model.ipv4 = ipv4
+	
+	
 	
 	type: str | None = payload.get("type")
 	if type is not None:
 		if (err := is_type_valid(type)) is not None:
 			failed_validations["type"] = err
-		model.update_type(type)
-
+		else:
+			model.update_type(type)
+			
 	orientation: str | None = payload.get("orientation")
 	if orientation is not None:
 		if (err := is_orientation_valid(orientation)) is not None:
 			failed_validations["orientation"] = err
-		model.update_orientation(Orientation[orientation])
+		else:
+			model.update_orientation(Orientation[orientation])
 	
 	is_draw_grid: bool | None = payload.get("isDrawGrid")
 	if is_draw_grid is not None:
@@ -165,7 +175,7 @@ def update_device(user_id: int, device_id: int, payload: dict) -> dict:
 		model.is_enabled = is_enabled
 		
 	if len(failed_validations.values()) > 0:
-		api_abort(ErrorCode.VALIDATION_ERROR, fields=failed_validations)
+		api_abort(ErrorCode.VALIDATION_ERROR, errors=failed_validations)
 	
 	try:
 		db.session.commit()
@@ -178,6 +188,9 @@ def update_device(user_id: int, device_id: int, payload: dict) -> dict:
 	
 
 def delete_device(user_id: int, device_id: int) -> None:
+	if db.session.get(DeviceModel, device_id) is None:
+		api_abort(ErrorCode.DEVICE_NOT_FOUND)
+		
 	if not can_access_device(user_id, device_id):
 		api_abort(ErrorCode.FORBIDDEN)
 	

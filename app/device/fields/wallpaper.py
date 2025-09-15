@@ -1,6 +1,7 @@
 from flask_restx import fields
 
-from . import ns
+from .. import ns
+
 
 wallpaper_fields = ns.model("Wallpaper", {
 	"id":			fields.Integer(),
@@ -15,7 +16,8 @@ wallpaper_fields = ns.model("Wallpaper", {
 	"shadow": 		fields.String()
 })
 
-wallpaper_update_model = ns.model("WallpaperUpdate", {
+
+wallpaper_update_fields = ns.model("WallpaperUpdate", {
 	"x":		fields.Integer(),
 	"y":		fields.Integer(),
 	"w":		fields.Integer(),

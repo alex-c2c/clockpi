@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 3e541b7af8ca
+Revision ID: db0191f7551e
 Revises: 
-Create Date: 2025-09-07 17:12:03.410073
+Create Date: 2025-09-12 13:02:25.873511
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '3e541b7af8ca'
+revision = 'db0191f7551e'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -35,7 +35,8 @@ def upgrade():
     sa.Column('is_enabled', sa.Boolean(), server_default='t', nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=False),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('ipv4')
     )
     op.create_table('user',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -77,12 +78,12 @@ def upgrade():
     sa.Column('hash', sa.String(), nullable=False),
     sa.Column('file_name', sa.String(), nullable=False),
     sa.Column('size', sa.Integer(), nullable=False),
-    sa.Column('label_x_per', sa.Integer(), nullable=True),
-    sa.Column('label_y_per', sa.Integer(), nullable=True),
-    sa.Column('label_w_per', sa.Float(precision=1), nullable=True),
-    sa.Column('label_h_per', sa.Float(precision=1), nullable=True),
-    sa.Column('color', sa.String(), nullable=True),
-    sa.Column('shadow', sa.String(), nullable=True),
+    sa.Column('label_x_per', sa.Float(precision=1), nullable=False),
+    sa.Column('label_y_per', sa.Float(precision=1), nullable=False),
+    sa.Column('label_w_per', sa.Float(precision=1), nullable=False),
+    sa.Column('label_h_per', sa.Float(precision=1), nullable=False),
+    sa.Column('color', sa.String(), nullable=False),
+    sa.Column('shadow', sa.String(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['device_id'], ['device.id'], ),

@@ -12,7 +12,7 @@ from app.user.consts import UserRole
 from app.user.logic import create_user
 from app.user.models import UserModel
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s <%(levelname)s> %(name)s.%(funcName)s: %(message)s")
 logger: Logger = getLogger(__name__)
 
 app = create_app()
@@ -30,23 +30,14 @@ def _get_local_ip() -> str:
 	return str(ip)
 
 
-def _create_superuser(data: dict) -> UserModel | None:
-	try:
-		user: UserModel | None = create_user(data)
-		if user is None:
-			logger.error("Unable to create superuser")
-		else:
-			logger.info(f"Created superuser {user.id}:{user.username}")
-		
-		return user
-	except Exception as e:
-		logger.error(f"Exception occured: {e}")
-	
-	return None
+def _create_superuser(data: dict) -> dict:
+	user: dict = create_user(data)
+	return user
 
 
 def _create_default_device(user_id:int, data: dict) -> None:
-	create_device(user_id, data)
+	device: dict = create_device(user_id, data)
+	logger.info(f"Created device {device}")
 	
 
 @app.cli.command("create-superuser")
@@ -77,11 +68,8 @@ def cli_setup_default() -> None:
 		"role": UserRole.ADMIN.value
 	}
 	
-	user_model: UserModel | None = _create_superuser(user_payload)
-	
-	if user_model is None:
-		return
-	
+	user: dict = _create_superuser(user_payload)
+		
 	device_payload: dict = {
 		"name": os.environ.get("DEFAULT_DEVICE_NAME"),
 		"desc": os.environ.get("DEFAULT_DEVICE_DESC"),
@@ -90,5 +78,5 @@ def cli_setup_default() -> None:
 		"orientation": Orientation.HORIZONTAL.value
 	}
 	
-	_create_default_device(user_model.id, device_payload)
+	_create_default_device(user["id"], device_payload)
 	

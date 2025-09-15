@@ -8,7 +8,7 @@ user_fields = ns.model("User", {
 	"id":			fields.Integer(description="User ID"),
 	"username": 	fields.String(description="User name"),
 	"dispName": 	fields.String(description="User's display name"),
-	"role": 		fields.String(description="User's access role", enum=[f"{UserRole.ADMIN.value}, {UserRole.USER.value}, {UserRole.VIEWER.value}"])
+	"role": 		fields.String(description="User's access role", enum=[f"{UserRole.ADMIN.value}", f"{UserRole.USER.value}", f"{UserRole.VIEWER.value}"])
 })
 
 user_create_model = ns.model("UserCreate", {
@@ -16,7 +16,7 @@ user_create_model = ns.model("UserCreate", {
 	"dispName": 			fields.String(required=True, description="User's display name"),
 	"password": 			fields.String(required=True, description="User's password"),
 	"confirmPassword": 		fields.String(required=True, description="User's password (confirmation)"),
-	"role": 				fields.String(required=True, description="User's access role", enum=[f"{UserRole.ADMIN.value}, {UserRole.USER.value}, {UserRole.VIEWER.value}"])
+	"role": 				fields.String(required=True, description="User's access role", enum=[f"{UserRole.ADMIN.value}", f"{UserRole.USER.value}", f"{UserRole.VIEWER.value}"])
 })
 
 user_update_model = ns.model("UserUpdate", {
@@ -24,5 +24,5 @@ user_update_model = ns.model("UserUpdate", {
 	"currentPassword": 		fields.String(description="User's current password"),
 	"newPassword":			fields.String(description="User's new password"),
 	"newConfirmPassword":	fields.String(description="User's new password (confirmation)"),
-	"role":					fields.String(description="User's access role", enum=[f"{UserRole.ADMIN.value}, {UserRole.USER.value}, {UserRole.VIEWER.value}"])
+	"role":					fields.String(description="User's access role", enum=[f"{UserRole.ADMIN.value}",f"{UserRole.USER.value}", f"{UserRole.VIEWER.value}"])
 })

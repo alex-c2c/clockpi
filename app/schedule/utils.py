@@ -2,7 +2,7 @@ from .consts import DAYS_OF_WEEK
 
 def validate_time(time: str | None) -> str | None:
 	if time is None:
-		return "This is a required field"
+		return "This is a required property"
 		
 	if len(time) != 5:
 		return "Wrong format (HH:MM)"
@@ -29,7 +29,7 @@ def validate_time(time: str | None) -> str | None:
 
 def validate_duration(duration: int | None) -> str | None:
 	if duration is None:
-		return "This is a required field"
+		return "This is a required property"
 		
 	if duration < 1 or duration > 1440:
 		return "Invalid input (1 >= duration <= 1440)"
@@ -39,7 +39,7 @@ def validate_duration(duration: int | None) -> str | None:
 
 def validate_days(days: list[str] | None) -> str | None:
 	if days is None:
-		return "This is a required field"
+		return "This is a required property"
 		
 	if len(days) > 7:
 		return "Maximum of 7 days"

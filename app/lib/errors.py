@@ -57,7 +57,7 @@ ERROR_CONFIG = {
 	# Validation / Input
 	ErrorCode.INVALID_INPUT: (HTTPStatus.BAD_REQUEST, "One or more fields are invalid."),
 	ErrorCode.VALIDATION_ERROR: (HTTPStatus.BAD_REQUEST, "One or more fields failed validation."),
-	ErrorCode.MISSING_REQUIRED_FIELD: (HTTPStatus.BAD_REQUEST, "A required field is missing."),
+	ErrorCode.MISSING_REQUIRED_FIELD: (HTTPStatus.BAD_REQUEST, "A required property is missing."),
 	ErrorCode.INVALID_DEPENDENCY: (HTTPStatus.BAD_REQUEST, "A referenced dependency does not exist."),
 	ErrorCode.CONFLICT: (HTTPStatus.CONFLICT, "Resource already exists or conflicts with existing data."),
 
@@ -105,10 +105,9 @@ error_fields = api.model("Error", {
 
 
 def api_abort(error_code: ErrorCode, **kwargs) -> NoReturn:
-	logger.debug(f"{error_code=} {kwargs=}")
+	#logger.debug(f"{error_code=} {kwargs=}")
 	err = STANDARD_ERRORS[error_code]
 	kwargs["requestId"] = getattr(g, "request_id", None)
 	kwargs["errorCode"] = err["error_code"]
-	logger.debug(f"{kwargs=}")
 	abort(err["status"].value, err["default_message"], **kwargs)
 	raise RuntimeError("Unreachable")

@@ -20,8 +20,7 @@ API
 @ns.route("")
 class UserListRes(Resource):
 	@login_required
-	@ns.response(200, "Success", model=user_fields)
-	@ns.response(401, "Authentication Error")
+	@ns.response(200, "Success", model=[user_fields])
 	@ns.marshal_with(user_fields, as_list=True)
 	def get(self):
 		all_users: list[dict] = get_all_users()
@@ -32,41 +31,34 @@ class UserListRes(Resource):
 @ns.param("id", "User ID")
 class UserRes(Resource):
 	@admin_required
-	@ns.response(204, "")
-	@ns.response(401, "Authentication Error")
-	@ns.response(403, "Authorization Error")
-	@ns.response(404, "User resource not found")
-	@ns.response(500, "Internal Server Error")
+	@ns.response(204, "Success")
 	def delete(self, id: int):
 		delete_user(id)
+		
 		return "", 204
 	
 	@login_required
-	@ns.response(204, "")
-	@ns.response(400, "Bad Request")
-	@ns.response(401, "Authentication Error")
-	@ns.response(403, "Authorization Error")
-	@ns.response(404, "User resource not found")
-	@ns.response(500, "Internal Server Error")
+	@ns.response(204, "Success")
 	@ns.expect(user_update_model, validate=True)
 	def patch(self, id: int):
 		data = ns.payload
+		
 		update_user(id, data)
+		
 		return "", 204
 
 
 @ns.route("/create")
 class UserCreateRes(Resource):
 	@admin_required
-	@ns.response(204, "")
-	@ns.response(400, "Bad Request")
-	@ns.response(401, "Authentication Error")
-	@ns.response(409, "Duplicate username")
-	@ns.response(500, "Internal Server Error")
 	@ns.expect(user_create_model, validate=True)
+	@ns.response(200, "Success", user_fields)
+	@ns.marshal_with(user_fields)
 	def post(self):
 		data = ns.payload
-		create_user(data)
-		return "", 204
+		
+		user: dict = create_user(data)
+		
+		return user, 200
 
 

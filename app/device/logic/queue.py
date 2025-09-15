@@ -90,7 +90,7 @@ def append_to_queue(user_id: int, device_id: int, wallpaper_id: int) -> None:
 	try:
 		db.session.commit()
 	except Exception as ex:
-		logger.error(f"[append_to_queue] Unable to commit to database")
+		db.session.rollback()
 		api_abort(ErrorCode.DATABASE_ERROR)
 	
 	logger.info(f"Queue appended: {device.queue}")
@@ -120,8 +120,12 @@ def move_to_first(user_id:int, device_id: int, wallpaper_id: int) -> None:
 			queue.insert(0, wallpaper_id)
 			break
 	
-	db.session.commit()
-
+	try:
+		db.session.commit()
+	except Exception as ex:
+		db.session.rollback()
+		api_abort(ErrorCode.DATABASE_ERROR)
+		
 	logger.info(f"Moved {wallpaper_id} to front of queue")
 
 

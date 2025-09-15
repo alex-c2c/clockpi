@@ -31,7 +31,7 @@ def create_user(data: dict) -> dict:
 	
 	username: str | None = data.get("username")
 	if username is None:
-		api_abort(ErrorCode.INVALID_INPUT, fields={"username":"This is a required field"})
+		api_abort(ErrorCode.INVALID_INPUT, errors={"username":"This is a required property"})
 		
 	if (err := is_username_valid(username)) is not None:
 		failed_validations["username"] = err
@@ -40,7 +40,8 @@ def create_user(data: dict) -> dict:
 		
 	existing_user: UserModel | None = UserModel.query.filter_by(username=username).one_or_none()
 	if existing_user is not None:
-		api_abort(ErrorCode.CONFLICT, detail="Username already taken")
+		failed_validations["username"] = "Username is already taken."
+		api_abort(ErrorCode.CONFLICT, errors=failed_validations)
 
 	password: str | None = data.get("password")
 	confirm_password: str | None = data.get("confirmPassword")
@@ -60,7 +61,7 @@ def create_user(data: dict) -> dict:
 		failed_validations["dispName"] = err
 
 	if len(failed_validations.values()) > 0:
-		api_abort(ErrorCode.VALIDATION_ERROR, fields=failed_validations)
+		api_abort(ErrorCode.VALIDATION_ERROR, errors=failed_validations)
 
 	new_user: UserModel = UserModel(
 		username,									# type: ignore
@@ -128,7 +129,7 @@ def update_user(user_id: int, data: dict) -> None:
 		user.role = UserRole[role]
 
 	if len(failed_validations.values()) > 0:
-		api_abort(ErrorCode.VALIDATION_ERROR, fields=failed_validations)
+		api_abort(ErrorCode.VALIDATION_ERROR, errors=failed_validations)
 
 	try:
 		db.session.commit()

@@ -10,7 +10,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_session import Session
 from flask_migrate import Migrate
 
-logging.basicConfig(level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(name)s.%(funcName)s: %(message)s")
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s <%(levelname)s> %(name)s.%(funcName)s: %(message)s")
 logger: Logger = getLogger(__name__)
 
 load_dotenv()
