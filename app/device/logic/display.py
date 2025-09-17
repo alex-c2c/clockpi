@@ -16,7 +16,7 @@ from ..models import DeviceModel
 logger: Logger = getLogger(__name__)
 
 
-def update_display(user_id: int, device_id: int, skip_user_check: bool = False) -> None:
+def update_display(device_id: int) -> None:
 	logger.info(f"{device_id=}")
 	
 	device: DeviceModel | None = db.session.get(DeviceModel, device_id)
@@ -24,13 +24,10 @@ def update_display(user_id: int, device_id: int, skip_user_check: bool = False) 
 	if device is None:
 		api_abort(ErrorCode.DEVICE_NOT_FOUND)
 		
-	if not skip_user_check and not can_access_device(user_id, device_id):
-		api_abort(ErrorCode.FORBIDDEN)
-	
 	current_wallpaper_id: int = 0 if len(device.queue) == 0 else device.queue[0]
 	wallpaper: WallpaperModel | None = db.session.get(WallpaperModel, current_wallpaper_id)
 	if wallpaper is None:
-		logger.error(f"Wallpaper resource not found for {current_wallpaper_id=}")
+		logger.error(f"Unable to find wallpaper resource ({current_wallpaper_id=})")
 		return
 
 	file_path: str = os.path.join(DIR_APP_UPLOAD, wallpaper.file_name)
@@ -70,15 +67,12 @@ def update_display(user_id: int, device_id: int, skip_user_check: bool = False) 
 	redis_controller.rpublish(f"{R_CH_DRAW}_{device.ipv4}", data)
 
 
-def clear_display(user_id: int, device_id: int, skip_user_check: bool = False) -> None:
-	logger.info(f"[clear_display] {user_id=} {device_id=}")
+def clear_display(device_id: int) -> None:
+	logger.info(f"[clear_display] {device_id=}")
 	
 	device: DeviceModel | None = db.session.get(DeviceModel, device_id)
 	
 	if device is None:
 		api_abort(ErrorCode.DEVICE_NOT_FOUND)
 		
-	if not skip_user_check and not can_access_device(user_id, device_id):
-		api_abort(ErrorCode.FORBIDDEN)
-	
 	redis_controller.rpublish(f"{R_CH_CLEAR}_{device.ipv4}", "clear")

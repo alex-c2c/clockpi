@@ -1,7 +1,7 @@
 from datetime import datetime
 from pytz import timezone
 
-from sqlalchemy import Boolean, ForeignKey, Integer, String, Boolean, DateTime
+from sqlalchemy import ARRAY, Boolean, ForeignKey, Integer, String, Boolean, DateTime, UniqueConstraint
 from sqlalchemy.dialects.postgresql import ENUM, JSONB
 from sqlalchemy.ext.mutable import MutableList
 from sqlalchemy.orm import Mapped, mapped_column
@@ -19,17 +19,17 @@ class DeviceModel(db.Model):
 	desc: Mapped[str]					= mapped_column(String())
 	ipv4: Mapped[str]					= mapped_column(String(), nullable=False, unique=True)
 	type: Mapped[str]					= mapped_column(String(), nullable=False)
-	supported_colors: Mapped[list[str]] = mapped_column(MutableList.as_mutable(JSONB), default=list, nullable=False, server_default="[]")
+	supported_colors: Mapped[list[str]] = mapped_column(MutableList.as_mutable(ARRAY(String)), default=list, nullable=False, server_default="{}")
 	default_label_color: Mapped[str]	= mapped_column(String(), nullable=False)
 	default_label_shadow: Mapped[str] 	= mapped_column(String(), nullable=False)
 	orientation: Mapped[Orientation] 	= mapped_column(ENUM(Orientation), nullable=False, server_default=Orientation.HORIZONTAL.value)
 	width: Mapped[int]					= mapped_column(Integer, nullable=False)
 	height: Mapped[int]					= mapped_column(Integer, nullable=False)
-	queue: Mapped[list[int]]			= mapped_column(MutableList.as_mutable(JSONB), default=list, nullable=False, server_default="[]")
+	queue: Mapped[list[int]]			= mapped_column(MutableList.as_mutable(ARRAY(Integer)), default=list, nullable=False, server_default="{}")
 	is_draw_grid: Mapped[bool]			= mapped_column(Boolean, nullable=False, default=False, server_default="f")
 	is_enabled: Mapped[bool]			= mapped_column(Boolean, nullable=False, default=True, server_default="t")
 	created_at:	Mapped[datetime]		= mapped_column(DateTime, nullable=False, default=datetime.now(timezone("Asia/Singapore")))
-	updated_at:	Mapped[datetime] 		= mapped_column(DateTime, nullable=False, default=datetime.now(timezone("Asia/Singapore")))
+	updated_at:	Mapped[datetime] 		= mapped_column(DateTime, nullable=True)
 
 	def __init__(self,
 	name: str,
@@ -117,16 +117,20 @@ class DeviceOwnershipModel(db.Model):
 	__tablename__: str = "device_ownership"
 	
 	id: Mapped[int]					= mapped_column(Integer, primary_key=True)
-	device_id: Mapped[int]			= mapped_column(ForeignKey("device.id"), nullable=False, unique=True)
-	owners: Mapped[list[int]]		= mapped_column(MutableList.as_mutable(JSONB), default=list, nullable=False, server_default="[]")
+	device_id: Mapped[int]			= mapped_column(ForeignKey("device.id"), nullable=False)
+	user_id: Mapped[int]			= mapped_column(ForeignKey("user.id"), nullable=False)
 	created_at:	Mapped[datetime]	= mapped_column(DateTime, nullable=False, default=datetime.now(timezone("Asia/Singapore")))
-	updated_at:	Mapped[datetime]	= mapped_column(DateTime, nullable=False, default=datetime.now(timezone("Asia/Singapore")))
+	updated_at:	Mapped[datetime]	= mapped_column(DateTime, nullable=True)
+
+	__table_args__ = (
+		UniqueConstraint("device_id", "user_id", name="uq_device_ownership"),
+	)
 
 	def __repr__(self) -> str:
 		return f"<DeviceOwnership - \
 			id:{self.id} \
 			device_id:{self.device_id} \
-			owners:{self.owners} \
+			owners:{self.user_id} \
 			created_at:{self.created_at} \
 			updated_at:{self.updated_at} \
 		>"
@@ -135,5 +139,5 @@ class DeviceOwnershipModel(db.Model):
 		return {
 			"id": self.id,
 			"deviceId": self.device_id,
-			"owners": self.owners,
+			"userId": self.user_id,
 		}

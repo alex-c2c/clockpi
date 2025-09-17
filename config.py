@@ -1,12 +1,13 @@
 import os
 
+
 class Config:
 	MAX_CONTENT_LENGTH: int = 16 * 1024 * 1024 # 16 MB
 	SCHEDULER_API_ENABLED: bool = True
 	SQLALCHEMY_TRACK_MODIFICATIONS: bool = False
 	SESSION_TYPE:str = "sqlalchemy"
-	PROPAGATE_EXCEPTIONS=True
-	
+	PROPAGATE_EXCEPTIONS: bool = True
+
 
 class DevConfig(Config):
 	DEBUG: bool = True

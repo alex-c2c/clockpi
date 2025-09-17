@@ -3,7 +3,9 @@ from logging import Logger, getLogger
 from flask import session
 from flask_restx import Resource
 
+from app.device.logic import can_access_device
 from app.lib.decorators import login_required
+from app.lib.errors import ErrorCode, api_abort
 
 from .. import ns
 from ..logic.display import clear_display, update_display
@@ -18,9 +20,12 @@ class DeviceDisplayClearRes(Resource):
 	@login_required
 	@ns.response(204, "Success")
 	def post(self, device_id: int):
-		user_id: int = session.get("id", 0)
+		user_id: int = session.get("userId", 0)
 		
-		clear_display(user_id, device_id)
+		if not can_access_device(user_id, device_id):
+			api_abort(ErrorCode.FORBIDDEN)
+		
+		clear_display(device_id)
 		
 		return "", 204
 
@@ -31,8 +36,11 @@ class DeviceDisplayRefreshRes(Resource):
 	@login_required
 	@ns.response(204, "Success")
 	def post(self, device_id: int):
-		user_id: int = session.get("id", 0)
+		user_id: int = session.get("userId", 0)
 		
-		update_display(user_id, device_id)
+		if not can_access_device(user_id, device_id):
+			api_abort(ErrorCode.FORBIDDEN)
+		
+		update_display(device_id)
 		
 		return "", 204

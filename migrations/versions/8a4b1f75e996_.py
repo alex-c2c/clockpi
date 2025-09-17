@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: db0191f7551e
+Revision ID: 8a4b1f75e996
 Revises: 
-Create Date: 2025-09-12 13:02:25.873511
+Create Date: 2025-09-17 20:25:58.071541
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = 'db0191f7551e'
+revision = '8a4b1f75e996'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -24,17 +24,17 @@ def upgrade():
     sa.Column('desc', sa.String(), nullable=False),
     sa.Column('ipv4', sa.String(), nullable=False),
     sa.Column('type', sa.String(), nullable=False),
-    sa.Column('supported_colors', postgresql.JSONB(astext_type=sa.Text()), server_default='[]', nullable=False),
+    sa.Column('supported_colors', sa.ARRAY(sa.String()), server_default='{}', nullable=False),
     sa.Column('default_label_color', sa.String(), nullable=False),
     sa.Column('default_label_shadow', sa.String(), nullable=False),
     sa.Column('orientation', postgresql.ENUM('HORIZONTAL', 'VERTICAL', name='orientation'), server_default='HORIZONTAL', nullable=False),
     sa.Column('width', sa.Integer(), nullable=False),
     sa.Column('height', sa.Integer(), nullable=False),
-    sa.Column('queue', postgresql.JSONB(astext_type=sa.Text()), server_default='[]', nullable=False),
+    sa.Column('queue', sa.ARRAY(sa.Integer()), server_default='{}', nullable=False),
     sa.Column('is_draw_grid', sa.Boolean(), server_default='f', nullable=False),
     sa.Column('is_enabled', sa.Boolean(), server_default='t', nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('ipv4')
     )
@@ -45,35 +45,12 @@ def upgrade():
     sa.Column('disp_name', sa.String(), nullable=False),
     sa.Column('role', postgresql.ENUM('ADMIN', 'USER', 'VIEWER', name='userrole'), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('username')
     )
-    op.create_table('device_ownership',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('device_id', sa.Integer(), nullable=False),
-    sa.Column('owners', postgresql.JSONB(astext_type=sa.Text()), server_default='[]', nullable=False),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=False),
-    sa.ForeignKeyConstraint(['device_id'], ['device.id'], ),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('device_id')
-    )
-    op.create_table('schedule',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('device_id', sa.Integer(), nullable=False),
-    sa.Column('days', postgresql.JSONB(astext_type=sa.Text()), server_default='[]', nullable=False),
-    sa.Column('start_time', sa.String(), nullable=False),
-    sa.Column('duration', sa.Integer(), nullable=False),
-    sa.Column('is_enabled', sa.Boolean(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=False),
-    sa.ForeignKeyConstraint(['device_id'], ['device.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
     op.create_table('wallpaper',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('device_id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('hash', sa.String(), nullable=False),
     sa.Column('file_name', sa.String(), nullable=False),
@@ -86,17 +63,67 @@ def upgrade():
     sa.Column('shadow', sa.String(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('device_ownership',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('device_id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['device_id'], ['device.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('device_id', 'user_id', name='uq_device_ownership')
+    )
+    op.create_table('schedule',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('device_id', sa.Integer(), nullable=False),
+    sa.Column('days', sa.ARRAY(sa.String()), server_default='{}', nullable=False),
+    sa.Column('start_time', sa.String(), nullable=False),
+    sa.Column('duration', sa.Integer(), nullable=False),
+    sa.Column('is_enabled', sa.Boolean(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['device_id'], ['device.id'], ),
     sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('wallpaper_ownership',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('wallpaper_id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('device_id', sa.Integer(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['device_id'], ['device.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
+    sa.ForeignKeyConstraint(['wallpaper_id'], ['wallpaper.id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('wallpaper_id')
+    )
+    op.create_table('schedule_ownership',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('schedule_id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('device_id', sa.Integer(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['device_id'], ['device.id'], ),
+    sa.ForeignKeyConstraint(['schedule_id'], ['schedule.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('schedule_id')
     )
     # ### end Alembic commands ###
 
 
 def downgrade():
     # ### commands auto generated by Alembic - please adjust! ###
-    op.drop_table('wallpaper')
+    op.drop_table('schedule_ownership')
+    op.drop_table('wallpaper_ownership')
     op.drop_table('schedule')
     op.drop_table('device_ownership')
+    op.drop_table('wallpaper')
     op.drop_table('user')
     op.drop_table('device')
     # ### end Alembic commands ###

@@ -4,13 +4,11 @@ import shutil
 
 from datetime import datetime
 from logging import Logger, getLogger
+from typing import Sequence
 
 from pytz import timezone
-from sqlalchemy import delete, select
-from flask import request
-from flask.ctx import AppContext
+from sqlalchemy import and_, delete, select
 from werkzeug.datastructures import FileStorage, ImmutableMultiDict
-from werkzeug.utils import secure_filename
 
 from app import db
 from app.consts import *
@@ -20,8 +18,7 @@ from app.epd7in3e.consts import *
 from app.device.logic.queue import append_to_queue, remove_from_queue
 from app.lib.errors import api_abort, ErrorCode
 
-from .consts import ALLOWED_EXTENSIONS
-from .models import WallpaperModel
+from .models import WallpaperModel, WallpaperOwnershipModel
 from .utils import save_upload_file, validate_image, process_image
 
 
@@ -31,6 +28,19 @@ logger: Logger = getLogger(__name__)
 """""
 LOGIC
 """""
+
+
+def can_access_wallpaper(user_id: int, device_id: int, wallpaper_id: int | None) -> bool:
+	stmt = select(WallpaperOwnershipModel).where(
+		and_(
+			WallpaperOwnershipModel.user_id == user_id,
+			WallpaperOwnershipModel.device_id == device_id,
+			WallpaperOwnershipModel.wallpaper_id == wallpaper_id
+			))
+	if db.session.scalars(stmt).one_or_none() is None:
+		return False
+		
+	return True
 
 
 def create_wallpaper(
@@ -152,55 +162,52 @@ def create_wallpaper(
 		return
 
 	# Save upload entry to DB
-	try:
-		name: str = secured_file_name.rsplit(".", 1)[0]
-		file_size: int = os.path.getsize(dest_path)
+	name: str = secured_file_name.rsplit(".", 1)[0]
+	file_size: int = os.path.getsize(dest_path)
 
-		# Insert to DB
-		wm: WallpaperModel = WallpaperModel()
-		wm.device_id = device_id
-		wm.name = name
-		wm.hash = hash
-		wm.file_name = new_file_name
-		wm.size = file_size
-		wm.color = device.default_label_color
-		wm.shadow = device.default_label_shadow
-		
-		db.session.add(wm)
-		db.session.flush()
+	# create new WallpaperModel
+	wm: WallpaperModel = WallpaperModel()
+	wm.name = name
+	wm.hash = hash
+	wm.file_name = new_file_name
+	wm.size = file_size
+	wm.color = device.default_label_color
+	wm.shadow = device.default_label_shadow
+	
+	db.session.add(wm)
+	db.session.flush()
+	
+	# create new WallpaperOwnershipModel
+	wom: WallpaperOwnershipModel = WallpaperOwnershipModel()
+	wom.wallpaper_id = wm.id
+	wom.user_id = user_id
+	wom.device_id = device_id
+	
+	db.session.add(wom)
+	db.session.flush()
 
-		# Append to image queue
-		append_to_queue(user_id, device_id, wm.id)
-
-	except OSError as error:
-		logger.error(f"Unable to create new wallpaper model due to {error}")
-		api_abort(ErrorCode.DATABASE_ERROR)
+	# this method will execute the commit()
+	append_to_queue(device_id, wm.id)
 
 	logger.info(f"Processed image and created new wallpaper model")
 
 
-def delete_wallpaper(user_id: int, wallpaper_id: int) -> None:
+def delete_wallpaper(device_id:int, wallpaper_id: int) -> None:
 	logger.info(msg=f"Attempting to delete wallpaper {wallpaper_id=}")
-
-	wallpaper: WallpaperModel | None = db.session.get(WallpaperModel, wallpaper_id)
-	if wallpaper is None:
-		api_abort(ErrorCode.WALLPAPER_NOT_FOUND)
 	
-	device_id: int = wallpaper.device_id
-	if not can_access_device(user_id, device_id):
-		api_abort(ErrorCode.FORBIDDEN)
-
-	file_name: str = wallpaper.file_name
+	file_name: str = db.session.scalars(select(WallpaperModel.file_name).where(WallpaperModel.id == wallpaper_id)).one_or_none() or ""
 	file_path: str = os.path.join(DIR_APP_UPLOAD, file_name)
 
-	try:
-		db.session.delete(wallpaper)
-		db.session.commit()
-	except Exception as e:
-		logger.error(f"Unable to delete wallpaper model due to {e}")
-		api_abort(ErrorCode.INTERNAL_SERVER_ERROR)
-
-	remove_from_queue(user_id, device_id, wallpaper_id)
+	# delete wallpaper owership first (ForeignKey)
+	db.session.execute(delete(WallpaperOwnershipModel).where(WallpaperOwnershipModel.wallpaper_id == wallpaper_id))
+	db.session.flush()
+	
+	# delete wallpaper
+	db.session.execute(delete(WallpaperModel).where(WallpaperModel.id == wallpaper_id))
+	db.session.flush()
+	
+	# this method will execute the commit()
+	remove_from_queue(device_id, wallpaper_id)
 
 	if os.path.isfile(file_path):
 		try:
@@ -208,28 +215,20 @@ def delete_wallpaper(user_id: int, wallpaper_id: int) -> None:
 		except Exception as ex:
 			logger.error(f"Unable to delete wallpaper file due to {ex}")
 	else:
-		logger.error(f"Unable to find wallpaper file {file_path}")
+		logger.error(f"Unable to find wallpaper file {file_name} in {file_path}")
 
 	logger.info(f"Deleted wallpaper {wallpaper_id=}")
 	
 
-def update_wallpaper(user_id: int, wallpaper_id: int, payload: dict) -> None:
+def update_wallpaper(device_id: int, wallpaper_id: int, payload: dict) -> None:
 	logger.info(f"Attempting to update wallpaper {wallpaper_id=}")
 
 	wallpaper: WallpaperModel | None = db.session.get(WallpaperModel, wallpaper_id)
 	if wallpaper is None:
 		api_abort(ErrorCode.WALLPAPER_NOT_FOUND)
-		
-	if not can_access_device(user_id, wallpaper.device_id):
-		api_abort(ErrorCode.FORBIDDEN, details="Unable to access device")
-		
-	device: DeviceModel | None = db.session.get(DeviceModel, wallpaper.device_id)
-	if device is None:
-		api_abort(ErrorCode.INVALID_DEPENDENCY, detail="Device not found")
 	
-	if not can_access_device(user_id, wallpaper.device_id):
-		api_abort(ErrorCode.FORBIDDEN, detail="Unable to access device")
-
+	supported_colors: list[str] = db.session.scalars(select(DeviceModel.supported_colors).where(DeviceModel.id == device_id)).one_or_none() or []
+	
 	failed_validations: dict = {}
 	
 	x: int | None = payload.get("x")
@@ -258,13 +257,13 @@ def update_wallpaper(user_id: int, wallpaper_id: int, payload: dict) -> None:
 
 	color: str | None = payload.get("color")
 	if color is not None:
-		if color.upper() not in device.supported_colors:
+		if color.upper() not in supported_colors:
 			failed_validations["color"] = "Invalid input (Unsupported color)"
 		wallpaper.color = color.upper()
 
 	shadow: int | None = payload.get("shadow")
 	if shadow is not None:
-		if shadow.upper() not in device.supported_colors:
+		if shadow.upper() not in supported_colors:
 			failed_validations["shadow"] = "Invalid input (Unsupported color)"
 		wallpaper.shadow = shadow.upper()
 
@@ -275,20 +274,17 @@ def update_wallpaper(user_id: int, wallpaper_id: int, payload: dict) -> None:
 
 	try:
 		db.session.commit()
-	except Exception as e:
-		logger.error(f"Unable to update wallpaper due to {e}")
+	except Exception as ex:
+		logger.error(f"DB commit failed: {ex}")
 		api_abort(ErrorCode.DATABASE_ERROR)
 
 	logger.info(f"Wallpaper {wallpaper_id=} updated")
 
 
-def get_wallpaper_name(user_id: int, wallpaper_id: int | None) -> str:
+def get_wallpaper_name(wallpaper_id: int | None) -> str:
 	model: WallpaperModel | None = db.session.get(WallpaperModel, wallpaper_id)
 	if model is None:
 		api_abort(ErrorCode.WALLPAPER_NOT_FOUND)
-	
-	if not can_access_device(user_id, model.device_id):
-		api_abort(ErrorCode.FORBIDDEN, detail="Unable to access device")
 		
 	file_name: str = model.file_name
 	file_path: str = os.path.join(DIR_APP_UPLOAD, f"{file_name}")
@@ -299,14 +295,15 @@ def get_wallpaper_name(user_id: int, wallpaper_id: int | None) -> str:
 
 
 def get_wallpapers(user_id: int, device_id:int) -> list[dict]:
-	if not can_access_device(user_id, device_id):
-		api_abort(ErrorCode.FORBIDDEN, detail="Unable to access device")
+	select_wallpaper_ids_stmt = select(WallpaperOwnershipModel.wallpaper_id).where(
+		and_(
+			WallpaperOwnershipModel.user_id == user_id,
+			WallpaperOwnershipModel.device_id == device_id
+		))
 	
-	stmt = select(WallpaperModel).where(WallpaperModel.device_id == device_id)
-	models: list[WallpaperModel] = list(db.session.scalars(stmt).all())
-	
-	wallpapers: list[dict] = []
-	for model in models:
-		wallpapers.append(model.to_dict())
+	wallpaper_ids: Sequence[int] = db.session.scalars(select_wallpaper_ids_stmt).all()
 
-	return wallpapers
+	select_wallpaper_stmt = select(WallpaperModel).where(WallpaperModel.id.in_(wallpaper_ids))
+	wallpapers: Sequence[WallpaperModel] = db.session.scalars(select_wallpaper_stmt).all()	
+	
+	return [wp.to_dict() for wp in wallpapers]

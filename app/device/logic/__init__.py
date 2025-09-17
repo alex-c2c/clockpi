@@ -1,19 +1,20 @@
-from csv import Error
 import os
 
+from datetime import datetime
 from logging import Logger, getLogger
 from typing import Sequence
 
-from sqlalchemy import delete, select
+from pytz import timezone
+from sqlalchemy import delete, exists, select
 
 from app import db
 from app.consts import DIR_APP_UPLOAD
-from app.device.models import DeviceModel, DeviceOwnershipModel
 from app.lib.errors import api_abort, ErrorCode
-from app.schedule.models import ScheduleModel
-from app.wallpaper.models import WallpaperModel
+from app.schedule.models import ScheduleModel, ScheduleOwnershipModel
+from app.wallpaper.models import WallpaperModel, WallpaperOwnershipModel
 
 from ..consts import *
+from ..models import DeviceModel, DeviceOwnershipModel
 from ..utils import *
 
 
@@ -26,13 +27,10 @@ LOGIC
 
 
 def can_access_device(user_id:int, device_id: int) -> bool:
-	stmt = select(DeviceOwnershipModel.owners).where(DeviceOwnershipModel.device_id == device_id)
-	owners: list[int] | None = db.session.scalars(stmt).one_or_none()
+	stmt = select(exists().where((DeviceOwnershipModel.device_id == device_id) & (DeviceOwnershipModel.user_id == user_id)))
 	
-	if owners is None or len(owners) == 0 or user_id not in owners:
-		return False
-	
-	return True
+	result: bool = db.session.scalar(stmt) or False
+	return result
 	
 
 def get_device(user_id: int, device_id: int) -> dict:
@@ -40,22 +38,14 @@ def get_device(user_id: int, device_id: int) -> dict:
 	
 	if model is None:
 		api_abort(ErrorCode.DEVICE_NOT_FOUND)
-		
-	if not can_access_device(user_id, device_id):
-		api_abort(ErrorCode.FORBIDDEN)
-	
+			
 	return model.to_dict()
 	
 
 def get_devices(user_id: int) -> list[dict]:
-	stmt = select(DeviceOwnershipModel)
-	ownership_models: Sequence[DeviceOwnershipModel]= db.session.scalars(stmt).all()
-	
-	device_ids: list[int] = []
-	for model in ownership_models:
-		if user_id in model.owners:
-			device_ids.append(model.device_id)
-				
+	stmt = select(DeviceOwnershipModel.device_id).where(DeviceOwnershipModel.user_id == user_id)
+	device_ids: Sequence[int]= db.session.scalars(stmt).all()
+					
 	stmt = select(DeviceModel).where(DeviceModel.id.in_(device_ids))
 	device_models: Sequence[DeviceModel] = db.session.scalars(stmt).all()
 
@@ -81,8 +71,8 @@ def create_device(user_id: int, payload: dict) -> dict:
 		if db.session.execute(select_ip_stmt).scalar_one_or_none() is not None:
 			failed_validations["ipv4"] = "'ipv4' already taken."
 
-	type_str: str | None = payload.get("type")
-	if (err := is_type_valid(type_str)) is not None:
+	type: str | None = payload.get("type")
+	if (err := is_type_valid(type)) is not None:
 		failed_validations["type"] = err
 
 	orientation_str: str | None = payload.get("orientation")
@@ -96,7 +86,7 @@ def create_device(user_id: int, payload: dict) -> dict:
 		name, 									# type: ignore
 		desc,
 		ipv4, 									# type: ignore
-		type_str, 								# type: ignore
+		type, 									# type: ignore
 		Orientation[orientation_str] 	# type: ignore
 	)
 	
@@ -105,7 +95,7 @@ def create_device(user_id: int, payload: dict) -> dict:
 	
 	device_ownership_model: DeviceOwnershipModel = DeviceOwnershipModel()
 	device_ownership_model.device_id = device_model.id
-	device_ownership_model.owners = [user_id]
+	device_ownership_model.user_id = user_id
 	
 	db.session.add(device_ownership_model)
 	
@@ -113,7 +103,7 @@ def create_device(user_id: int, payload: dict) -> dict:
 		db.session.commit()
 	except Exception as ex:
 		db.session.rollback()
-		logger.error(f"Unable to commit to database", ex)
+		logger.error(f"DB commit failed: {ex}")
 		api_abort(ErrorCode.DATABASE_ERROR)
 		
 	return device_model.to_dict()
@@ -150,8 +140,6 @@ def update_device(user_id: int, device_id: int, payload: dict) -> dict:
 		else:
 			model.ipv4 = ipv4
 	
-	
-	
 	type: str | None = payload.get("type")
 	if type is not None:
 		if (err := is_type_valid(type)) is not None:
@@ -173,39 +161,50 @@ def update_device(user_id: int, device_id: int, payload: dict) -> dict:
 	is_enabled: bool | None = payload.get("IsEnabled")
 	if is_enabled is not None:
 		model.is_enabled = is_enabled
-		
+				
 	if len(failed_validations.values()) > 0:
 		api_abort(ErrorCode.VALIDATION_ERROR, errors=failed_validations)
+	
+	model.updated_at = datetime.now(timezone("Asia/Singapore"))
 	
 	try:
 		db.session.commit()
 	except Exception as ex:
 		db.session.rollback()
-		logger.error(f"Unable to update device ({device_id}): {ex}")
+		logger.error(f"DB commit failed: {ex}")
 		api_abort(ErrorCode.DATABASE_ERROR)
 
 	return model.to_dict()
 	
 
-def delete_device(user_id: int, device_id: int) -> None:
+def delete_device(device_id: int) -> None:
 	if db.session.get(DeviceModel, device_id) is None:
 		api_abort(ErrorCode.DEVICE_NOT_FOUND)
-		
-	if not can_access_device(user_id, device_id):
-		api_abort(ErrorCode.FORBIDDEN)
+			
+	# Get list of wallpaper IDs owned by device
+	stmt = select(WallpaperOwnershipModel.wallpaper_id).where(WallpaperOwnershipModel.device_id == device_id)
+	wallpaper_ids: Sequence[int] = db.session.scalars(stmt).all()
 	
-	# Delete wallpapers
-	stmt = select(WallpaperModel.file_name).where(WallpaperModel.device_id == device_id)
-	file_names: list[str] = list(db.session.scalars(stmt).all())
+	# Get list of wallpaper file names
+	file_names: Sequence[str] = db.session.scalars(select(WallpaperModel.file_name).where(WallpaperModel.id.in_(wallpaper_ids))).all()
 
-	stmt = delete(WallpaperModel).where(WallpaperModel.device_id == device_id)
+	# Delete wallpaper owership
+	stmt = delete(WallpaperOwnershipModel).where(WallpaperOwnershipModel.device_id == device_id)
+	db.session.execute(stmt)
+
+	# Delete wallpapers
+	stmt = delete(WallpaperModel).where(WallpaperModel.id.in_(wallpaper_ids))
+	db.session.execute(stmt)
+	
+	# Delete schedule owership
+	stmt = delete(ScheduleOwnershipModel).where(ScheduleOwnershipModel.device_id == device_id)
 	db.session.execute(stmt)
 	
 	# Delete schedules
 	stmt = delete(ScheduleModel).where(ScheduleModel.device_id == device_id)
 	db.session.execute(stmt)
 	
-	# Delete ownership
+	# Delete device ownership
 	stmt = delete(DeviceOwnershipModel).where(DeviceOwnershipModel.device_id == device_id)
 	db.session.execute(stmt)
 	
@@ -218,13 +217,15 @@ def delete_device(user_id: int, device_id: int) -> None:
 		db.session.commit()
 	except Exception as ex:
 		db.session.rollback()
-		logger.error(f"Unable to delete rows associated with device resource ({device_id})")
+		logger.error(f"DB commit failed: {ex}")
 		api_abort(ErrorCode.DATABASE_ERROR)
 	
 	# Clean up associated files
 	for file_name in file_names:
 		file_path: str = os.path.join(DIR_APP_UPLOAD, file_name)
-		if os.path.isfile(file_path):
+
+		try:
+			logger.info(f"Deleting file {file_path}")
 			os.remove(file_path)
-		else:
-			logger.error(f"Unable to find wallpaper file {file_path}")
+		except Exception as ex:
+			logger.error(f"Unable to delete file: {ex}")

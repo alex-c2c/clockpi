@@ -1,12 +1,11 @@
-import re
-import sys
-
+from datetime import datetime
 from logging import Logger, getLogger
+from flask import session
+from pytz import timezone
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from app import db
 from app.lib.errors import api_abort, ErrorCode
-from app.session_pkg.logic import get_user_from_session
 
 from .consts import *
 from .models import UserModel
@@ -26,10 +25,10 @@ def get_all_users() -> list[dict]:
 	return [user.to_dict() for user in data]
 
 
-def create_user(data: dict) -> dict:
+def create_user(payload: dict) -> dict:
 	failed_validations: dict = {}
 	
-	username: str | None = data.get("username")
+	username: str | None = payload.get("username")
 	if username is None:
 		api_abort(ErrorCode.INVALID_INPUT, errors={"username":"This is a required property"})
 		
@@ -43,8 +42,8 @@ def create_user(data: dict) -> dict:
 		failed_validations["username"] = "Username is already taken."
 		api_abort(ErrorCode.CONFLICT, errors=failed_validations)
 
-	password: str | None = data.get("password")
-	confirm_password: str | None = data.get("confirmPassword")
+	password: str | None = payload.get("password")
+	confirm_password: str | None = payload.get("confirmPassword")
 
 	if (err := is_password_valid(password)) is not None:
 		failed_validations["password"] = err
@@ -52,15 +51,16 @@ def create_user(data: dict) -> dict:
 	if password != confirm_password:
 		failed_validations["confirmPassword"] = "Passwords do not match"
 		
-	role: str | None = data.get("role")
+	role: str | None = payload.get("role")
 	if (err := is_role_valid(role)) is not None:
 		failed_validations["role"] = err
 	
-	disp_name: str | None = data.get("dispName")
+	disp_name: str | None = payload.get("dispName")
 	if (err := is_disp_name_valid(disp_name)) is not None:
 		failed_validations["dispName"] = err
 
 	if len(failed_validations.values()) > 0:
+		logger.error(f"{failed_validations=}")
 		api_abort(ErrorCode.VALIDATION_ERROR, errors=failed_validations)
 
 	new_user: UserModel = UserModel(
@@ -73,8 +73,8 @@ def create_user(data: dict) -> dict:
 	try:
 		db.session.add(new_user)
 		db.session.commit()
-	except Exception as e:
-		logger.error(f"Unable to create new user with {data=} due to {e=}")
+	except Exception as ex:
+		logger.error(f"DB commit failed: {ex}")
 		api_abort(ErrorCode.DATABASE_ERROR)
 
 	logger.info(f"User {new_user.id}:{new_user.username} created")
@@ -82,8 +82,8 @@ def create_user(data: dict) -> dict:
 	return new_user.to_dict()
 
 
-def update_user(user_id: int, data: dict) -> None:
-	myself: UserModel | None = get_user_from_session()
+def update_user(user_id: int, payload: dict) -> None:
+	myself: UserModel | None = db.session.get(UserModel, session.get("userId", 0))
 	if myself is None:
 		api_abort(ErrorCode.FORBIDDEN)
 	
@@ -96,9 +96,9 @@ def update_user(user_id: int, data: dict) -> None:
 	
 	failed_validations: dict = {}
 
-	current_password: str | None = data.get("currentPassword")
-	new_password: str | None = data.get("newPassword")
-	new_confirm_password: str | None = data.get("newConfirmPassword")
+	current_password: str | None = payload.get("currentPassword")
+	new_password: str | None = payload.get("newPassword")
+	new_confirm_password: str | None = payload.get("newConfirmPassword")
 	if current_password is not None and new_password is not None and new_confirm_password is not None:		
 		if not check_password_hash(user.password, current_password):
 			api_abort(ErrorCode.INVALID_INPUT, detail="Current password does not match")
@@ -111,14 +111,14 @@ def update_user(user_id: int, data: dict) -> None:
 
 		user.password = generate_password_hash(new_password)
 
-	disp_name: str | None = data.get("dispName")
+	disp_name: str | None = payload.get("dispName")
 	if disp_name is not None:
 		if (err := is_disp_name_valid(disp_name)) is not None:
 			failed_validations["dispName"] = err
 
 		user.disp_name = disp_name
 
-	role: str | None= data.get("role")
+	role: str | None= payload.get("role")
 	if role is not None:
 		if (err := is_role_valid(role)) is not None:
 			failed_validations["role"] = err
@@ -130,11 +130,13 @@ def update_user(user_id: int, data: dict) -> None:
 
 	if len(failed_validations.values()) > 0:
 		api_abort(ErrorCode.VALIDATION_ERROR, errors=failed_validations)
+		
+	user.updated_at = datetime.now(timezone("Asia/Singapore"))
 
 	try:
 		db.session.commit()
-	except Exception as e:
-		logger.error(f"Unable to save user update with {data=} due to {e=}")
+	except Exception as ex:
+		logger.error(f"DB commit failed: {ex}")
 		api_abort(ErrorCode.DATABASE_ERROR)
 
 	logger.info(f"User {user.id}:{user.username} updated")
@@ -148,8 +150,8 @@ def delete_user(user_id: int) -> None:
 	try:
 		db.session.delete(user)
 		db.session.commit()
-	except Exception as e:
-		logger.error(f"Unable to delete user {user_id=} due to {e=}")
+	except Exception as ex:
+		logger.error(f"DB commit failed: {ex}")
 		api_abort(ErrorCode.DATABASE_ERROR)
 
 	logger.info(f"User {user_id} deleted")

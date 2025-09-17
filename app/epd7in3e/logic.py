@@ -93,13 +93,13 @@ def process_image(
 		epd_color = SupportedColors[color].get_epd_color()
 	except Exception as e:
 		epd_color = SupportedColors.NONE.get_epd_color()
-		logger.error(f"[process_image] Caught invalid argument: {color=}")
+		logger.error(f"Caught invalid argument: {color=}")
 	
 	try:
 		epd_shadow = SupportedColors[shadow].get_epd_color()
 	except Exception as e:
 		epd_shadow = SupportedColors.NONE.get_epd_color()
-		logger.error(f"[process_image] Caught invalid argument: {shadow=}")
+		logger.error(f"Caught invalid argument: {shadow=}")
 	
 	# Create image
 	image: Image = PImg.open(file_path)

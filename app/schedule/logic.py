@@ -1,7 +1,8 @@
 from datetime import datetime
 from logging import Logger, getLogger
 
-from sqlalchemy import delete, select
+from pytz import timezone
+from sqlalchemy import and_, delete, select
 
 from app import db, redis_controller
 from app.consts import *
@@ -9,7 +10,7 @@ from app.device.logic import can_access_device
 from app.device.models import DeviceModel
 from app.lib.errors import api_abort, ErrorCode
 
-from .models import ScheduleModel
+from .models import ScheduleModel, ScheduleOwnershipModel
 from .utils import *
 
 logger: Logger = getLogger(__name__)
@@ -20,10 +21,21 @@ LOGIC
 """""
 
 
-def get_schedules(user_id: int, device_id: int) -> list[dict]:
-	if not can_access_device(user_id, device_id):
-		api_abort(ErrorCode.DEVICE_NOT_FOUND)
+def can_access_schedule(user_id: int, device_id: int, schedule_id: int) -> bool:
+	stmt = select(ScheduleOwnershipModel).where(
+		and_(
+			ScheduleOwnershipModel.user_id == user_id,
+			ScheduleOwnershipModel.device_id == device_id,
+			ScheduleOwnershipModel.schedule_id == schedule_id
+			))
 	
+	if db.session.scalars(stmt).one_or_none() is None:
+		return False
+		
+	return True
+
+
+def get_schedules(device_id: int) -> list[dict]:
 	stmt = select(ScheduleModel).where(ScheduleModel.device_id == device_id)
 	models: list[ScheduleModel] = list(db.session.scalars(stmt).all())
 
@@ -36,10 +48,7 @@ def create_schedule(user_id:int, device_id:int, payload: dict) -> None:
 	device: DeviceModel | None = db.session.get(DeviceModel, device_id)
 	if device is None:
 		api_abort(ErrorCode.DEVICE_NOT_FOUND)
-	
-	if not can_access_device(user_id, device_id):
-		api_abort(ErrorCode.FORBIDDEN)
-		
+			
 	failed_validations: dict = {}
 			
 	days: list[str] | None = payload.get("days")
@@ -61,54 +70,61 @@ def create_schedule(user_id:int, device_id:int, payload: dict) -> None:
 	if len(failed_validations.values()) > 0:
 		api_abort(ErrorCode.VALIDATION_ERROR, errors=failed_validations)
 	
-	new_sch = ScheduleModel()
-	new_sch.device_id = device_id
-	new_sch.days = days				# type: ignore
-	new_sch.start_time = start_time	# type: ignore
-	new_sch.duration = duration		# type: ignore
-	new_sch.is_enabled = is_enabled # type: ignore
+	sm = ScheduleModel()
+	sm.device_id = device_id
+	sm.days = days				# type: ignore
+	sm.start_time = start_time	# type: ignore
+	sm.duration = duration		# type: ignore
+	sm.is_enabled = is_enabled # type: ignore
+	
+	db.session.add(sm)
+	db.session.flush()
+	
+	som = ScheduleOwnershipModel()
+	som.schedule_id = sm.id
+	som.user_id = user_id
+	som.device_id = device_id
+	
+	db.session.add(som)
+	db.session.flush()
 	
 	try:
-		db.session.add(new_sch)
 		db.session.commit()
-	except Exception as e:
-		logger.error(f"Unable to create new schedule due to {e}")
+	except Exception as ex:
+		logger.error(f"DB commit failed: {ex}")
 		api_abort(ErrorCode.DATABASE_ERROR)
 	
-	logger.info(f"Created new schedule {new_sch.id}")
+	logger.info(f"Created new schedule {sm.id}")
 
 
-def delete_schedule(user_id:int, schedule_id: int) -> None:
+def delete_schedule(schedule_id: int) -> None:
 	logger.info(f"Attempting to delete schedule:{schedule_id}")
 	
-	schedule: ScheduleModel | None = db.session.get(ScheduleModel, schedule_id)
-	if schedule is None:
-		api_abort(ErrorCode.SCHEDULE_NOT_FOUND)
+	# Delete ownership first due to ForeignKey
+	db.session.execute(delete(ScheduleOwnershipModel).where(ScheduleOwnershipModel.schedule_id == schedule_id))
+	db.session.flush()
 	
-	if not can_access_device(user_id, schedule.device_id):
-		api_abort(ErrorCode.FORBIDDEN)
+	# Delete schedule
+	db.session.execute(delete(ScheduleModel).where(ScheduleModel.id == schedule_id))
+	db.session.flush()
 	
 	try:
-		db.session.delete(schedule)
 		db.session.commit()
-	except Exception as e:
+	except Exception as ex:
 		db.session.rollback()
-		logger.error(f"Unable to delete schedule {schedule_id} due to {e}")
+		logger.error(f"DB commit failed: {ex}")
 		api_abort(ErrorCode.DATABASE_ERROR)
 		
 	logger.info(f"Deleted schedule:{schedule_id}")
 
 
-def update_schedule(user_id:int, schedule_id: int, payload: dict) -> None:
+def update_schedule(schedule_id: int, payload: dict) -> None:
 	logger.info(f"Attempting to update schedule")
 	
 	schedule: ScheduleModel | None = db.session.get(ScheduleModel, schedule_id)
 	if schedule is None:
 		api_abort(ErrorCode.SCHEDULE_NOT_FOUND)
-		
-	if not can_access_device(user_id, schedule.device_id):
-		api_abort(ErrorCode.FORBIDDEN)
-		
+			
 	failed_validations: dict = {}
 	
 	days: list[str] | None = payload.get("days", None)
@@ -139,48 +155,41 @@ def update_schedule(user_id:int, schedule_id: int, payload: dict) -> None:
 	if len(failed_validations.values()) > 0:
 		api_abort(ErrorCode.VALIDATION_ERROR, errors=failed_validations)
 
+	schedule.updated_at = datetime.now(timezone("Asia/Singapore"))
+
 	try:
 		db.session.commit()
-	except Exception as e:
-		logger.error(f"Unable to update schedule due to {e}")
+	except Exception as ex:
+		logger.error(f"DB commit failed: {ex}")
 		api_abort(ErrorCode.DATABASE_ERROR)
 	
 	logger.info(f"Updated schedule {schedule_id}")
 
 
-def get_status(user_id:int, device_id: int, skip_user_check: bool = False) -> SleepStatus:
+def get_status(device_id: int) -> SleepStatus:
 	device: DeviceModel | None = db.session.get(DeviceModel, device_id)
 	if device is None:
 		api_abort(ErrorCode.DEVICE_NOT_FOUND)
 		
-	if not skip_user_check and  not can_access_device(user_id, device_id):
-		api_abort(ErrorCode.FORBIDDEN)
-
 	key: str = f"{R_SLEEP_STATUS}_{device.ipv4}"
 	value: str = redis_controller.rget(key, SleepStatus.AWAKE.value)
 	
 	return SleepStatus[value]
 
 
-def set_status(user_id:int, device_id:int, status: SleepStatus, skip_user_check: bool = False) -> None:
+def set_status(device_id:int, status: SleepStatus) -> None:
 	logger.debug(f"set_status:{status=}")
 
 	device: DeviceModel | None = db.session.get(DeviceModel, device_id)
 	if device is None:
 		api_abort(ErrorCode.DEVICE_NOT_FOUND)
 		
-	if not skip_user_check and  not can_access_device(user_id, device_id):
-		api_abort(ErrorCode.FORBIDDEN)
-	
 	key:str = f"{R_SLEEP_STATUS}_{device.ipv4}"
 	
 	redis_controller.rset(key, value=status.value)
 
 
-def should_sleep_now(user_id:int, device_id: int, skip_user_check: bool = False) -> bool:
-	if not skip_user_check and not can_access_device(user_id, device_id):
-		api_abort(ErrorCode.FORBIDDEN)
-
+def should_sleep_now(device_id: int) -> bool:
 	stmt = select(ScheduleModel).where(ScheduleModel.device_id == device_id)
 	schedules: list[ScheduleModel] = list(db.session.scalars(stmt).all())
 	minute_ranges: list = []

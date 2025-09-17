@@ -3,7 +3,9 @@ from logging import Logger, getLogger
 from flask import session
 from flask_restx import Resource
 
+from app.device.logic import can_access_device
 from app.lib.decorators import login_required
+from app.lib.errors import api_abort, ErrorCode
 
 from .. import ns
 from ..fields import *
@@ -15,25 +17,33 @@ logger: Logger = getLogger(__name__)
 
 
 @ns.route("/<int:device_id>/queue/shuffle")
+@ns.param("device_id", "Device ID")
 class DeviceQueueShuffleRes(Resource):
 	@login_required
 	@ns.response(204, "Success")
 	def post(self, device_id: int):
-		user_id: int = session.get("id", 0)
+		user_id: int = session.get("userId", 0)
+		
+		if not can_access_device(user_id, device_id):
+			api_abort(ErrorCode.FORBIDDEN)
 
-		shuffle_queue(user_id, device_id)
+		shuffle_queue(device_id)
 		
 		return "", 204
 
 
 @ns.route("/<int:device_id>/queue/next")
+@ns.param("device_id", "Device ID")
 class DeviceQueueNextRes(Resource):
 	@login_required
 	@ns.response(204, "Success")
 	def post(self, device_id: int):
-		user_id: int = session.get("id", 0)
+		user_id: int = session.get("userId", 0)
 		
-		shift_next(user_id, device_id)
+		if not can_access_device(user_id, device_id):
+			api_abort(ErrorCode.FORBIDDEN)
+		
+		shift_next(device_id)
 		
 		return "", 204
 
@@ -44,9 +54,12 @@ class DeviceQueueSelectRes(Resource):
 	@ns.response(204, "Success")
 	@ns.expect(queue_select_fields, validate=True)
 	def post(self, device_id: int):
-		user_id: int = session.get("id", 0)
+		user_id: int = session.get("userId", 0)
 		payload: dict = ns.payload
 		
-		move_to_first(user_id, device_id, payload.get("wallpaperId", 0))
+		if not can_access_device(user_id, device_id):
+			api_abort(ErrorCode.FORBIDDEN)
+		
+		move_to_first(device_id, payload.get("wallpaperId", 0))
 		
 		return "", 204

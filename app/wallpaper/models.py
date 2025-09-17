@@ -16,7 +16,6 @@ class WallpaperModel(db.Model):
 	wh: width/height of label in percentage with respect to width/height of canvas
 	'''
 	id: 			Mapped[int] 		= mapped_column(Integer, primary_key=True)
-	device_id:		Mapped[int]			= mapped_column(ForeignKey("device.id"), nullable=False)
 	name:			Mapped[str] 		= mapped_column(String(), nullable=False)
 	hash: 			Mapped[str] 		= mapped_column(String(), nullable=False)
 	file_name:		Mapped[str] 		= mapped_column(String(), nullable=False)
@@ -33,7 +32,6 @@ class WallpaperModel(db.Model):
 	def to_dict(self) -> dict:
 		d: dict = {}
 		d["id"] = self.id
-		d["deviceId"] = self.device_id
 		d["name"] = self.name
 		d["hash"] = self.hash
 		d["fileName"] = self.file_name
@@ -49,7 +47,6 @@ class WallpaperModel(db.Model):
 	def __repr__(self):
 		return f"<Wallpaper - \
 			id:{self.id} \
-			device_id:{self.device_id} \
 			name:{self.name} \
 			hash:{self.hash} \
 			size:{self.size} \
@@ -63,3 +60,18 @@ class WallpaperModel(db.Model):
 			created_at:{self.created_at} \
 			updated_at:{self.updated_at}\
 			>"
+
+
+class WallpaperOwnershipModel(db.Model):
+	__tablename__: str = "wallpaper_ownership"
+	
+	id: 			Mapped[int] 		= mapped_column(Integer, primary_key=True)
+	wallpaper_id:	Mapped[int]			= mapped_column(ForeignKey("wallpaper.id"), unique=True, nullable=False)
+	user_id:		Mapped[int]			= mapped_column(ForeignKey("user.id"), nullable=False)
+	device_id:		Mapped[int]			= mapped_column(ForeignKey("device.id"), nullable=False)
+	created_at:		Mapped[datetime] 	= mapped_column(DateTime, nullable=False, default=datetime.now(timezone("Asia/Singapore")))
+	updated_at:		Mapped[datetime] 	= mapped_column(DateTime, nullable=True)
+
+
+	def __repr__(self) -> str:
+		return f"<WallpaperOwnership - {self.id=} {self.user_id=} {self.device_id=} {self.wallpaper_id=} {self.created_at=} {self.updated_at=}>"

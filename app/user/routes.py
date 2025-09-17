@@ -27,23 +27,23 @@ class UserListRes(Resource):
 		return all_users, 200
 
 
-@ns.route("/<int:id>")
-@ns.param("id", "User ID")
+@ns.route("/<int:user_id>")
+@ns.param("user_id", "User ID")
 class UserRes(Resource):
 	@admin_required
 	@ns.response(204, "Success")
-	def delete(self, id: int):
-		delete_user(id)
+	def delete(self, user_id: int):
+		delete_user(user_id)
 		
 		return "", 204
 	
 	@login_required
 	@ns.response(204, "Success")
 	@ns.expect(user_update_model, validate=True)
-	def patch(self, id: int):
+	def patch(self, user_id: int):
 		data = ns.payload
 		
-		update_user(id, data)
+		update_user(user_id, data)
 		
 		return "", 204
 

@@ -73,8 +73,8 @@ def validate_image(file_path: str) -> bool:
 		img: Image = Img.open(file_path)
 		img.verify()
 		return True
-	except Exception as e:
-		logger.error(f"_validate_image: {e}")
+	except Exception as ex:
+		logger.error(f"Failed to validate image: {ex}")
 		return False
 		
 
@@ -142,7 +142,7 @@ def process_image(
 		return True
 
 	except IOError as error:
-		logger.error(f"process_image: {error}")
+		logger.error(f"Unable to process image: {error}")
 		return False
 
 
@@ -175,15 +175,3 @@ def save_upload_file(file: FileStorage | None) -> str:
 	file.save(temp_path)
 	
 	return secured_file_name
-
-
-def is_valid_img_scale(value: str | None) -> str | None:
-	if value is None:
-		return "This is a required field"
-		
-	try:
-		img_scale_per: float = float(value)
-	except ValueError as e:
-		return "Invalid input (float required)"
-	
-	return None

@@ -1,3 +1,4 @@
+import json
 import os
 import getpass
 import logging
@@ -7,15 +8,14 @@ import socket
 from app import create_app
 from app.device.consts import Orientation
 from app.device.logic import create_device
-from app.device.models import DeviceModel
+from app.schedule.logic import create_schedule
 from app.user.consts import UserRole
 from app.user.logic import create_user
-from app.user.models import UserModel
 
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s <%(levelname)s> %(name)s.%(funcName)s: %(message)s")
 logger: Logger = getLogger(__name__)
 
-app = create_app()
+app = create_app(True)
 
 
 def _get_local_ip() -> str:
@@ -30,13 +30,13 @@ def _get_local_ip() -> str:
 	return str(ip)
 
 
-def _create_superuser(data: dict) -> dict:
-	user: dict = create_user(data)
+def _create_superuser(payload: dict) -> dict:
+	user: dict = create_user(payload)
 	return user
 
 
-def _create_default_device(user_id:int, data: dict) -> None:
-	device: dict = create_device(user_id, data)
+def _create_default_device(user_id:int, payload: dict) -> None:
+	device: dict = create_device(user_id, payload)
 	logger.info(f"Created device {device}")
 	
 
@@ -47,7 +47,7 @@ def cli_create_superuser() -> None:
 	password: str = getpass.getpass(f"Password: ")
 	confirm_password: str = getpass.getpass(f"Confirm password: ")
 	
-	data: dict = {
+	payload: dict = {
 		"username": username,
 		"dispName": disp_name,
 		"password": password,
@@ -55,7 +55,7 @@ def cli_create_superuser() -> None:
 		"role": UserRole.ADMIN.value
 	}
 
-	_create_superuser(data)
+	_create_superuser(payload)
 	
 
 @app.cli.command("setup-default")
@@ -79,4 +79,30 @@ def cli_setup_default() -> None:
 	}
 	
 	_create_default_device(user["id"], device_payload)
+
+
+@app.cli.command("setup-test-data")
+def cli_setup_test_data() -> None:
+	this_dir: str = os.path.dirname(os.path.abspath(__file__))
+	test_data_dir: str = os.path.join(this_dir, "test")
 	
+	# load test users
+	with open(os.path.join(test_data_dir, "users.json"), "r") as rf:
+		user_payloads: list[dict] = json.load(rf)
+		logger.info(f"{user_payloads=}")
+		for user in user_payloads:
+			create_user(user)
+	
+	# load test devices
+	with open(os.path.join(test_data_dir, "devices.json"), "r") as rf:
+		device_payloads: list[dict] = json.load(rf)
+		logger.info(f"{device_payloads=}")
+		for device in device_payloads:
+			create_device(device["userId"], device)
+
+	# load test schedules
+	with open(os.path.join(test_data_dir, "schedules.json"), "r") as rf:
+		schedule_payloads: list[dict] = json.load(rf)
+		logger.info(f"{schedule_payloads=}")
+		for schedule in schedule_payloads:
+			create_schedule(schedule["userId"], schedule["deviceId"], schedule)

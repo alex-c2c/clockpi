@@ -1,7 +1,7 @@
 from datetime import datetime
 from pytz import timezone
 
-from sqlalchemy import Boolean, ForeignKey, String, DateTime, Integer
+from sqlalchemy import ARRAY, Boolean, ForeignKey, String, DateTime, Integer
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.mutable import MutableList
 from sqlalchemy.orm import Mapped, mapped_column
@@ -13,12 +13,12 @@ class ScheduleModel(db.Model):
 
 	id: 		Mapped[int]			= mapped_column(Integer, primary_key=True)
 	device_id:	Mapped[int]			= mapped_column(ForeignKey("device.id"), nullable=False)
-	days: 		Mapped[list[str]]	= mapped_column(MutableList.as_mutable(JSONB), default=list, nullable=False, server_default="[]")
+	days: 		Mapped[list[str]]	= mapped_column(MutableList.as_mutable(ARRAY(String)), default=list, nullable=False, server_default="{}")
 	start_time: Mapped[str] 		= mapped_column(String(), nullable=False)
 	duration: 	Mapped[int] 		= mapped_column(Integer, nullable=False)
 	is_enabled: Mapped[bool] 		= mapped_column(Boolean, nullable=False, default=True)
 	created_at:	Mapped[datetime]	= mapped_column(DateTime, nullable=False, default=datetime.now(timezone("Asia/Singapore")))
-	updated_at:	Mapped[datetime] 	= mapped_column(DateTime, nullable=False, default=datetime.now(timezone("Asia/Singapore")))
+	updated_at:	Mapped[datetime] 	= mapped_column(DateTime, nullable=True)
 
 	def __repr__(self) -> str:
 		return f"<Schedule - \
@@ -43,3 +43,18 @@ class ScheduleModel(db.Model):
 			"duration": self.duration,
 			"isEnabled": self.is_enabled,
 		}
+
+
+class ScheduleOwnershipModel(db.Model):
+	__tablename__: str = "schedule_ownership"
+	
+	id: 			Mapped[int] 		= mapped_column(Integer, primary_key=True)
+	schedule_id:	Mapped[int]			= mapped_column(ForeignKey("schedule.id"), unique=True, nullable=False)
+	user_id:		Mapped[int]			= mapped_column(ForeignKey("user.id"), nullable=False)
+	device_id:		Mapped[int]			= mapped_column(ForeignKey("device.id"), nullable=False)
+	created_at:		Mapped[datetime] 	= mapped_column(DateTime, nullable=False, default=datetime.now(timezone("Asia/Singapore")))
+	updated_at:		Mapped[datetime] 	= mapped_column(DateTime, nullable=True)
+
+
+	def __repr__(self) -> str:
+		return f"<ScheduleOwnership - {self.id=} {self.user_id=} {self.device_id=} {self.schedule_id=} {self.created_at=} {self.updated_at=}>"

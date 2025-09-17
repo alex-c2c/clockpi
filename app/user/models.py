@@ -18,7 +18,7 @@ class UserModel(db.Model):
 	disp_name: 	Mapped[str]	 		= mapped_column(String(), nullable=False)
 	role: 		Mapped[UserRole] 	= mapped_column(ENUM(UserRole), nullable=False, default=UserRole.VIEWER)
 	created_at:	Mapped[datetime]	= mapped_column(DateTime, nullable=False, default=datetime.now(timezone("Asia/Singapore")))
-	updated_at:	Mapped[datetime] 	= mapped_column(DateTime, nullable=False, default=datetime.now(timezone("Asia/Singapore")))
+	updated_at:	Mapped[datetime] 	= mapped_column(DateTime, nullable=True)
 
 	def __init__(self, username: str, password: str, disp_name: str, role: UserRole = UserRole.VIEWER) -> None:
 		self.username = username
