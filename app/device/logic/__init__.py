@@ -158,7 +158,7 @@ def update_device(user_id: int, device_id: int, payload: dict) -> dict:
 	if is_draw_grid is not None:
 		model.is_draw_grid = is_draw_grid
 	
-	is_enabled: bool | None = payload.get("IsEnabled")
+	is_enabled: bool | None = payload.get("isEnabled")
 	if is_enabled is not None:
 		model.is_enabled = is_enabled
 				
