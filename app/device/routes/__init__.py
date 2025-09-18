@@ -26,7 +26,6 @@ class DeviceListRes(Resource):
 	@ns.marshal_with(device_fields, as_list=True)
 	def get(self):
 		user_id: int = session.get("userId", 0)
-		
 		devices: list[dict] = get_devices(user_id)
 		
 		return devices, 200

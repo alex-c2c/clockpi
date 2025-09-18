@@ -2,6 +2,7 @@ from logging import Logger, getLogger
 
 from flask_restx import Resource
 
+from app.lib.errors import ErrorCode, api_abort
 from app.user.fields import user_fields
 
 from . import ns
@@ -18,6 +19,9 @@ class SessionRes(Resource):
 	@ns.response(200, "Success", model=user_fields)
 	@ns.marshal_with(user_fields)
 	def get(self):
-		user: dict = get_user_from_session()
+		user: UserModel | None = get_user_from_session()
 		
-		return user, 200
+		if user is None:
+			api_abort(ErrorCode.FORBIDDEN)
+		
+		return user.to_dict(), 200
