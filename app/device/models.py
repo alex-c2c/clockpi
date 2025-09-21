@@ -2,7 +2,7 @@ from datetime import datetime
 from pytz import timezone
 
 from sqlalchemy import ARRAY, Boolean, ForeignKey, Integer, String, Boolean, DateTime, UniqueConstraint
-from sqlalchemy.dialects.postgresql import ENUM, JSONB
+from sqlalchemy.dialects.postgresql import ENUM
 from sqlalchemy.ext.mutable import MutableList
 from sqlalchemy.orm import Mapped, mapped_column
 

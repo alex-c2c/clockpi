@@ -17,7 +17,6 @@ device_fields = ns.model("Device", {
 	"height":				fields.Integer(description="Screen height", readOnly=True),
 	"queue":				fields.List(fields.Integer, description="List of wallpaper IDs", readOnly=True),
 	"isDrawGrid":			fields.Boolean(description="Is draw grid on screen?"),
-	"isSleep":				fields.Boolean(description="Is device sleeping?", readOnly=True),
 	"isEnabled":			fields.Boolean(description="Is device enabled?"),
 })
 

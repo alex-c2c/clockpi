@@ -38,7 +38,7 @@ def get_device(user_id: int, device_id: int) -> dict:
 	
 	if model is None:
 		api_abort(ErrorCode.DEVICE_NOT_FOUND)
-			
+		
 	return model.to_dict()
 	
 
@@ -163,6 +163,7 @@ def update_device(user_id: int, device_id: int, payload: dict) -> dict:
 		model.is_enabled = is_enabled
 				
 	if len(failed_validations.values()) > 0:
+		db.session.rollback()
 		api_abort(ErrorCode.VALIDATION_ERROR, errors=failed_validations)
 	
 	model.updated_at = datetime.now(timezone("Asia/Singapore"))

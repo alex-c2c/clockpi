@@ -91,6 +91,7 @@ def create_schedule(user_id:int, device_id:int, payload: dict) -> None:
 	try:
 		db.session.commit()
 	except Exception as ex:
+		db.session.rollback()
 		logger.error(f"DB commit failed: {ex}")
 		api_abort(ErrorCode.DATABASE_ERROR)
 	
@@ -153,6 +154,7 @@ def update_schedule(schedule_id: int, payload: dict) -> None:
 		schedule.is_enabled = is_enabled
 		
 	if len(failed_validations.values()) > 0:
+		db.session.rollback()
 		api_abort(ErrorCode.VALIDATION_ERROR, errors=failed_validations)
 
 	schedule.updated_at = datetime.now(timezone("Asia/Singapore"))
@@ -160,6 +162,7 @@ def update_schedule(schedule_id: int, payload: dict) -> None:
 	try:
 		db.session.commit()
 	except Exception as ex:
+		db.session.rollback()
 		logger.error(f"DB commit failed: {ex}")
 		api_abort(ErrorCode.DATABASE_ERROR)
 	

@@ -231,29 +231,29 @@ def update_wallpaper(device_id: int, wallpaper_id: int, payload: dict) -> None:
 	
 	failed_validations: dict = {}
 	
-	x: int | None = payload.get("x")
-	if x is not None:
-		if x < 0 or x > 100:
-			failed_validations["x"] = "Invalid input (0 >= x <= 100)"
-		wallpaper.label_x_per = x
+	label_x_per: float| None = payload.get("labelXPer")
+	if label_x_per is not None:
+		if label_x_per < 0:
+			failed_validations["labelXPer"] = "Invalid input (labelXPer >= 0)"
+		wallpaper.label_x_per = label_x_per
 
-	y: int | None = payload.get("y")
-	if y is not None:
-		if y < 0 or y > 100:
-			failed_validations["y"] = "Invalid input (0 >= y <= 100)"
-		wallpaper.label_y_per = y
+	label_y_per: float | None = payload.get("labelYPer")
+	if label_y_per is not None:
+		if label_y_per < 0:
+			failed_validations["labelYPer"] = "Invalid input (labelYPer >= 0)"
+		wallpaper.label_y_per = label_y_per
 
-	w: int | None = payload.get("w")
-	if w is not None:
-		if w <= 0 or w > 100:
-			failed_validations["w"] = "Invalid input (0 > w <= 100)"
-		wallpaper.label_w_per = w
+	label_w_per: float | None = payload.get("labelWPer")
+	if label_w_per is not None:
+		if label_w_per <= 0 or label_w_per > 100:
+			failed_validations["labelWPer"] = "Invalid input (labelWPer >= 0)"
+		wallpaper.label_w_per = label_w_per
 
-	h: int | None = payload.get("h")
-	if h is not None:
-		if h <= 0 or h > 100:
-			failed_validations["h"] = "Invalid input (0 > h <= 100)"
-		wallpaper.label_h_per = h
+	label_h_per: float | None = payload.get("labelHPer")
+	if label_h_per is not None:
+		if label_h_per <= 0 or label_h_per > 100:
+			failed_validations["labelHPer"] = "Invalid input (labelHPer >= 0)"
+		wallpaper.label_h_per = label_h_per
 
 	color: str | None = payload.get("color")
 	if color is not None:
@@ -268,6 +268,7 @@ def update_wallpaper(device_id: int, wallpaper_id: int, payload: dict) -> None:
 		wallpaper.shadow = shadow.upper()
 
 	if len(failed_validations.values()) > 0:
+		db.session.rollback();
 		api_abort(ErrorCode.VALIDATION_ERROR, errors=failed_validations)
 
 	wallpaper.updated_at = datetime.now(timezone("Asia/Singapore"))
@@ -275,6 +276,7 @@ def update_wallpaper(device_id: int, wallpaper_id: int, payload: dict) -> None:
 	try:
 		db.session.commit()
 	except Exception as ex:
+		db.session.rollback()
 		logger.error(f"DB commit failed: {ex}")
 		api_abort(ErrorCode.DATABASE_ERROR)
 

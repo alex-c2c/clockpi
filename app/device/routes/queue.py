@@ -3,7 +3,7 @@ from logging import Logger, getLogger
 from flask import session
 from flask_restx import Resource
 
-from app.device.logic import can_access_device
+from app.device.logic import can_access_device, get_device
 from app.lib.decorators import login_required
 from app.lib.errors import api_abort, ErrorCode
 
@@ -15,6 +15,22 @@ from ..logic.queue import move_to_first, shift_next, shuffle_queue
 
 logger: Logger = getLogger(__name__)
 
+
+@ns.route("/<int:device_id>/queue")
+@ns.param("device_id", "Device ID")
+class DeviceQueueRes(Resource):
+	@login_required
+	@ns.response(200, "Success", [int])
+	def get(self, device_id: int) :
+		user_id: int = session.get("userId", 0)
+		
+		if not can_access_device(user_id, device_id):
+			api_abort(ErrorCode.FORBIDDEN)
+		
+		device: dict = get_device(user_id, device_id)
+		
+		return device["queue"], 200
+		
 
 @ns.route("/<int:device_id>/queue/shuffle")
 @ns.param("device_id", "Device ID")

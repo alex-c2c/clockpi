@@ -74,6 +74,7 @@ def create_user(payload: dict) -> dict:
 		db.session.add(new_user)
 		db.session.commit()
 	except Exception as ex:
+		db.session.rollback()
 		logger.error(f"DB commit failed: {ex}")
 		api_abort(ErrorCode.DATABASE_ERROR)
 
@@ -129,6 +130,7 @@ def update_user(user_id: int, payload: dict) -> None:
 		user.role = UserRole[role]
 
 	if len(failed_validations.values()) > 0:
+		db.session.rollback()
 		api_abort(ErrorCode.VALIDATION_ERROR, errors=failed_validations)
 		
 	user.updated_at = datetime.now(timezone("Asia/Singapore"))
@@ -136,6 +138,7 @@ def update_user(user_id: int, payload: dict) -> None:
 	try:
 		db.session.commit()
 	except Exception as ex:
+		db.session.rollback()
 		logger.error(f"DB commit failed: {ex}")
 		api_abort(ErrorCode.DATABASE_ERROR)
 
@@ -151,6 +154,7 @@ def delete_user(user_id: int) -> None:
 		db.session.delete(user)
 		db.session.commit()
 	except Exception as ex:
+		db.session.rollback()
 		logger.error(f"DB commit failed: {ex}")
 		api_abort(ErrorCode.DATABASE_ERROR)
 

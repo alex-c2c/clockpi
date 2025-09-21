@@ -38,6 +38,7 @@ def shift_next(device_id: int) -> None:
 	try:
 		db.session.commit()
 	except Exception as ex:
+		db.session.rollback()
 		logger.error(f"DB commit failed: {ex}")
 		api_abort(ErrorCode.DATABASE_ERROR)
 	
@@ -64,6 +65,7 @@ def shuffle_queue(device_id: int) -> None:
 	try:
 		db.session.commit()
 	except Exception as ex:
+		db.session.rollback()
 		logger.error(f"DB commit failed: {ex}")
 		api_abort(ErrorCode.DATABASE_ERROR)		
 	
@@ -91,6 +93,7 @@ def append_to_queue(device_id: int, wallpaper_id: int) -> None:
 	try:
 		db.session.commit()
 	except Exception as ex:
+		db.session.rollback()
 		logger.error(f"DB commit failed: {ex}")
 		api_abort(ErrorCode.DATABASE_ERROR)
 	
@@ -123,6 +126,7 @@ def move_to_first(device_id: int, wallpaper_id: int) -> None:
 	try:
 		db.session.commit()
 	except Exception as ex:
+		db.session.rollback()
 		logger.error(f"DB commit failed: {ex}")
 		api_abort(ErrorCode.DATABASE_ERROR)
 		

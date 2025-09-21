@@ -36,11 +36,11 @@ class FileRes(Resource):
 	@ns.response(200, "Success")
 	@ns.expect(wallpaper_id_parser)
 	def get(self, device_id: int):
-		user_id: int = session.get("userId", 0)
+		#user_id: int = session.get("userId", 0)
 					
 		wallpaper_id: int | None = wallpaper_id_parser.parse_args().get("id")
-		if not can_access_wallpaper(user_id, device_id, wallpaper_id):
-			api_abort(ErrorCode.FORBIDDEN)
+		#if not can_access_wallpaper(user_id, device_id, wallpaper_id):
+		#	api_abort(ErrorCode.FORBIDDEN)
 
 		file_name: str = get_wallpaper_name(wallpaper_id)
 		
@@ -51,7 +51,7 @@ class FileRes(Resource):
 @ns.param("device_id", "Device ID")
 class DeviceWallpaperListRes(Resource):
 	@login_required
-	@ns.response(200, "Success", wallpaper_fields)
+	@ns.response(200, "Success", [wallpaper_fields])
 	@ns.marshal_with(wallpaper_fields, as_list=True)
 	def get(self, device_id: int):
 		user_id: int = session.get("userId", 0)
@@ -60,7 +60,7 @@ class DeviceWallpaperListRes(Resource):
 			api_abort(ErrorCode.FORBIDDEN)
 
 		wallpapers: list[dict] = get_wallpapers(user_id, device_id)
-		
+
 		return wallpapers, 200
 
 
@@ -108,7 +108,7 @@ class WallpaperRes(Resource):
 	def patch(self, device_id:int, wallpaper_id: int):
 		user_id: int = session.get("userId", 0)
 		payload: dict = ns.payload
-				
+
 		if not can_access_wallpaper(user_id, device_id, wallpaper_id):
 			api_abort(ErrorCode.FORBIDDEN)
 		

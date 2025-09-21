@@ -53,8 +53,8 @@ class DeviceRes(Resource):
 	@ns.response(200, "Success", device_fields)
 	def get(self, device_id: int):
 		user_id: int = session.get("userId", 0)
-		
-		if can_access_device(user_id, device_id):
+
+		if not can_access_device(user_id, device_id):
 			api_abort(ErrorCode.FORBIDDEN)
 		
 		device: dict = get_device(user_id, device_id)
