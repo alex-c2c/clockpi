@@ -42,7 +42,7 @@ def is_role_valid(role: str | None) -> str | None:
 		
 	if sys.version_info < (3, 13):
 		roles: list[str] = [str(ur.value) for ur in UserRole]
-		if role_str not in roles:
+		if role not in roles:
 			return "Invalid input"
 	else:
 		if role not in UserRole:

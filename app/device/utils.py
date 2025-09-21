@@ -52,16 +52,16 @@ def is_type_valid(type: str | None) -> str | None:
 	return None
 
 
-def is_orientation_valid(orientation_str: str | None) -> str | None:
-	if orientation_str is None:
+def is_orientation_valid(orientation: str | None) -> str | None:
+	if orientation is None:
 		return "This is a required property."
 		
 	if sys.version_info < (3, 13):
 		orientations: list[str] = [str(o.value) for o in Orientation]
-		if orientation_str not in orientations:
+		if orientation not in orientations:
 			return "Unsupported orientation."
 	else:
-		if orientation_str not in Orientation:
+		if orientation not in Orientation:
 			return "Unsupported orientation."
 			
 	return None
