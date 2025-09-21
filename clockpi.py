@@ -11,7 +11,7 @@ from flask_cors import CORS
 import werkzeug
 import werkzeug.exceptions
 
-from app import api, api_bp, auth, device, session_pkg, user
+from app import api, api_bp, auth, background, device, session_pkg, user
 from app import create_app, redis_controller
 
 
@@ -29,6 +29,7 @@ app: Flask = create_app()
 # API Blueprint + namespaces
 app.register_blueprint(api_bp)
 auth.append_namespace(api)
+background.append_namespace(api)
 device.append_namespace(api)
 session_pkg.append_namespace(api)
 user.append_namespace(api)
