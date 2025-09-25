@@ -56,7 +56,7 @@ def convert_image_to_buffer(image:Image) -> list[int]:
 		logger.warning("Invalid image dimensions: %d x %d, expected %d x %d" % (image.width, image.height, EPD_DIMENSIONS[0], EPD_DIMENSIONS[1]))
 	
 	# Convert the soruce image to the 7 colors, dithering if needed
-	image_7color: Image = image.convert("RGB").quantize(palette=rot_img)
+	image_7color: Image = rot_img.convert("RGB").quantize(palette=pal_image)
 	buf_7color: bytearray = bytearray(image_7color.tobytes('raw'))
 
 	# PIL does not support 4 bit color, so pack the 4 bits of color
