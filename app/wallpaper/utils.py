@@ -135,6 +135,8 @@ def process_image(
 
 		# Save file
 		canvas.save(dest_path)
+		
+		logger.debug(f"Image saved. {canvas.width=} {canvas.height=}")
 
 		if del_src:
 			os.remove(file_path)

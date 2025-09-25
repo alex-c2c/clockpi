@@ -42,24 +42,21 @@ def draw_grids(draw: ImageDraw) -> None:
 
 # Copied from epd7in3e.py
 def convert_image_to_buffer(image:Image) -> list[int]:
-	# Create a pallette with the 7 colors supported by the panel
-	pal_image = PImg.new("P", (1,1))
+	# Create a palette with the 7 colors supported by the panel
+	pal_image: Image = PImg.new("P", (1,1))
 	pal_image.putpalette( (0,0,0,  255,255,255,  255,255,0,  255,0,0,  0,0,0,  0,0,255,  0,255,0) + (0,0,0)*249)
 	# pal_image.putpalette( (0,0,0,  255,255,255,  0,255,0,   0,0,255,  255,0,0,  255,255,0, 255,128,0) + (0,0,0)*249)
 
-	'''
 	# Check if we need to rotate the image
-	imwidth, imheight = image.size
-	if(imwidth == EPD_WIDTH and imheight == EPD_HEIGHT):
-		image_temp = image
-	elif(imwidth == EPD_HEIGHT and imheight == EPD_WIDTH):
-		image_temp = image.rotate(90, expand=True)
+	if image.width == EPD_DIMENSIONS[0] and image.height == EPD_DIMENSIONS[1]:
+		rot_img: Image = image
+	elif image.width == EPD_DIMENSIONS[1] and image.height == EPD_DIMENSIONS[0]:
+		rot_img = image.rotate(90, expand=True)
 	else:
-		logger.warning("Invalid image dimensions: %d x %d, expected %d x %d" % (imwidth, imheight, EPD_WIDTH, EPD_HEIGHT))
-	'''
+		logger.warning("Invalid image dimensions: %d x %d, expected %d x %d" % (image.width, image.height, EPD_DIMENSIONS[0], EPD_DIMENSIONS[1]))
 	
 	# Convert the soruce image to the 7 colors, dithering if needed
-	image_7color: Image = image.convert("RGB").quantize(palette=pal_image)
+	image_7color: Image = image.convert("RGB").quantize(palette=rot_img)
 	buf_7color: bytearray = bytearray(image_7color.tobytes('raw'))
 
 	# PIL does not support 4 bit color, so pack the 4 bits of color

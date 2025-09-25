@@ -58,7 +58,11 @@ def update_display(device_id: int, is_save_img: bool = False) -> None:
 		buffer: list[int] = convert_image_to_buffer(image)
 		compressed_bytes: bytes = zlib.compress(bytes(buffer))
 		data = base64.b64encode(compressed_bytes).decode("utf-8")
-		logger.debug(f"{len(buffer)=} {len(compressed_bytes)=} {len(data)=}")
+		
+		logger.debug(f"{len(image.tobytes())=}")
+		logger.debug(f"{len(buffer)=}")
+		logger.debug(f"{len(compressed_bytes)=}")
+		logger.debug(f"{len(data)=}")
 		#logger.debug((compressed_bytes))
 		
 		if is_save_img:
