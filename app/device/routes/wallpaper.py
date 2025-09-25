@@ -8,7 +8,7 @@ from app.consts import DIR_APP_UPLOAD
 from app.device.logic import can_access_device
 from app.lib.decorators import admin_required, login_required, local_apikey_required
 from app.lib.errors import ErrorCode, api_abort
-from app.wallpaper.logic import can_access_wallpaper, create_wallpaper, delete_wallpaper, update_wallpaper, get_wallpapers, get_wallpaper_name
+from app.wallpaper.logic import can_access_wallpaper, create_wallpaper, delete_all_wallpaper, delete_wallpaper, update_wallpaper, get_wallpapers, get_wallpaper_name
 
 from .. import ns
 from ..fields import *
@@ -82,6 +82,23 @@ class DeviceWallpaperUploadRes(Resource):
 			request.files.get("file"),
 			request.form
 		)
+
+		return "", 204
+		
+		
+@ns.route("/<int:device_id>/wallpaper/delete-all")
+@ns.param("device_id", "Device ID")
+class DeviceWallpaperDeletAllRes(Resource):
+	@login_required
+	@ns.expect(upload_parser, validate=True)
+	@ns.response(204, "Success")
+	def post(self, device_id: int):
+		user_id: int = session.get("userId", 0)
+		
+		if not can_access_device(user_id, device_id):
+			api_abort(ErrorCode.FORBIDDEN)
+				
+		delete_all_wallpaper(user_id, device_id)
 
 		return "", 204
 

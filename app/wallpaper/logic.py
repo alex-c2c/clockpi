@@ -15,7 +15,7 @@ from app.consts import *
 from app.device.logic import can_access_device
 from app.device.models import DeviceModel
 from app.epd7in3e.consts import *
-from app.device.logic.queue import append_to_queue, remove_from_queue
+from app.device.logic.queue import append_to_queue, remove_all_from_queue, remove_from_queue
 from app.lib.errors import api_abort, ErrorCode
 
 from .models import WallpaperModel, WallpaperOwnershipModel
@@ -192,13 +192,49 @@ def create_wallpaper(
 	logger.info(f"Processed image and created new wallpaper model")
 
 
+def delete_all_wallpaper(user_id:int, device_id: int) -> None:
+	logger.info(f"Attempting to delete all wallpaper")
+	
+	stmt = select(WallpaperOwnershipModel.wallpaper_id).where(and_(WallpaperOwnershipModel.user_id == user_id, WallpaperOwnershipModel.device_id == device_id))
+	wallpaper_ids: Sequence[int] = db.session.scalars(stmt).all()
+	
+	stmt = select(WallpaperModel.file_name).where(WallpaperModel.id.in_(wallpaper_ids))
+	file_names: Sequence[str] = db.session.scalars(stmt).all()
+	
+	# delete wallpaper ownership first (ForeignKey)
+	db.session.execute(delete(WallpaperOwnershipModel).where(WallpaperOwnershipModel.wallpaper_id.in_(wallpaper_ids)))
+	db.session.flush()
+	
+	# delete wallpaper
+	db.session.execute(delete(WallpaperModel).where(WallpaperModel.id.in_(wallpaper_ids)))
+	db.session.flush()
+	
+	# this method will execute the commit() too
+	remove_all_from_queue(device_id)
+	
+	# Delete wallpaper image files
+	# Note: app will throw exception if commit failed when removing queue
+	# and do a rollback before stepping here
+	for file_name in file_names:
+		file_path: str = os.path.join(DIR_APP_UPLOAD, file_name)
+		if os.path.isfile(file_path):
+			try:
+				os.remove(file_path)
+			except Exception as ex:
+				logger.error(f"Unable to delete wallpaper file due to {ex}")
+		else:
+			logger.error(f"Unable to find wallpaper file {file_name} in {file_path}")
+
+	logger.info(f"Deleted all wallpaper")
+	
+
 def delete_wallpaper(device_id:int, wallpaper_id: int) -> None:
 	logger.info(msg=f"Attempting to delete wallpaper {wallpaper_id=}")
 	
 	file_name: str = db.session.scalars(select(WallpaperModel.file_name).where(WallpaperModel.id == wallpaper_id)).one_or_none() or ""
 	file_path: str = os.path.join(DIR_APP_UPLOAD, file_name)
 
-	# delete wallpaper owership first (ForeignKey)
+	# delete wallpaper ownership first (ForeignKey)
 	db.session.execute(delete(WallpaperOwnershipModel).where(WallpaperOwnershipModel.wallpaper_id == wallpaper_id))
 	db.session.flush()
 	
@@ -206,9 +242,12 @@ def delete_wallpaper(device_id:int, wallpaper_id: int) -> None:
 	db.session.execute(delete(WallpaperModel).where(WallpaperModel.id == wallpaper_id))
 	db.session.flush()
 	
-	# this method will execute the commit()
+	# this method will execute the commit() too
 	remove_from_queue(device_id, wallpaper_id)
 
+	# Delete wallpaper image files
+	# Note: app will throw exception if commit failed when removing queue
+	# and do a rollback before stepping here
 	if os.path.isfile(file_path):
 		try:
 			os.remove(file_path)

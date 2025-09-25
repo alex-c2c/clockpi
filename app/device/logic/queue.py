@@ -131,6 +131,26 @@ def move_to_first(device_id: int, wallpaper_id: int) -> None:
 		api_abort(ErrorCode.DATABASE_ERROR)
 		
 	logger.info(f"Moved {wallpaper_id} to front of queue")
+	
+
+def remove_all_from_queue(device_id: int) -> None:
+	logger.info(f"Attempting to remove all from queue")
+
+	device: DeviceModel | None = db.session.get(DeviceModel, device_id)
+
+	if device is None:
+		api_abort(ErrorCode.DEVICE_NOT_FOUND)
+		
+	device.queue = []
+	
+	try:
+		db.session.commit()
+	except Exception as ex:
+		db.session.rollback()
+		logger.error(f"DB commit failed: {ex}")
+		api_abort(ErrorCode.DATABASE_ERROR)
+
+	logger.info(f"Removed all from queue")
 
 
 def remove_from_queue(device_id: int, wallpaper_id: int) -> None:
