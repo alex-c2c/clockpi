@@ -16,8 +16,8 @@ from ..models import DeviceModel
 logger: Logger = getLogger(__name__)
 
 
-def update_display(device_id: int) -> None:
-	logger.info(f"{device_id=}")
+def update_display(device_id: int, is_save_img: bool = False) -> None:
+	logger.info(f"{device_id=} {is_save_img=}")
 	
 	device: DeviceModel | None = db.session.get(DeviceModel, device_id)
 
@@ -58,7 +58,13 @@ def update_display(device_id: int) -> None:
 		buffer: list[int] = convert_image_to_buffer(image)
 		compressed_bytes: bytes = zlib.compress(bytes(buffer))
 		data = base64.b64encode(compressed_bytes).decode("utf-8")
-		#logger.debug(f"{len(buffer)=} {len(compressed_bytes)=} {len(data)=}")
+		logger.debug(f"{len(buffer)=} {len(compressed_bytes)=} {len(data)=}")
+		#logger.debug((compressed_bytes))
+		
+		if is_save_img:
+			test_img_file_path: str = os.path.join(DIR_TEST_IMG, f"{wallpaper.file_name}")
+			logger.info(f"Saving test image: {test_img_file_path}")
+			image.save(test_img_file_path)
 	
 	if len(data) == 0:
 		logger.error(f"Empty byte array")

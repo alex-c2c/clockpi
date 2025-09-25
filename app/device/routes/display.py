@@ -44,3 +44,20 @@ class DeviceDisplayRefreshRes(Resource):
 		update_display(device_id)
 		
 		return "", 204
+
+
+# NOTE: for debugging purposes
+@ns.route("/<int:device_id>/display/test/save")
+@ns.param("device_id", "Device ID")
+class DeviceDisplaySaveRes(Resource):
+	@login_required
+	@ns.response(204, "Success")
+	def post(self, device_id: int):
+		user_id: int = session.get("userId", 0)
+		
+		if not can_access_device(user_id, device_id):
+			api_abort(ErrorCode.FORBIDDEN)
+		
+		update_display(device_id, True)
+		
+		return "", 204
