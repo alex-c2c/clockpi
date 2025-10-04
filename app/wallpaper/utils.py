@@ -97,8 +97,9 @@ def process_image(
 
 		# Resize bg to fill the entire canvas
 		# According to orientation
-		bg_r: float = max(canvas_size[0] / w, canvas_size[1] / h)
-		bg.thumbnail((w * bg_r, h * bg_r), Img.Resampling.LANCZOS)
+		bg_ratio: float = max(canvas_size[0] / w, canvas_size[1] / h)
+		bg = bg.resize(size=(int(w * bg_ratio), int(h * bg_ratio)), resample=Img.Resampling.LANCZOS)
+		#bg.thumbnail((w * bg_ratio, h * bg_ratio), Img.Resampling.LANCZOS)
 
 		# Resize foreground image to user specified percentage scale
 		# image_scale represents the the image width as a percent of canvas width (fixed size)
