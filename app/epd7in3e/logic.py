@@ -110,21 +110,21 @@ def process_image(
 
 	text_x_pos: int = int(label_x_per * img_width)
 	text_y_pos: int = int(label_y_per * img_height)
-	text_width: float = label_w_per * img_width
+	target_text_width: float = label_w_per * img_width
 	font_path: str = os.path.join(DIR_FONT, "RobotoMono-Bold.ttf")
-	font_size: int = 10
+	font_size: int = 5
 	font: FreeTypeFont = PImgFont.truetype(font_path, font_size)
 	
 	# get the correct font size
-	text_width = draw.textlength(time, font=font)
-	while text_width < img_width:
+	current_text_width: float = draw.textlength(time, font=font)
+	while current_text_width < target_text_width:
 		font_size += 1
 		font = PImgFont.truetype(font_path, font_size)
-		text_width = draw.textlength(time, font=font)
+		current_text_width = draw.textlength(time, font=font)
 	
 	# draw shadow text first
 	if epd_shadow is not None:
-		draw.text((text_x_pos + TEXT_OFFSET_X + SHADOW_OFFSET_X * label_w_per * 0.01, text_y_pos + TEXT_OFFSET_Y + SHADOW_OFFSET_Y * label_w_per * 0.01), time, epd_shadow, font, anchor="lt")
+		draw.text((text_x_pos + TEXT_OFFSET_X + SHADOW_OFFSET_X * label_w_per, text_y_pos + TEXT_OFFSET_Y + SHADOW_OFFSET_Y * label_w_per), time, epd_shadow, font, anchor="lt")
 
 	# draw text next
 	if epd_color is not None:
