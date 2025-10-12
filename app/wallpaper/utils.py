@@ -113,19 +113,18 @@ def process_image(
 		# Apply gaussian blur to bg
 		bg = bg.filter(ImageFilter.GaussianBlur(radius=4))
 
-		# Paste bg to canvas
-		# Centralize it vertically or horizontally depending on orientation
-		if canvas.width < canvas.height:
-			# vertical
-			bg_offset_y: int = int((bg.height - canvas.height) * 0.5)
-			canvas.paste(bg, (0, -bg_offset_y))
-		else:
-			# horizontal
-			bg_offset_x: int = int((bg.width - canvas.width) * 0.5)
-			canvas.paste(bg, (-bg_offset_x, 0))
+		# Centralize bg after resizing
+		bg_offset_x: int = 0
+		bg_offset_y: int = 0
+		if bg.width > canvas.width:
+			bg_offset_x = int((bg.width - canvas.width) * 0.5)
+			
+		if bg.height > canvas.height:
+			bg_offset_y = int((bg.height - canvas.height) * 0.5)
+		
+		canvas.paste(bg, (-bg_offset_x, -bg_offset_y))
 
-		# Paste fg to canvas
-		# Use user specified offsets
+		# Paste fg to canvas with user specified offsets
 		canvas.paste(fg, image_offset)
 
 		# Apply fyold steinburg dithering
