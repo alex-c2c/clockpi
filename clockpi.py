@@ -1,13 +1,18 @@
 import atexit
+from concurrent.futures import thread
 import http.client
+from os import getenv
+import os
 import traceback
 from typing import Any
 import uuid
 
 from logging import Logger, getLogger
 
+import dotenv
 from flask import Flask, Response, g, jsonify, request
 from flask_cors import CORS
+import waitress
 import werkzeug
 import werkzeug.exceptions
 
@@ -80,3 +85,6 @@ def handle_generic_error(error: Exception) -> tuple[Response, int]:
 	
 	return jsonify(response), status_code
 
+
+if __name__ == "__main__":
+	waitress.serve(app, host="127.0.0.1", port=5001)
