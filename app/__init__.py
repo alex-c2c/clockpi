@@ -37,7 +37,11 @@ api = Api(
 
 def create_app(is_skip_scheduler: bool = False) -> Flask:
 	app = Flask(__name__)
-	app.config.from_object(os.getenv("APP_SETTING"))
+	
+	app_settings: str = os.getenv("APP_SETTING", "")
+	logger.info(f"Using config: {app_settings}")
+	
+	app.config.from_object(app_settings)
 	app.config["SESSION_SQLALCHEMY"] = db
 
 	db.init_app(app)
