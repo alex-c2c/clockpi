@@ -1,50 +1,78 @@
-# Postgresql on Linux (Raspberry Pi)
-## Authentication mode
+# Getting Started
+
+## Dependencies
+1. Python 3.13
+2. Redis 8.2.2
+3. Postgres 17.6
+
+## Postgresql on Linux (Raspberry Pi)
+### Authentication mode
 By default, after installation, a new user `postgres` is created, this will be the default username, with no password required for login, as `peer` mode is the default.
 To turn on password authentication, follow https://stackoverflow.com/questions/18664074/getting-error-peer-authentication-failed-for-user-postgres-when-trying-to-ge and change `peer` -> `md5`
 
-# Start Redis
-`redis-server --daemonize yes`
-
-# New Postgresql Cluster on Mac
-## Create seprate postgresql database cluster
+### Create new Postgresql database cluster
 `initdb <cluster_name>`
 Uses system current username as the default username for postgresql
 
-## Start cluster
+### Start cluster
 `pg_ctl -D <cluster_name> -l ./logfile start`
 
-## Connect to cluster
+### Connect to cluster
 `psql -h <address> -p <port_number> -d <database_name> -U <username>`
 On first connect, use `postgres` as <database_name> since it is one of the default database name created with a new cluster
 
-# Create database
+### Create database
 `CREATE DATABASE <DATABASE_NAME>;`
 
-# Create Migration
+## Application Database Migration
+### Create migration
 `flask --app app db init`
 
-# Migrate database model
+### Migrate database model
 `flask --app app db migrate`
 
-Run this first if migration failed due to "database not up to date" from migrations being off-synced
-`flask --app app db stamp head`
-
-# Commit migration
+### Commit migration
 `flask --app app db upgrade`
 
-# Create super user
+## Misc
+### Create additional file
+Create `<dir_to_clockpi>/.flaskenv`
+```bash
+FLASK_APP=clockpi.py
+FLASK_RUN_HOST=127.0.0.1
+FLASK_RUN_PORT=5001
+```
+Create `<dir_to_clockpi>/.env`
+```bash
+DATABASE_URL=postgresql://<postgres_user>:<postgres_password>@<postgres_url>:<postgres_port>/clockpi
+APP_SETTING=config.ProdConfig
+SECRET_KEY=<create_secret_1>
+REDIS_URL=redis://:<redis_password>@<redis_url>:<redis_port>/0
+LOCAL_API_KEY=<create_secret_2>
+
+DEFAULT_SUPERUSER_USERNAME=<value>
+DEFAULT_SUPERUSER_PASSWORD=<value>
+DEFAULT_SUPERUSER_DISPNAME=<value>
+DEFAULT_SUPERUSER_ROLE=<value>
+```
+
+### Create super user
 `flask --app cli create_super_user`
 
-# Create API key for user manually
+### Create API key for user manually
 `flask --app cli create_api_key`
 
-# Start development server
-# "run" is from run.py
-`flask --app clockpi(.py) run --host 0.0.0.0 --port 5001`
-`--debug`: Optional
-`--no-reload`: Optional
+## Run Application
+### Start postgres
+`pg_ctl -D <cluster_name> -l ./logfile start`
 
-# Start production server
-# equivalent to 'from run(.py) import app' and app.run()
-`gunicorn  -c gunicorn.py "run:app"`
+### Start Redis
+`redis-server --daemonize yes`
+
+### Start Flask App
+#### Development server
+`flask --app clockpi run --host 127.0.0.1 --port 5001`
+
+#### Production server
+`python clockpi.py`
+*Uses python-waitress to server the application.*
