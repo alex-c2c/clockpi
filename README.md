@@ -55,6 +55,24 @@ DEFAULT_SUPERUSER_PASSWORD=<value>
 DEFAULT_SUPERUSER_DISPNAME=<value>
 DEFAULT_SUPERUSER_ROLE=<value>
 ```
+Create `/lib/systemd/system/clockpi.service`
+```bash
+[Unit]
+Description=Clockpi app
+After=network.target
+
+[Service]
+WorkingDirectory=<dir_to_clockpi>
+Environment=<dir_to_clockpi>/.venv/bin
+ExecStart=<dir_to_clockpi>/.venv/bin/python <dir_to_clockpi>/clockpi.py
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=5
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+```
 
 ### Create super user
 `flask --app cli create_super_user`
