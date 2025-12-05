@@ -57,7 +57,7 @@ class DeviceRes(Resource):
 		if not can_access_device(user_id, device_id):
 			api_abort(ErrorCode.FORBIDDEN)
 		
-		device: dict = get_device(user_id, device_id)
+		device: dict = get_device(device_id)
 			
 		return device, 200
 		

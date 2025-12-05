@@ -33,7 +33,7 @@ def can_access_device(user_id:int, device_id: int) -> bool:
 	return result
 	
 
-def get_device(user_id: int, device_id: int) -> dict:
+def get_device(device_id: int) -> dict:
 	model: DeviceModel | None = db.session.get(DeviceModel, device_id)
 	
 	if model is None:
