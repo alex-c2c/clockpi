@@ -27,6 +27,7 @@ class DeviceModel(db.Model):
 	height: Mapped[int]					= mapped_column(Integer, nullable=False)
 	queue: Mapped[list[int]]			= mapped_column(MutableList.as_mutable(ARRAY(Integer)), default=list, nullable=False, server_default="{}")
 	is_draw_grid: Mapped[bool]			= mapped_column(Boolean, nullable=False, default=False, server_default="f")
+	is_show_time: Mapped[bool]			= mapped_column(Boolean, nullable=False, default=True, server_default="t")
 	is_enabled: Mapped[bool]			= mapped_column(Boolean, nullable=False, default=True, server_default="t")
 	created_at:	Mapped[datetime]		= mapped_column(DateTime, nullable=False, default=datetime.now(timezone("Asia/Singapore")))
 	updated_at:	Mapped[datetime] 		= mapped_column(DateTime, nullable=True)
@@ -45,6 +46,7 @@ class DeviceModel(db.Model):
 		self.queue = []
 		self.is_draw_grid = False
 		self.is_enabled = True
+		self.is_show_time = True
 		
 		self.update_orientation(orientation)
 		self.update_colors()
@@ -62,6 +64,7 @@ class DeviceModel(db.Model):
 			queue:{self.queue} \
 			is_draw_grid:{self.is_draw_grid} \
 			is_enabled:{self.is_enabled} \
+			is_show_time:{self.is_show_time} \
 			created_at:{self.created_at} \
 			updated_at:{self.updated_at} \
 			>"
@@ -80,6 +83,7 @@ class DeviceModel(db.Model):
 			"queue": self.queue,
 			"isDrawGrid": self.is_draw_grid,
 			"isEnabled": self.is_enabled,
+			"isShowTime": self.is_show_time,
 		}
 	
 	def update_orientation(self, orientation: Orientation) -> None:

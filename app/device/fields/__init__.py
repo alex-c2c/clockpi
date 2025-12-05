@@ -18,6 +18,7 @@ device_fields = ns.model("Device", {
 	"queue":				fields.List(fields.Integer, description="List of wallpaper IDs", readOnly=True),
 	"isDrawGrid":			fields.Boolean(description="Is draw grid on screen?"),
 	"isEnabled":			fields.Boolean(description="Is device enabled?"),
+	"isShowTime":			fields.Boolean(description="Is show time?"),
 })
 
 
@@ -28,7 +29,8 @@ device_update_fields = ns.model("DeviceUpdate", {
 	"type":			fields.String(description="Device type"),
 	"orientation":	fields.String(description="Screen orientation"),
 	"isDrawGrid":	fields.Boolean(description="Is draw grid on screen?"),
-	"isEnabled":	fields.Boolean(description="Is device enabled?"),	
+	"isEnabled":	fields.Boolean(description="Is device enabled?"),
+	"isShowTime":			fields.Boolean(description="Is show time?"),
 })
 
 

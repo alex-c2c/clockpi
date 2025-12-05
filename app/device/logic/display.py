@@ -8,6 +8,7 @@ from logging import Logger, getLogger
 from app import db, redis_controller
 from app.consts import *
 from app.device.logic import can_access_device
+from app.epd7in3e.consts import SupportedColors
 from app.lib.errors import api_abort, ErrorCode
 from app.wallpaper.models import WallpaperModel
 
@@ -42,9 +43,9 @@ def update_display(device_id: int, is_save_img: bool = False) -> None:
 	h: float | None = wallpaper.label_h_per	# time label height (percentage of canvas height)
 	width: int = device.width
 	height: int = device.height
-	color: str = wallpaper.color
-	shadow: str = wallpaper.shadow
-	draw_grids: bool = device.is_draw_grid
+	color: str = wallpaper.color if device.is_show_time else SupportedColors.NONE.value
+	shadow: str = wallpaper.shadow if device.is_show_time else SupportedColors.NONE.value
+	is_draw_grids: bool = device.is_draw_grid
 	
 	if x is None or y is None or w is None or h is None:
 		logger.error(f"Missing required argument")
@@ -54,7 +55,7 @@ def update_display(device_id: int, is_save_img: bool = False) -> None:
 	if device.type == "epd7in3e":
 		from app.epd7in3e.logic import process_image, convert_image_to_buffer
 		
-		image = process_image(file_path, time, x, y, w, h, width, height, color, shadow, draw_grids)
+		image = process_image(file_path, time, x, y, w, h, width, height, color, shadow, is_draw_grids)
 		buffer: list[int] = convert_image_to_buffer(image)
 		compressed_bytes: bytes = zlib.compress(bytes(buffer))
 		data = base64.b64encode(compressed_bytes).decode("utf-8")

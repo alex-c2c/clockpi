@@ -161,6 +161,10 @@ def update_device(user_id: int, device_id: int, payload: dict) -> dict:
 	is_enabled: bool | None = payload.get("isEnabled")
 	if is_enabled is not None:
 		model.is_enabled = is_enabled
+		
+	is_show_time: bool | None = payload.get("isShowTime")
+	if is_show_time is not None:
+		model.is_show_time = is_show_time
 				
 	if len(failed_validations.values()) > 0:
 		db.session.rollback()
