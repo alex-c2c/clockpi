@@ -22,8 +22,7 @@ class TickDeviceRes(Resource):
 	@local_apikey_required
 	@ns.response(204, "Success")
 	def post(self, device_id: int):
-		data = ns.payload
-		
+				
 		tick_device(device_id)
 		
 		return "", 204
@@ -45,7 +44,6 @@ class ShiftDeviceRes(Resource):
 	@local_apikey_required
 	@ns.response(204, "Success")
 	def post(self, device_id: int):
-		data = ns.payload
 		
 		shift_device_queue(device_id)
 		
@@ -69,7 +67,6 @@ class ShuffleDeviceRes(Resource):
 	@local_apikey_required
 	@ns.response(204, "Success")
 	def post(self, device_id: int):
-		data = ns.payload
 		
 		shuffle_device_queue(device_id)
 		
