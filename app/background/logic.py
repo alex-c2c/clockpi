@@ -23,17 +23,23 @@ def tick_device(device_id: int) -> None:
 		return
 		
 	sleep_status: SleepStatus = get_status(device_id)
-	is_sleep: bool = should_sleep_now(device_id)
+	should_sleep: bool = should_sleep_now(device_id)
 
-	logger.info(f"ticking device ({device_id})")
-	if is_sleep:
+	logger.info(f"ticking device ({device_id}), {sleep_status.value=}, {should_sleep=}")
+	if should_sleep:
 		if sleep_status == SleepStatus.AWAKE:
+			logger.debug("Clearing display")
 			clear_display(device_id)
+			
+			logger.debug("Setting device to sleep")
 			set_status(device_id, SleepStatus.SLEEP)
 	else:
+		logger.debug("Updating display")
 		update_display(device_id)
+		
 		if sleep_status == SleepStatus.SLEEP:
-			set_status(device_id, SleepStatus.SLEEP)
+			logger.debug("Setting device to awake")
+			set_status(device_id, SleepStatus.AWAKE)
 	
 
 def tick_all_devices() -> None:
